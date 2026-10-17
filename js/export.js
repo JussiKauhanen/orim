@@ -33,6 +33,7 @@ $('#exportMenu').addEventListener('click',async e=>{
   if(fmt==='drawiocopy'){ if(!state.model||state.fatal){ toast('Fix the code errors before exporting'); return; } copyText(buildDrawio(),'Copied. Paste onto a draw.io canvas with Ctrl+V'); return; }
   if(fmt==='import'){ $('#fileIn').click(); return; }
   if(!state.model||state.fatal){ toast('Fix the code errors before exporting'); return; }
+  if(fmt==='qr'){ openShareQR(); return; }
   flushEditorHist();
   const name=fileBase(); let data,filename,preview=null;
   try{

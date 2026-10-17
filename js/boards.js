@@ -24,6 +24,13 @@ const Boards=(()=>{
     renderStatic(); route();
   }
   function route(){
+    const sh=/^#([mt]=[A-Za-z0-9_-]+)$/.exec(location.hash||'');
+    if(sh){
+      // A shared board link: drop the data from the address first, so reloading or going back does not import it twice.
+      try{ history.replaceState(null,'',location.pathname+location.search); }catch(_){}
+      importShared(sh[1]).then(code=>{ if(code){ openNew(code); toast('Board opened from the shared link'); } else showHome(); });
+      return;
+    }
     const m=/^#b-([A-Za-z0-9]+)$/.exec(location.hash||'');
     if(m&&meta(m[1])){ if(current!==m[1]||!$('#home').hidden) open(m[1]); }
     else showHome();
@@ -124,7 +131,7 @@ const Boards=(()=>{
     const hc=$('#heroCode'); if(hc&&!hc.dataset.done){ hc.dataset.done='1'; hc.innerHTML=hlQuick(HERO_TEXT); }
     const ri=$('#heroIcons'); if(ri&&Icons.ready) ri.innerHTML=['pp:power-apps','pp:dataverse','pp:power-automate','pp:copilot-studio','azure:function-apps','azure:key-vaults'].map(k=>{ const ic=iconFor(k); return ic?'<img src="'+ic.uri+'" alt="'+esc(ic.title)+'" title="'+esc(ic.title)+'">':''; }).join('')+'<span>+'+(Icons.byKey.size-6)+' more</span>';
   }
-  const HERO_TEXT='Power Platform environment {\n  Canvas app\n  Partner portal\n  Help agent\n  Dataverse\n  Cloud flows\n}\n\nEmployees -> Canvas app\nEmployees -> Help agent\nEmployees -> Entra ID: sign in\nCanvas app -> Dataverse\nHelp agent -> Dataverse\nDataverse -> Cloud flows: row changed\nCloud flows -> Data gateway\nData gateway -> On-prem ERP\nDataverse => Reports';
+  const HERO_TEXT='Power Platform environment {\n  Canvas app\n  Partner portal\n  Help agent\n  Dataverse\n  Cloud flows\n  Reports\n}\n\nEmployees -> Canvas app\nEmployees -> Help agent\nEmployees -> Entra ID: sign in\nCanvas app -> Dataverse\nHelp agent -> Dataverse\nDataverse -> Cloud flows: row changed\nCloud flows -> Data gateway\nData gateway -> On-prem ERP\nDataverse => Reports';
   function heroSVG(code){
     let m; try{ const r=parseMermaid(code); m=r.model; resolveGeometry(m,new Map()); }catch(_){ return ''; }
     const b=contentBounds(m); if(!b) return ''; const pad=36; const boxes=groupBoxes(m);

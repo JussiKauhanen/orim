@@ -35,6 +35,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 **Export**
 - PNG, SVG, draw.io (`.drawio`, editable in draw.io and diagrams.net), Mermaid in Markdown, Mermaid text and an orim board file (`.json`, keeps images).
 - Copy for draw.io pastes straight onto a draw.io canvas.
+- QR code moves the current board to another device: scan it, or save the link (see below).
 
 ## Run it locally
 
@@ -97,6 +98,7 @@ orim/
 │   ├── quick-text.js       Plain-text language and paste to board
 │   ├── export-drawio.js    draw.io export
 │   ├── export.js           Other exports
+│   ├── share-qr.js         QR code and shared links (#m=…)
 │   ├── theme.js            Theme switching
 │   ├── tooltips.js         Tooltips
 │   ├── boards.js           Home page, board list, saving, #b-<id> links
@@ -104,7 +106,9 @@ orim/
 ├── assets/
 │   ├── icons.json          Icon pack (generated)
 │   └── favicon.svg
-├── vendor/dagre/           dagre 0.8.5 for auto layout (MIT)
+├── vendor/
+│   ├── dagre/              dagre 0.8.5 for auto layout (MIT)
+│   └── qrcode-generator/   qrcode-generator 1.4.4 for QR codes (MIT)
 ├── tests/core.test.mjs     Parser and serializer round-trip tests
 └── tools/
     ├── build.mjs           Bundles dist/orim.html
@@ -169,6 +173,15 @@ Help while typing stays out of the way:
 - Pause on a line and a short list appears that fits where you are: names to start with on an empty line, arrow types after a name, targets after an arrow, and label or chain options after a connection. Typing narrows the list; Tab inserts, Esc hides it.
 - The pause adapts. Taking suggestions keeps it short; ignoring or hiding them makes it longer, so experienced users rarely see the list. Ctrl+Space opens it at any time.
 - When new boxes appear outside the view, the board pans and zooms to show them, and new items flash briefly.
+
+## Move a board to another device
+
+**Export → QR code** shows a large QR code, the link it contains and the board's Mermaid code. Scanning the code, or opening the link, creates a copy of the board on the other device.
+
+- The board travels inside the link itself (`#m=` followed by the deflated, base64url-encoded Mermaid), so nothing is uploaded or stored anywhere else.
+- Only the current board is included, and images are left out.
+- A QR code holds about 2,900 characters. If the board is too large, pen strokes and then positions are dropped (the board is laid out again on arrival); **Smaller code** switches between the sizes. Boards that still do not fit need a board file.
+- On GitHub Pages or `localhost` the link points to the same site. Anywhere else it points to `https://jussikauhanen.github.io/orim/`; change `ORIM_PAGES` in `js/share-qr.js` for your own deployment.
 
 ## Keyboard shortcuts
 

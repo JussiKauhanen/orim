@@ -16,6 +16,6 @@ function openModal(title,bodyHTML,buttons){
   $('#modalFoot').onclick=e=>{ const k=e.target.closest('[data-mb]'); if(!k) return; if(k.dataset.mb==='close'){ closeModal(); return; } const b=buttons[+k.dataset.mb]; b&&b.run&&b.run(); };
   $('#modal').hidden=false;
 }
-function closeModal(){ $('#modal').hidden=true; $('#modalBody').innerHTML=''; }
+function closeModal(){ $('#modal').hidden=true; $('.modal').classList.remove('qr'); $('#modalBody').innerHTML=''; }
 $('#modalClose').addEventListener('click',closeModal);
 $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });

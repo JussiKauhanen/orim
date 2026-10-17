@@ -16,6 +16,10 @@ Microsoft's guidelines also ask that the icons are not cropped, flipped, rotated
 
 `vendor/dagre/dagre.min.js` is dagre 0.8.5, used for automatic layout. MIT License, Copyright (c) 2012-2014 Chris Pettitt. See `vendor/dagre/LICENSE`.
 
+## qrcode-generator
+
+`vendor/qrcode-generator/qrcode.js` is qrcode-generator 1.4.4 by Kazuhiko Arase, used for the QR code export. MIT License, Copyright (c) 2009 Kazuhiko Arase. The license notice is at the top of the file. "QR Code" is a registered trademark of DENSO WAVE INCORPORATED.
+
 ## Fonts
 
 Instrument Sans and JetBrains Mono are loaded from Google Fonts under the SIL Open Font License 1.1.

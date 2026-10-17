@@ -97,6 +97,7 @@
           <button type="button" data-export="drawio"><b>draw.io diagram</b><small>Editable in draw.io and diagrams.net</small></button>
           <button type="button" data-export="json"><b>Board file (.json)</b><small>Reopen here with Import</small></button>
           <hr>
+          <button type="button" data-export="qr"><b>QR code</b><small>Open this board on another device</small></button>
           <button type="button" data-export="copy"><b>Copy Mermaid code</b><small>Includes canvas positions as comments</small></button>
           <button type="button" data-export="drawiocopy"><b>Copy for draw.io</b><small>Paste straight onto a draw.io canvas</small></button>
           <button type="button" data-export="import" class="show-narrow-only"><b>Import a file</b><small>.md, .mmd, .txt or board .json</small></button>
@@ -225,6 +226,7 @@ User <- Email -- Logic App
   </div>
 
   <script src="vendor/dagre/dagre.min.js"></script>
+  <script src="vendor/qrcode-generator/qrcode.js"></script>
   <script src="js/core/mermaid.js"></script>
   <script src="js/core/geometry.js"></script>
   <script src="js/core/templates.js"></script>
@@ -249,6 +251,7 @@ User <- Email -- Logic App
   <script src="js/quick-text.js"></script>
   <script src="js/export-drawio.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/share-qr.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/tooltips.js"></script>
   <script src="js/boards.js"></script>

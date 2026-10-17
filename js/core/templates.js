@@ -139,10 +139,10 @@ flowchart LR
     agent@{ icon: "pp:copilot-studio", label: "Help agent" }
     dv@{ icon: "pp:dataverse", label: "Dataverse" }
     flow@{ icon: "pp:power-automate", label: "Cloud flows" }
+    bi@{ icon: "pp:power-bi", label: "Reports" }
   end
   gw@{ icon: "azure:on-premises-data-gateways", label: "Data gateway" }
   erp[(On-prem ERP)]
-  bi@{ icon: "pp:power-bi", label: "Reports" }
 
   users --> app
   users --> agent
