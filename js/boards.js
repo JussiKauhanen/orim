@@ -66,7 +66,7 @@ const Boards=(()=>{
     Object.assign(IMG,LS.get(IMGS+id,{})||{});
     const code=LS.get(CODE+id,'flowchart LR\n');
     lastSaved.set(id,code);
-    state.sel.clear(); state.cache.clear(); H.stack=[]; H.i=-1; closeModal(); closeMenus();
+    state.sel.clear(); state.cache.clear(); H.stack=[]; H.i=-1; closeModal(); closeMenus(); cmClose();
     $('#home').hidden=true; app.hidden=false;
     loadCode(typeof code==='string'?code:'flowchart LR\n',{clearCache:true}); updUndo();
     requestAnimationFrame(()=>{ applyView(); render(); fit(); });
@@ -75,7 +75,7 @@ const Boards=(()=>{
   function openNew(code,title){ const id=create(code,title); open(id); return id; }
   function showHome(){
     if(current){ flushEditorHist(); saveNow(); }
-    closeModal(); closeMenus(); hideTip&&hideTip();
+    closeModal(); closeMenus(); cmClose(); hideTip&&hideTip();
     app.hidden=true; $('#home').hidden=false; setHash(''); document.title='orim';
     renderRecents();
   }
@@ -126,6 +126,7 @@ const Boards=(()=>{
   const tplThumb=t=>t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
   function renderStatic(){
     $('#homeTpl').innerHTML=TPL_CARDS().map(t=>'<button type="button" class="tpl" data-tpl-id="'+t.id+'"'+(t.tint?' style="--tint:'+t.tint+'"':'')+'><span class="th">'+tplThumb(t)+'</span><b>'+esc(t.name)+'</b><small>'+esc(t.desc||'')+'</small></button>').join('');
+    const cards=$('#homeTpl').children.length; $('#homeTpl').style.setProperty('--n',Math.ceil(cards/2)); requestAnimationFrame(updTplNav);
     for(const b of document.querySelectorAll('#homeView [data-view]')) b.setAttribute('aria-pressed',String(b.dataset.view===view));
     const hero=$('#heroBoard'); if(hero){ const t=TEMPLATES.find(x=>x.id==='pp')||TEMPLATES[0]; hero.innerHTML=heroSVG(t.code); }
     const hc=$('#heroCode'); if(hc&&!hc.dataset.done){ hc.dataset.done='1'; hc.innerHTML=hlQuick(HERO_TEXT); }
@@ -176,6 +177,16 @@ const Boards=(()=>{
   function exportFile(id){ open(id); setTimeout(()=>{ const b=document.querySelector('#exportMenu [data-export=json]'); if(b) b.click(); },120); }
 
   // wiring
+  // Templates: two rows that scroll sideways, with arrow buttons for mouse users.
+  function updTplNav(){
+    const r=$('#homeTpl'), nav=$('#tplNav'); if(!r||!nav) return;
+    const over=r.scrollWidth>r.clientWidth+4; nav.hidden=!over; if(!over) return;
+    nav.querySelector('[data-tpl-dir="-1"]').disabled=r.scrollLeft<=4;
+    nav.querySelector('[data-tpl-dir="1"]').disabled=r.scrollLeft+r.clientWidth>=r.scrollWidth-4;
+  }
+  $('#tplNav').addEventListener('click',e=>{ const b=e.target.closest('[data-tpl-dir]'); if(!b) return; const r=$('#homeTpl'); r.scrollBy({left:+b.dataset.tplDir*r.clientWidth*0.8,behavior:'smooth'}); });
+  $('#homeTpl').addEventListener('scroll',updTplNav,{passive:true});
+  window.addEventListener('resize',updTplNav);
   $('#homeTpl').addEventListener('click',e=>{
     const b=e.target.closest('[data-tpl-id]'); if(!b) return; const id=b.dataset.tplId;
     if(id==='blank'){ openNew('flowchart LR\n','Untitled board'); return; }

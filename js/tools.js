@@ -2,12 +2,12 @@
  * Left toolbar, tool fly-outs, tool switching.
  */
 'use strict';
-const TOOLS=[['select','select','Select (V)'],['hand','hand','Hand (H or Space)'],'|',['sticky','sticky','Sticky note (N)'],['text','text','Text (T)'],['shapes','shapes','Shapes (S)'],['connector','arCurved','Arrows and connectors (A)'],['ink','pen','Pen, highlighter and eraser (P)'],['frame','frame','Frame (F)'],['image','picture','Image: paste, drop or pick a file'],'|',['library','library','Icon library (I)']];
+const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons']];
 state.inkColor=LS.get('mab.inkColor',{pen:0,hl:0}); state.stickyColor=LS.get('mab.stickyColor',0); state.lastShape='rect'; state.lastInk='pen'; state.fly=null;
 const INK_TOOLS=['pen','hl','eraser'];
 state.arrowKind=LS.get('mab.arrowKind','curved'); state.arrowW=LS.get('mab.arrowW',2); state.arrowColor=LS.get('mab.arrowColor',0);
 function renderTools(){
-  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'">'+ico(t[1])+'</button>').join('');
+  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+ico(t[1])+'</span></button>').join('');
   updTools();
 }
 function updTools(){
@@ -16,36 +16,41 @@ function updTools(){
     const id=b.dataset.tool; let on;
     if(id==='library') on=state.libOpen; else if(id==='shapes') on=SHAPE_TOOLS.includes(t); else if(id==='ink') on=INK_TOOLS.includes(t); else on=t===id;
     b.setAttribute('aria-pressed',String(on));
-    if(id==='shapes'){ const k=SHAPE_TOOLS.includes(t)?t:state.lastShape; b.innerHTML=ico(k==='rect'?'shapes':k); }
-    if(id==='ink'){ const k=INK_TOOLS.includes(t)?t:state.lastInk; b.innerHTML=ico(k); }
-    if(id==='connector'){ const ak=ARROW_KINDS.find(x=>x[0]===state.arrowKind); b.innerHTML=ico(ak?ak[1]:'arCurved'); }
+    const ti=b.querySelector('.ti');
+    if(id==='shapes'){ const k=SHAPE_TOOLS.includes(t)?t:state.lastShape; ti.innerHTML=ico(k==='rect'?'shapes':k); }
+    if(id==='ink'){ const k=INK_TOOLS.includes(t)?t:state.lastInk; ti.innerHTML=ico(k); }
+    if(id==='connector'){ const ak=ARROW_KINDS.find(x=>x[0]===state.arrowKind); ti.innerHTML=ico(ak?ak[1]:'arCurved'); }
   }
   board.classList.toggle('t-hand',t==='hand');
   board.classList.toggle('t-draw',[...SHAPE_TOOLS,'text','frame','sticky'].includes(t));
   board.classList.toggle('t-connector',t==='connector');
   board.classList.toggle('t-ink',t==='pen'||t==='hl');
   board.classList.toggle('t-eraser',t==='eraser');
+  board.classList.toggle('t-comment',t==='comment');
   renderFly();
 }
 function renderFly(){
   const fl=$('#flyout'); const t=state.tool; const kind=state.fly&&state.fly===toolFamily(t)?state.fly:null;
   if(!kind){ fl.hidden=true; return; }
   let h='';
-  if(kind==='shapes') h='<div class="fly-grid">'+SHAPE_TOOLS.map(id=>{ const sh=SHAPES.find(x=>x.id===id); return '<button type="button" class="ibtn" data-fly-tool="'+id+'" aria-pressed="'+(t===id)+'" title="'+sh.name+(sh.key?' ('+sh.key.toUpperCase()+')':'')+'" aria-label="'+sh.name+'">'+ico(id)+'</button>'; }).join('')+'</div>';
+  // Miro-style lists: icon, name and shortcut on each row.
+  const head=title=>'<div class="fly-head"><span>'+title+'</span><button type="button" class="ibtn fly-close" data-fly-close title="Close panel (Esc)" aria-label="Close panel"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div>';
+  const row=(attr,on,icon,name,key)=>'<button type="button" class="fly-row" '+attr+' aria-pressed="'+on+'">'+ico(icon)+'<span>'+name+'</span>'+(key?'<kbd>'+key+'</kbd>':'')+'</button>';
+  if(kind==='shapes') h=head('Shapes')+SHAPE_TOOLS.map(id=>{ const sh=SHAPES.find(x=>x.id===id); return row('data-fly-tool="'+id+'"',t===id,id,sh.name,sh.key?sh.key.toUpperCase():''); }).join('');
   if(kind==='ink'){
-    h=[['pen','pen','Pen (P)'],['hl','hl','Highlighter (Shift+P)'],['eraser','eraser','Eraser (E)']].map(([id,ic,tt])=>'<button type="button" class="ibtn" data-fly-tool="'+id+'" aria-pressed="'+(t===id)+'" title="'+tt+'" aria-label="'+tt+'">'+ico(ic)+'</button>').join('');
+    h=head('Draw')+[['pen','pen','Pen','P'],['hl','hl','Highlighter','Shift+P'],['eraser','eraser','Eraser','E']].map(([id,ic,nm,k])=>row('data-fly-tool="'+id+'"',t===id,ic,nm,k)).join('');
     if(t!=='eraser'){
       const names=t==='pen'?['Black','Red','Blue']:['Yellow','Pink','Green'];
-      h+='<span class="hsep"></span>'+INK_COLORS[t].map((c,i)=>'<button type="button" class="ink-dot" data-ink-color="'+i+'" aria-pressed="'+(state.inkColor[t]===i)+'" title="'+names[i]+'" aria-label="'+names[i]+'" style="background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+';'+(t==='hl'?'opacity:.75':'')+'"></button>').join('');
+      h+='<div class="fly-sec">Color</div><div class="fly-dots">'+INK_COLORS[t].map((c,i)=>'<button type="button" class="ink-dot" data-ink-color="'+i+'" aria-pressed="'+(state.inkColor[t]===i)+'" title="'+names[i]+'" aria-label="'+names[i]+'" style="background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+';'+(t==='hl'?'opacity:.75':'')+'"></button>').join('')+'</div>';
     }
   }
   if(kind==='connector'){
-    h=ARROW_KINDS.map(([id,ic,tt])=>'<button type="button" class="ibtn" data-akind="'+id+'" aria-pressed="'+(state.arrowKind===id)+'" title="'+tt+'" aria-label="'+tt+'">'+ico(ic)+'</button>').join('');
-    h+='<span class="hsep"></span><label class="thick" title="Thickness"><output>'+state.arrowW+'</output><input type="range" min="1" max="12" step="0.5" value="'+state.arrowW+'" data-fly-thick aria-label="Thickness"></label>';
-    h+='<span class="hsep"></span><div class="fly-colors" style="grid-template-columns:repeat(2,22px);gap:6px">'+ARROW_COLORS.map((c,i)=>'<button type="button" class="ink-dot" data-fly-acolor="'+i+'" aria-pressed="'+(state.arrowColor===i)+'" title="'+c+'" style="width:22px;height:22px;background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+'"></button>').join('')+'</div>';
+    h=head('Arrows')+ARROW_KINDS.map(([id,ic,tt])=>row('data-akind="'+id+'"',state.arrowKind===id,ic,tt,id==='curved'?'A':'')).join('');
+    h+='<div class="fly-sec">Thickness</div><label class="thick" title="Thickness"><input type="range" min="1" max="12" step="0.5" value="'+state.arrowW+'" data-fly-thick aria-label="Thickness"><output>'+state.arrowW+'</output></label>';
+    h+='<div class="fly-sec">Color</div><div class="fly-dots">'+ARROW_COLORS.map((c,i)=>'<button type="button" class="ink-dot" data-fly-acolor="'+i+'" aria-pressed="'+(state.arrowColor===i)+'" title="'+c+'" aria-label="Color '+c+'" style="width:22px;height:22px;background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+'"></button>').join('')+'</div>';
   }
-  if(kind==='sticky') h='<div class="pop-label" style="margin:2px 4px 4px">Sticky color</div><div class="fly-colors">'+STICKY_COLORS.slice(0,12).map((c,i)=>'<button type="button" class="ink-dot" data-sticky-color="'+i+'" aria-pressed="'+(state.stickyColor===i)+'" title="'+c+'" style="background:'+c+';border-radius:4px"></button>').join('')+'</div>';
-  fl.innerHTML=h+'<span class="hsep"></span><button type="button" class="ibtn fly-close" data-fly-close title="Close panel (Esc)" aria-label="Close panel"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>'; fl.hidden=false;
+  if(kind==='sticky') h=head('Sticky note color')+'<div class="fly-colors">'+STICKY_COLORS.slice(0,12).map((c,i)=>'<button type="button" class="ink-dot" data-sticky-color="'+i+'" aria-pressed="'+(state.stickyColor===i)+'" title="'+c+'" style="background:'+c+';border-radius:4px"></button>').join('')+'</div>';
+  fl.innerHTML=h; fl.hidden=false;
   const btn=$('#tools [data-tool="'+kind+'"]'); const pr=boardPane.getBoundingClientRect(); const lb=$('#leftbar').getBoundingClientRect(); const br=btn?btn.getBoundingClientRect():lb;
   fl.style.left=(lb.right-pr.left+8)+'px';
   fl.style.top=clamp(br.top-pr.top-6,8,Math.max(8,pr.height-fl.offsetHeight-8))+'px';

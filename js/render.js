@@ -78,8 +78,8 @@ function edgesMarkup(m,boxes,P,live,pre){
     if(e.line!=='invis'){ out+=headMarkup(e.head,g.p3,g.t3,sw,col,P.labelBg,'edge-head'); out+=headMarkup(e.tail,g.p0,g.t0,sw,col,P.labelBg,'edge-head'); }
     if(e.label&&!(live&&state.editing&&state.editing.kind==='edge'&&state.editing.id===i)){
       const ls=wrapText(e.label,180,12); const tw=Math.max(...ls.map(l=>Core.measure(l,12)))+12; const th=ls.length*15+6;
-      out+='<rect x="'+(g.mid.x-tw/2)+'" y="'+(g.mid.y-th/2)+'" width="'+tw+'" height="'+th+'" rx="4" style="fill:'+P.labelBg+'"/>';
-      out+='<text text-anchor="middle" style="fill:'+(sel?P.accent:P.labelText)+';font:500 12px '+P.font+'">';
+      out+='<rect class="elbl" x="'+(g.mid.x-tw/2)+'" y="'+(g.mid.y-th/2)+'" width="'+tw+'" height="'+th+'" rx="4" style="fill:'+P.labelBg+'"/>';
+      out+='<text class="elbl" text-anchor="middle" style="fill:'+(sel?P.accent:P.labelText)+';font:500 12px '+P.font+'">';
       ls.forEach((l,k)=>{ out+='<tspan x="'+g.mid.x+'" y="'+(g.mid.y-th/2+3+12+k*15).toFixed(1)+'">'+esc(l)+'</tspan>'; });
       out+='</text>';
     }
@@ -290,6 +290,7 @@ function applyView(){
   boardPane.style.backgroundPosition=v.x+'px '+v.y+'px';
   $('#zoomPct').textContent=Math.round(v.z*100)+'%';
   if(state.editing) placeEditor();
+  if(typeof renderComments==='function') renderComments();
   if(!ctxEl.hidden) placeCtx();
   if(state.frameOffer) placeFrameOffer();
 }

@@ -80,6 +80,7 @@ const I={
   layerDown:'<path d="M12 12l8 4-8 4-8-4z"/><path d="M4 8l8 4 8-4" opacity=".45"/><path d="M4 4l8 4 8-4" opacity=".45"/>',
   picture:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5L5 19.5"/>',
   chevD:'<path d="M8 10l4 4 4-4"/>',
+  comment:'<path d="M12 4a8 8 0 1 1-4.1 14.9L4 20l1.1-3.9A8 8 0 0 1 12 4z"/>',
   bold:'<path d="M7.5 5h5.5a3.5 3.5 0 0 1 0 7H7.5z"/><path d="M7.5 12h6.5a3.5 3.5 0 0 1 0 7H7.5z"/>',
   italic:'<path d="M10.5 5h7M6.5 19h7M14 5l-4 14"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',

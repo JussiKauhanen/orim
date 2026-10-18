@@ -29,6 +29,7 @@ function onDown(e){
   if(tl==='pen'||tl==='hl'){ state.drag={mode:'draw',tool:tl,color:INK_COLORS[tl][state.inkColor[tl]]||INK_COLORS[tl][0],w:INK_W[tl],pts:[[r10(p.x),r10(p.y)]]}; renderOverlay(); return; }
   if(tl==='eraser'){ state.drag={mode:'erase',hits:new Set(),cur:p}; eraseAt(p); render(); return; }
   if(tl==='sticky'){ state.drag={mode:'sticky',start:p}; return; }
+  if(tl==='comment'){ startComment(p); return; }
   if(kind==='port'){ state.drag={mode:'connect',from:tgt.dataset.id,side:tgt.dataset.side,start:p,cur:p,target:null,moved:false}; renderOverlay(); return; }
   const tool=state.tool;
   if([...SHAPE_TOOLS,'text','frame'].includes(tool)){ state.drag={mode:'create',shape:tool,start:p,cur:p}; return; }
@@ -55,7 +56,7 @@ function onDown(e){
     const key='e:'+tgt.dataset.idx;
     if(e.shiftKey){ state.sel.has(key)?state.sel.delete(key):state.sel.add(key); selChanged(); return; }
     state.sel=new Set([key]); selChanged();
-    state.drag={mode:'emove',idx:+tgt.dataset.idx,start:p,sx:e.clientX,sy:e.clientY,vel:0,lt:0,lx:e.clientX,ly:e.clientY};
+    state.drag={mode:'emove',idx:+tgt.dataset.idx,start:p,sx:e.clientX,sy:e.clientY,vel:0,lt:0,lx:e.clientX,ly:e.clientY,onLabel:!!(e.target.closest&&e.target.closest('.elbl'))};
     return;
   }
   if(!e.shiftKey&&state.sel.size){ state.sel.clear(); selChanged(); }
@@ -260,7 +261,7 @@ function onUp(e){
     if(a&&a.from&&a.to&&a.from!==a.to&&a.kind!=='block'){ arrowToEdge(a); return; }
     mutate(()=>{}, {structural:false}); return;
   }
-  if(d.mode==='emove'){ return; }
+  if(d.mode==='emove'){ if(d.onLabel&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6) queueEdit(d.idx,true,'edge'); return; }
   if(d.mode==='presize'){ if(d.moved) mutate(()=>{}, {structural:false}); else render(); return; }
   if(d.mode==='eend'){
     const e2=m.edges[d.idx]; if(!e2||!d.moved){ render(); return; }
@@ -353,8 +354,8 @@ function onUp(e){
     setTool('select'); if(nid){ state.sel=new Set(['n:'+nid]); selChanged(); queueEdit(nid,false); }
   }
 }
-function queueEdit(id,caretEnd){ state.pendingEdit={id,caretEnd}; clearTimeout(state.pendingEditT); state.pendingEditT=setTimeout(runPendingEdit,120); }
-function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model||!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
+function queueEdit(id,caretEnd,kind){ state.pendingEdit={id,caretEnd,kind:kind||'node'}; clearTimeout(state.pendingEditT); state.pendingEditT=setTimeout(runPendingEdit,120); }
+function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model) return; if(pe.kind==='edge'){ if(!state.model.edges[pe.id]) return; openEditor('edge',pe.id); } else { if(!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); } if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
 board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
 function snapAngle(o,p){ const dx=p.x-o.x,dy=p.y-o.y,L=Math.hypot(dx,dy),a=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*(Math.PI/4); return {x:o.x+Math.cos(a)*L,y:o.y+Math.sin(a)*L}; }
 function addToolEdge(from,to){
@@ -467,7 +468,7 @@ board.addEventListener('dblclick',e=>{
   if(!state.model||state.fatal) return;
   const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind;
   if(kind==='node'){ if(state.editing&&state.editing.kind==='node'&&state.editing.id===tgt.dataset.id) return; state.pendingEdit=null; openEditor('node',tgt.dataset.id); return; }
-  if(kind==='edge'){ openEditor('edge',+tgt.dataset.idx); return; }
+  if(kind==='edge'){ if(state.editing&&state.editing.kind==='edge'&&state.editing.id===+tgt.dataset.idx) return; state.pendingEdit=null; openEditor('edge',+tgt.dataset.idx); return; }
   if(kind==='group'&&tgt.dataset.part!=='body'){ openEditor('group',tgt.dataset.id); return; }
   if(kind&&kind!=='group') return;
   const p=toWorld(e); const nid=createNode({shape:'round',cx:p.x,cy:p.y,group:groupAt(p)||null,label:'Step'});

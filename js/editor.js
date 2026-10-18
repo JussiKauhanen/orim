@@ -276,10 +276,10 @@ ta.addEventListener('keydown',e=>{
 function updStatus(){
   const st=$('#status'),pr=$('#problems');
   if(state.errors.length){
-    st.className='chip err'; st.textContent=state.errors.length+(state.errors.length===1?' issue':' issues');
+    st.hidden=false; st.className='chip err'; st.textContent=state.errors.length+(state.errors.length===1?' issue':' issues');
     pr.hidden=false;
     pr.innerHTML=state.errors.slice(0,8).map(e=>'<button type="button" data-line="'+e.line+'"><b>Line '+(e.line+1)+'</b><span>'+esc(e.msg)+'</span></button>').join('');
-  } else { st.className='chip ok'; st.textContent='Synced'; pr.hidden=true; pr.innerHTML=''; }
+  } else { st.hidden=true; st.textContent=''; pr.hidden=true; pr.innerHTML=''; }
 }
 $('#problems').addEventListener('click',e=>{
   const b=e.target.closest('[data-line]'); if(!b) return;

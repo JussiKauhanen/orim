@@ -30,10 +30,14 @@ function fileBase(){ const t=(state.model&&state.model.title)||'diagram'; return
 $('#exportMenu').addEventListener('click',async e=>{
   const b=e.target.closest('[data-export]'); if(!b) return; const fmt=b.dataset.export; closeMenus();
   if(fmt==='copy'){ copyText(state.code,'Mermaid code copied'); return; }
-  if(fmt==='drawiocopy'){ if(!state.model||state.fatal){ toast('Fix the code errors before exporting'); return; } copyText(buildDrawio(),'Copied. Paste onto a draw.io canvas with Ctrl+V'); return; }
+  if(fmt==='drawiocopy'){ if(!state.model||state.fatal){ toast('Fix the code errors before exporting'); return; }
+    const sel=state.sel.size?state.sel:null; let xml;
+    try{ xml=buildDrawio(sel); }catch(err){ console.error(err); toast('Could not build the draw.io copy'); return; }
+    copyText(xml,sel?'Selection copied. Paste onto a draw.io canvas with Ctrl+V':'Copied. Paste onto a draw.io canvas with Ctrl+V'); return; }
   if(fmt==='import'){ $('#fileIn').click(); return; }
   if(!state.model||state.fatal){ toast('Fix the code errors before exporting'); return; }
   if(fmt==='qr'){ openShareQR(); return; }
+  if(fmt==='ai'){ openAskAI(); return; }
   flushEditorHist();
   const name=fileBase(); let data,filename,preview=null;
   try{
@@ -43,7 +47,7 @@ $('#exportMenu').addEventListener('click',async e=>{
     else if(fmt==='txt'){ data=state.code; filename=name+'.txt'; }
     else if(fmt==='drawio'){ if(window.claude){ data=buildDrawioSvg(); if(!data){ toast('The board is empty'); return; } filename=name+'.drawio.svg'; } else { data=buildDrawio(); filename=name+'.drawio'; } }
     else if(fmt==='json'){ data=JSON.stringify({format:'orim-board',version:2,title:state.model.title||'',code:state.code,images:usedImages()},null,2); filename=name+'.json'; }
-  }catch(err){ toast(fmt==='png'?'PNG export failed in this browser. Try SVG.':'Export failed'); return; }
+  }catch(err){ console.error(err); toast(fmt==='png'?'PNG export failed in this browser. Try SVG.':'Export failed'); return; }
   if(fmt==='png'&&!(data&&data.size)){ toast('The board is empty'); return; }
   if(!window.claude){
     try{ const blob=data instanceof Blob?data:new Blob([data],{type:fmt==='svg'?'image/svg+xml':fmt==='json'?'application/json':fmt==='drawio'?'application/xml':'text/plain'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); toast('Saved '+filename); return; }catch(err){}

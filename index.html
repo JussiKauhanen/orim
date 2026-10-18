@@ -20,6 +20,7 @@
       <button type="button" class="ibtn" id="homeTheme" aria-label="Theme"></button>
       <button type="button" class="btn" id="homeImport">Import</button>
       <button type="button" class="btn primary" id="homeNew"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
+      <button type="button" class="me-btn" data-me hidden></button>
     </header>
     <main class="home-main">
       <section class="hero">
@@ -44,7 +45,7 @@
         <div class="feat"><b>Take it anywhere</b><p>Export PNG, SVG, draw.io or Markdown that renders on GitHub and Azure DevOps.</p></div>
       </section>
       <section aria-labelledby="hTpl">
-        <div class="sec-head"><h2 id="hTpl">Start something new</h2></div>
+        <div class="sec-head"><h2 id="hTpl">Start something new</h2><div class="tpl-nav" id="tplNav"><button type="button" class="ibtn" data-tpl-dir="-1" aria-label="Previous templates" title="Previous"><svg class="i" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></svg></button><button type="button" class="ibtn" data-tpl-dir="1" aria-label="More templates" title="More"><svg class="i" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></svg></button></div></div>
         <div class="tpl-row" id="homeTpl"></div>
       </section>
       <section aria-labelledby="hRec" id="recentsSec">
@@ -89,22 +90,24 @@
       <div class="menu-wrap">
         <button type="button" class="btn primary" id="exportBtn" aria-haspopup="true">Export<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
         <div class="menu right" id="exportMenu" hidden>
-          <button type="button" data-export="png"><b>PNG image</b><small>2x resolution, white background</small></button>
-          <button type="button" data-export="svg"><b>SVG vector</b><small>Scales cleanly, icons embedded</small></button>
+          <button type="button" data-export="png"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 15.5l-4.5-4.5-9.5 8.5"/></svg><b>PNG image</b><small>2x resolution, white background</small></button>
+          <button type="button" data-export="svg"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18C6.5 10 17.5 10 19 18"/><path d="M5 8h14"/><rect x="10.5" y="6.5" width="3" height="3" rx=".5"/><circle cx="5" cy="18" r="1.5"/><circle cx="19" cy="18" r="1.5"/></svg><b>SVG vector</b><small>Scales cleanly, icons embedded</small></button>
           <hr>
-          <button type="button" data-export="md"><b>Mermaid in Markdown (.md)</b><small>Renders on GitHub, Azure DevOps, Notion</small></button>
-          <button type="button" data-export="txt"><b>Mermaid source (.txt)</b><small>Plain code, rename to .mmd if needed</small></button>
-          <button type="button" data-export="drawio"><b>draw.io diagram</b><small>Editable in draw.io and diagrams.net</small></button>
-          <button type="button" data-export="json"><b>Board file (.json)</b><small>Reopen here with Import</small></button>
+          <button type="button" data-export="md"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="6" rx="3"/><path d="M12 9v3.5"/><path d="M12 12.5l5 4.25-5 4.25-5-4.25z"/></svg><b>Mermaid in Markdown (.md)</b><small>Renders on GitHub, Azure DevOps, Notion</small></button>
+          <button type="button" data-export="txt"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="6" rx="3"/><path d="M12 9v3.5"/><path d="M12 12.5l5 4.25-5 4.25-5-4.25z"/></svg><b>Mermaid source (.txt)</b><small>Plain code, rename to .mmd if needed</small></button>
+          <button type="button" data-export="drawio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/><path d="M11 7h5v7"/><circle cx="16" cy="7" r=".9"/></svg><b>draw.io diagram</b><small>Editable in draw.io and diagrams.net</small></button>
+          <button type="button" data-export="json"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"/><path d="M14 3.5v5h5"/><path d="M10.5 12c-1 0-1.5.5-1.5 1.25s-.5 1.25-1 1.25c.5 0 1 .5 1 1.25S9.5 17 10.5 17M13.5 12c1 0 1.5.5 1.5 1.25s.5 1.25 1 1.25c-.5 0-1 .5-1 1.25s-.5 1.25-1.5 1.25"/></svg><b>Board file (.json)</b><small>Reopen here with Import</small></button>
           <hr>
-          <button type="button" data-export="qr"><b>QR code</b><small>Open this board on another device</small></button>
-          <button type="button" data-export="copy"><b>Copy Mermaid code</b><small>Includes canvas positions as comments</small></button>
-          <button type="button" data-export="drawiocopy"><b>Copy for draw.io</b><small>Paste straight onto a draw.io canvas</small></button>
-          <button type="button" data-export="import" class="show-narrow-only"><b>Import a file</b><small>.md, .mmd, .txt or board .json</small></button>
+          <button type="button" data-export="ai"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4.5 3.5V17H6a2 2 0 0 1-2-2z"/><path d="M8 9l2.5 1.75L8 12.5M13 12.5h3"/></svg><b>Ask an AI</b><small>Prompt with the orim format; paste the answer back</small></button>
+          <button type="button" data-export="qr"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path d="M14.5 14.5h2.5v2.5h-2.5zM18.5 18.5h2v2h-2zM14.5 19.5h1M20.5 14.5v1.5"/></svg><b>QR code</b><small>Open this board on another device</small></button>
+          <button type="button" data-export="copy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="6" rx="3"/><path d="M12 9v3.5"/><path d="M12 12.5l5 4.25-5 4.25-5-4.25z"/></svg><b>Copy Mermaid code</b><small>Includes canvas positions as comments</small></button>
+          <button type="button" data-export="drawiocopy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/><path d="M11 7h5v7"/><circle cx="16" cy="7" r=".9"/></svg><b>Copy for draw.io</b><small>Paste straight onto a draw.io canvas</small></button>
+          <button type="button" data-export="import" class="show-narrow-only"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>Import a file</b><small>.md, .mmd, .txt or board .json</small></button>
         </div>
       </div>
       <button type="button" class="ibtn" id="themeBtn" aria-label="Theme"></button>
       <button type="button" class="ibtn" id="helpBtn" title="Shortcuts and syntax" aria-label="Shortcuts and syntax"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><path d="M12 17h.01"/></svg></button>
+      <button type="button" class="me-btn" data-me hidden></button>
     </div>
   </header>
 
@@ -112,7 +115,7 @@
     <section class="pane code-pane" id="codePane" aria-label="Mermaid code">
       <div class="pane-head">
         <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button></div>
-        <span class="chip ok" id="status">Synced</span>
+        <span class="chip err" id="status" hidden></span>
         <span class="grow"></span>
         <label class="toggle" title="Show the positions and drawings stored as %% comments"><input type="checkbox" id="layoutToggle"><span>Canvas data</span></label>
         <button type="button" class="btn sm" id="formatBtn" title="Rewrite the code in a clean, consistent layout">Format</button>
@@ -175,6 +178,7 @@
       <dt><kbd>T</kbd> <kbd>F</kbd></dt><dd>Text, frame (subgraph)</dd>
       <dt><kbd>A</kbd></dt><dd>Connector. Or drag the blue dots on any shape</dd>
       <dt><kbd>I</kbd></dt><dd>Icon library</dd>
+      <dt><kbd>C</kbd></dt><dd>Comment: click the board or a shape, type, Enter</dd>
       <dt>Double-click</dt><dd>Edit text, or add a box on empty board</dd>
       <dt><kbd>Ctrl</kbd> <kbd>D</kbd></dt><dd>Duplicate</dd>
       <dt><kbd>Ctrl</kbd> <kbd>G</kbd></dt><dd>Group into a frame, add <kbd>Shift</kbd> to ungroup</dd>
@@ -217,6 +221,8 @@ User <- Email -- Logic App
 
   <div class="tip" id="tip" hidden></div>
   <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+  <div class="me-menu island" id="meMenu" role="dialog" aria-label="Account" hidden></div>
+
   <div class="modal-back" id="modal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <header><span id="modalTitle">Export</span><span class="grow"></span><button type="button" class="ibtn" id="modalClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
@@ -252,8 +258,11 @@ User <- Email -- Logic App
   <script src="js/export-drawio.js"></script>
   <script src="js/export.js"></script>
   <script src="js/share-qr.js"></script>
+  <script src="js/ai-guide.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/tooltips.js"></script>
+  <script src="js/me.js"></script>
+  <script src="js/comments.js"></script>
   <script src="js/boards.js"></script>
   <script src="js/main.js"></script>
 </body>

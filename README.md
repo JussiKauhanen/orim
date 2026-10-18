@@ -7,7 +7,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 ## Features
 
 **Home**
-- A start page with templates (each shown as a small preview of the real board) and your recent boards, in a list or a grid.
+- A start page with templates in two rows that scroll sideways (each shown as a small preview of the real board) and your recent boards, in a list or a grid.
 - Rename, duplicate, export or delete boards from the ⋯ menu.
 - Paste text, Mermaid or an image anywhere on the home page to start a new board from it.
 - Every board has its own link (`#b-<id>`), so the browser's back button and bookmarks work.
@@ -19,13 +19,15 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Paste any text onto the board to turn it into connected boxes or sticky notes.
 
 **Board**
-- Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser.
+- Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut.
 - Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color.
 - Arrow ends snap to shapes; pull hard to detach.
 - Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
 - Lasso empty space to create a frame. Drag frame edges to resize, or pick a format such as 16:9 or A4.
 - Text styling: size, bold, italic, color and highlight.
 - Paste or drop images.
+- Comments: press C, click the board or a shape, type and press Enter. Comments on a shape move with it; drag a pin to move it, reply in the thread, or resolve it.
+- The first comment asks for your name. It shows as an avatar in the top right, where you can change it or sign out. The name is kept in this browser only; comments keep the name they were written with.
 - Undo and redo for everything, light and dark themes, keyboard shortcuts.
 
 **Icons**
@@ -36,6 +38,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - PNG, SVG, draw.io (`.drawio`, editable in draw.io and diagrams.net), Mermaid in Markdown, Mermaid text and an orim board file (`.json`, keeps images).
 - Copy for draw.io pastes straight onto a draw.io canvas.
 - QR code moves the current board to another device: scan it, or save the link (see below).
+- Ask an AI copies a prompt for any AI chat (see below).
 
 ## Run it locally
 
@@ -99,8 +102,11 @@ orim/
 │   ├── export-drawio.js    draw.io export
 │   ├── export.js           Other exports
 │   ├── share-qr.js         QR code and shared links (#m=…)
+│   ├── ai-guide.js         Ask an AI: prompt, format guide, paste back
 │   ├── theme.js            Theme switching
 │   ├── tooltips.js         Tooltips
+│   ├── me.js               Your name and avatar for comments
+│   ├── comments.js         Comment pins and threads
 │   ├── boards.js           Home page, board list, saving, #b-<id> links
 │   └── main.js             Startup
 ├── assets/
@@ -109,6 +115,7 @@ orim/
 ├── vendor/
 │   ├── dagre/              dagre 0.8.5 for auto layout (MIT)
 │   └── qrcode-generator/   qrcode-generator 1.4.4 for QR codes (MIT)
+├── docs/orim-board.md      Format guide for AI assistants (generated)
 ├── tests/core.test.mjs     Parser and serializer round-trip tests
 └── tools/
     ├── build.mjs           Bundles dist/orim.html
@@ -119,7 +126,7 @@ The scripts are plain browser scripts loaded in order, not modules, so the app r
 
 ## Where boards are stored
 
-Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
+Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. `orim.me` is your comment name. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
 
 ## File format
 
@@ -131,6 +138,7 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 %% @arrow <id> <kind> <x1> <y1> <x2> <y2> <w> <color> [from=<id>] [to=<id>]
 %% @ink   <id> pen|hl <color> <w> <x,y> <dx,dy> ...   pen and highlighter strokes
 %% @image <id> <x> <y> <w> <h> [front]               image placement; front = above shapes (pixels live in the board file)
+%% @comment <id> <x> <y> [on=<id>] [done] <json>      comment thread [{a: author, t: text, d: time}]; on= makes x y an offset from that shape, done = resolved
 ```
 
 Icon nodes use Mermaid 11 shape syntax: `fn@{ icon: "azure:function-apps", label: "API" }`. Packs are `azure:`, `pp:` (Power Platform) and `d365:`. Other Mermaid renderers show these as plain nodes unless the same icon pack is registered there.
@@ -174,6 +182,19 @@ Help while typing stays out of the way:
 - The pause adapts. Taking suggestions keeps it short; ignoring or hiding them makes it longer, so experienced users rarely see the list. Ctrl+Space opens it at any time.
 - When new boxes appear outside the view, the board pans and zooms to show them, and new items flash briefly.
 
+## Ask an AI
+
+**Export → Ask an AI** copies a prompt for ChatGPT, Claude, Copilot or any other chat assistant. The prompt contains:
+
+- a short guide to the orim board format: node shapes, frames, edges, styling and the `%%` canvas lines;
+- the Power Platform and Dynamics 365 icon ids, and the 88 Azure icons most boards use;
+- the current board;
+- your request, if you type one in the dialog.
+
+The assistant replies with the complete board in a ```` ```mermaid ```` block. Paste the whole reply into the dialog's answer box, or straight onto the board, and orim takes the code from it. Ctrl+Z undoes the change.
+
+The prompt is about 5,000 characters plus the board. **Download guide (.md)** saves the guide with every Azure icon id as a skill file with a name and description at the top, so it can be added to an assistant that supports skills or custom instructions. A copy is in [docs/orim-board.md](docs/orim-board.md); it is generated from `js/ai-guide.js`, so download a fresh one after changing the format or the icons.
+
 ## Move a board to another device
 
 **Export → QR code** shows a large QR code, the link it contains and the board's Mermaid code. Scanning the code, or opening the link, creates a copy of the board on the other device.
@@ -191,6 +212,7 @@ Help while typing stays out of the way:
 | N, T, S, A, P, Shift+P, E, F | Sticky, text, shapes, arrows, pen, highlighter, eraser, frame |
 | R, O, D, B | Rectangle, circle, decision, database |
 | I | Icon library |
+| C | Comment |
 | Ctrl+Z, Ctrl+Shift+Z | Undo, redo |
 | Ctrl+D, Ctrl+G, Ctrl+Shift+G | Duplicate, group into frame, ungroup |
 | Ctrl+B, Ctrl+I | Bold, italic |

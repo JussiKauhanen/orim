@@ -11,7 +11,7 @@ const V11={rect:'rect',rectangle:'rect',proc:'rect',process:'rect',square:'rect'
 const BRACKETS=[['(((',[')))'],'circle'],['([',['])'],'stadium'],['[(',[')]'],'cyl'],['((',['))'],'circle'],['[[',[']]'],'sub'],['[/',['/]','\\]'],'para'],['[\\',['\\]','/]'],'para'],['{{',['}}'],'hex'],['(',[')'],'round'],['[',[']'],'rect'],['{',['}'],'diamond'],['>',[']'],'rect']];
 const BR_OUT={rect:['[',']'],round:['(',')'],stadium:['([','])'],cyl:['[(',')]'],circle:['((','))'],sub:['[[',']]'],para:['[/','/]'],hex:['{{','}}'],diamond:['{','}']};
 const LAYOUT_MARK=/^%%\s*layout\b/i;
-const POS_RE=/^\s*%%\s*@(pos|ink|arrow|route|image)\b/;
+const POS_RE=/^\s*%%\s*@(pos|ink|arrow|route|image|comment)\b/;
 const ID_RE=/^[\p{L}\p{N}_]+(?:[-.][\p{L}\p{N}_]+)*/u;
 
 function decodeLabel(t){return String(t).replace(/<br\s*\/?>/gi,'\n').replace(/#quot;/g,'"').replace(/#amp;/g,'&').replace(/#lt;/g,'<').replace(/#gt;/g,'>').replace(/#35;/g,'#')}
@@ -141,7 +141,7 @@ function parseStyle(str){
   return st;
 }
 
-function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[]};}
+function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[]};}
 const r10=v=>Math.round(v*10)/10;
 function encodeInk(k){
   const pts=k.pts.map(([x,y])=>[r10(x),r10(y)]); if(!pts.length) return '';
@@ -208,6 +208,10 @@ function parseMermaid(src){
         (am[9]||'').trim().split(/\s+/).forEach(tok=>{ const q=/^(from|to)=(.+)$/.exec(tok); if(q) a[q[1]]=q[2]; }); m.arrows.push(a); continue; }
       am=/^%%\s*@image\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)(\s+front)?\s*$/.exec(t);
       if(am){ m.images.push({id:am[1],x:+am[2],y:+am[3],w:+am[4],h:+am[5],front:!!am[6]}); continue; }
+      am=/^%%\s*@comment\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)((?:\s+(?:on=\S+|done))*)\s+(\[.*\])\s*$/.exec(t);
+      if(am){ let msgs=[]; try{ msgs=JSON.parse(am[5]).filter(x=>x&&typeof x.t==='string').map(x=>{ const q={t:x.t,d:+x.d||0}; if(typeof x.a==='string'&&x.a) q.a=x.a; return q; }); }catch(_){}
+        const fl=am[4]||''; const on=/on=(\S+)/.exec(fl);
+        m.threads.push({id:am[1],x:+am[2],y:+am[3],on:on?on[1]:null,done:/\bdone\b/.test(fl),msgs}); continue; }
       am=/^%%\s*@route\s+(\d+)\s+(straight|elbow|curved)\s*$/.exec(t);
       if(am){ pendRoute.set(+am[1],am[2]); continue; }
       if(LAYOUT_MARK.test(t)) continue;
@@ -314,6 +318,12 @@ function layoutLines(m,boxes){
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&m.nodes.has(a0.from)?' from='+a0.from:'')+(a0.to&&m.nodes.has(a0.to)?' to='+a0.to:'')); }
   for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
+  for(const c of (m.threads||[])){
+    if(!c.msgs||!c.msgs.length) continue;
+    // on=<node>: x y are offsets from the node, so the comment moves with it. If the node is gone, keep the last place on the board.
+    const keep=c.on&&m.nodes.has(c.on); const x=keep||!c.on?c.x:(c.wx!=null?c.wx:c.x), y=keep||!c.on?c.y:(c.wy!=null?c.wy:c.y);
+    L.push('%% @comment '+c.id+' '+r1(x)+' '+r1(y)+(keep?' on='+c.on:'')+(c.done?' done':'')+' '+JSON.stringify(c.msgs.map(q=>q.a?{a:q.a,t:q.t,d:q.d}:{t:q.t,d:q.d})));
+  }
   return L.length?['%% layout: canvas positions and drawings kept by the visual editor',...L]:[];
 }
 function groupHasMembers(m,gid){

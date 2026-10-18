@@ -6,8 +6,30 @@ function xa(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function b64utf8(str){ return btoa(unescape(encodeURIComponent(str))); }
 function dioImg(uri){ const m=/^data:([^;,]+)((?:;[^;,=]+=[^;,]+)*)(;base64)?,(.*)$/.exec(uri||''); if(!m) return uri; return 'data:'+m[1]+','+(m[3]?m[4]:b64utf8(decodeURIComponent(m[4]))); }
 function dioLabel(t){ return xa(esc(t||'').replace(/\n/g,'<br>')); }
-function buildDrawio(){
-  const m=state.model; const boxes=groupBoxes(m); const cells=[]; const ids=new Map(); let seq=2;
+// sel: optional selection keys (n:, g:, e:, a:, k:, p:). Frames bring their contents along.
+function drawioPick(m,sel){
+  const P={n:new Set(),g:new Set(),e:new Set(),a:new Set(),k:new Set(),p:new Set()};
+  for(const k of sel){ const t=k[0],id=k.slice(2); if(P[t]) P[t].add(id); }
+  for(const gid of [...P.g]) for(const g of m.groups.values()) if(isDesc(m,g.id,gid)) P.g.add(g.id);
+  for(const n of m.nodes.values()) if(n.group&&P.g.has(n.group)) P.n.add(n.id);
+  return P;
+}
+function buildDrawio(sel){
+  const m0=state.model; const all=groupBoxes(m0); const cells=[]; const ids=new Map(); let seq=2;
+  let m=m0, boxes=all;
+  if(sel&&sel.size){
+    const P=drawioPick(m0,sel);
+    m=Object.assign({},m0,{
+      nodeOrder:m0.nodeOrder.filter(id=>P.n.has(id)),
+      groupOrder:m0.groupOrder.filter(id=>P.g.has(id)),
+      edges:m0.edges.map((e,i)=>P.e.has(String(i))||(P.n.has(e.from)||P.g.has(e.from))&&(P.n.has(e.to)||P.g.has(e.to))?e:null),
+      arrows:m0.arrows.filter(a=>P.a.has(a.id)),
+      inks:m0.inks.filter(k=>P.k.has(k.id)),
+      images:m0.images.filter(im=>P.p.has(im.id))
+    });
+    boxes=new Map([...all].filter(([gid])=>P.g.has(gid)));
+  }
+  const order=[...m.groupOrder].sort((a,b)=>groupDepth(m0,a)-groupDepth(m0,b));
   const cid=k=>{ if(!ids.has(k)) ids.set(k,'c'+(seq++)); return ids.get(k); };
   const g2=v=>Math.round(v*10)/10;
   const geo=(x,y,w,h,par)=>{ const pb=par?boxes.get(par):null; return '<mxGeometry x="'+g2(x-(pb?pb.x:0))+'" y="'+g2(y-(pb?pb.y:0))+'" width="'+g2(w)+'" height="'+g2(h)+'" as="geometry"/>'; };
@@ -31,7 +53,7 @@ function buildDrawio(){
     else style+=(SH[n.shape]||SH.rect)+'fillColor='+(st.fill||'#ffffff')+';strokeColor='+(st.stroke||'#1a1a1a')+';strokeWidth=2'+txt;
     cells.push('<mxCell id="'+cid('n:'+id)+'" value="'+dioLabel(n.label)+'" style="'+xa(style)+'" vertex="1" parent="'+(par?cid('g:'+par):'1')+'">'+geo(x,y,w,h,par)+'</mxCell>'); }
   const HD={arrow:'classic',none:'none',circle:'oval',cross:'cross'};
-  m.edges.forEach((e,i)=>{ const sk=m.nodes.has(e.from)?'n:'+e.from:'g:'+e.from, tk=m.nodes.has(e.to)?'n:'+e.to:'g:'+e.to; if(!ids.has(sk)||!ids.has(tk)) return;
+  m.edges.forEach((e,i)=>{ if(!e) return; const sk=m.nodes.has(e.from)?'n:'+e.from:'g:'+e.from, tk=m.nodes.has(e.to)?'n:'+e.to:'g:'+e.to; if(!ids.has(sk)||!ids.has(tk)) return;
     const rt=e.route||'curved'; let style='html=1;rounded=1;endArrow='+HD[e.head]+';startArrow='+HD[e.tail]+';endFill='+(e.head==='circle'?0:1)+';startFill='+(e.tail==='circle'?0:1)+';strokeWidth='+(e.width||(e.line==='thick'?4:2))+';strokeColor='+(e.line==='invis'?'none':(e.color||'#1a1a1a'))+';fontSize=12;fontColor=#5f5f5f;labelBackgroundColor=#ffffff;';
     style+=rt==='elbow'?'edgeStyle=orthogonalEdgeStyle;':rt==='straight'?'edgeStyle=none;':'edgeStyle=orthogonalEdgeStyle;curved=1;';
     if(e.line==='dotted') style+='dashed=1;';

@@ -72,6 +72,23 @@ test('canvas data: stickies, drawings, free arrows, routes, images', () => {
   assert.equal(r.model.images.length, 1);
 });
 
+test('comments: threads on shapes and on the board', () => {
+  const r = roundTrip(`flowchart LR
+  a --> b
+%% @comment cm1 12 -8 on=a [{"a":"Anna","t":"Why \\"this\\"?\\nTwo lines","d":1700000000000},{"t":"Because","d":1700000060000}]
+%% @comment cm2 300 40 done [{"t":"Fixed","d":1700000000000}]
+`);
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.threads.length, 2);
+  assert.equal(r.model.threads[0].on, 'a');
+  assert.equal(r.model.threads[0].msgs.length, 2);
+  assert.equal(r.model.threads[0].msgs[0].a, 'Anna');
+  assert.equal(r.model.threads[0].msgs[1].a, undefined);
+  assert.ok(r.model.threads[0].msgs[0].t.includes('\n'));
+  assert.equal(r.model.threads[1].done, true);
+});
+
 test('reports errors with line numbers', () => {
   const r = roundTrip('flowchart LR\n  A -->\n  subgraph x [X]\n    B\n');
   assert.ok(r.errors.some((e) => e.line === 1));
