@@ -20,7 +20,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 
 **Board**
 - Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut.
-- Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color.
+- Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color. Frames connect too: hover a frame's border or title for its blue dots, or start the Arrow tool there.
 - Arrow ends snap to shapes; pull hard to detach.
 - Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
 - Lasso empty space to create a frame. Drag frame edges to resize, or pick a format such as 16:9 or A4.
@@ -172,6 +172,7 @@ API -> Cache, Key Vault
 | `A -> B: label` | labelled arrow |
 | `id: Label` | box with an id and a different label |
 | `Name { … }` | frame |
+| `Frame A -> Frame B` | arrow between frames (a box with the same name wins) |
 | `# Heading` or `Heading:` | frame for the list items below it |
 | `- item` | sticky note |
 

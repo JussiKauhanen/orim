@@ -34,10 +34,10 @@ function onDown(e){
   const tool=state.tool;
   if([...SHAPE_TOOLS,'text','frame'].includes(tool)){ state.drag={mode:'create',shape:tool,start:p,cur:p}; return; }
   if(tool==='connector'){
-    const nid=(kind==='node'&&tgt.dataset.id)||nodeAt(p);
+    const nid=(kind==='node'&&tgt.dataset.id)||nodeAt(p)||frameEdgeAt(p);
     if(state.pendingFrom){
       const from=state.pendingFrom; state.pendingFrom=null; const to=nid||linkAt(p,0,from);
-      if(to&&to!==from&&state.model.nodes.has(from)){ addToolEdge(from,to); return; }
+      if(to&&to!==from&&(state.model.nodes.has(from)||state.model.groups.has(from))){ addToolEdge(from,to); return; }
       renderOverlay(); if(!nid) return;
     }
     if(nid&&state.arrowKind!=='block'){ state.drag={mode:'connect',from:nid,side:null,start:p,cur:p,target:null,moved:false}; renderOverlay(); }
@@ -111,8 +111,10 @@ function onMove(e){
     let hid=null;
     if(state.tool==='select'||state.tool==='connector'){
       const pad=20/state.view.z;
-      if(state.hover){ const n=m.nodes.get(state.hover); if(n&&p.x>=n.x-pad&&p.x<=n.x+n.w+pad&&p.y>=n.y-pad&&p.y<=n.y+n.h+pad) hid=state.hover; }
+      if(state.hover){ const n=m.nodes.get(state.hover); if(n&&p.x>=n.x-pad&&p.x<=n.x+n.w+pad&&p.y>=n.y-pad&&p.y<=n.y+n.h+pad) hid=state.hover;
+        else if(m.groups.has(state.hover)&&!nodeAt(p,0)&&frameEdgeAt(p,24/state.view.z)===state.hover) hid=state.hover; }
       if(!hid) hid=nodeAt(p,0);
+      if(!hid) hid=frameEdgeAt(p);
     }
     if(state.pendingFrom){ state.pendPt=p; state.hover=hid||linkAt(p,0,state.pendingFrom); renderOverlay(); return; }
     if(hid!==state.hover){ state.hover=hid; renderOverlay(); }
@@ -316,7 +318,7 @@ function onUp(e){
     return;
   }
   if(d.mode==='connect'){
-    const from=m.nodes.get(d.from); if(!from){ render(); return; }
+    const from=nodeRect(m,d.from,state.boxes); if(!from){ render(); return; }
     if(d.target){
       if(!d.side&&state.tool==='connector'){ addToolEdge(d.from,d.target); return; }
       const to=d.target; mutate(mm=>{ mm.edges.push({from:d.from,to,line:'solid',head:'arrow',tail:'none',label:''}); });
@@ -324,7 +326,7 @@ function onUp(e){
     }
     if(!d.moved&&!d.side&&state.tool==='connector'){ state.pendingFrom=d.from; state.pendPt=p; renderOverlay(); toast('Now click the shape to connect to'); return; }
     if(d.moved&&!d.side&&state.tool==='connector'){ addFreeArrow(clipToRect(from,p),p,d.from,null); return; }
-    const shape=from.shape==='icon'||from.shape==='text'?'rect':from.shape;
+    const shape=!from.shape?'round':from.shape==='icon'||from.shape==='text'?'rect':from.shape;
     let cx,cy;
     if(d.moved){ cx=p.x; cy=p.y; }
     else { const side=d.side||'r'; const gap=88; cx=from.x+from.w/2+(side==='r'?from.w/2+gap+60:side==='l'?-(from.w/2+gap+60):0); cy=from.y+from.h/2+(side==='b'?from.h/2+gap+26:side==='t'?-(from.h/2+gap+26):0); }

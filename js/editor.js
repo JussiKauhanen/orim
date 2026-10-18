@@ -139,6 +139,7 @@ function boardLabels(exclude){ const out=[]; if(!state.model) return out; const 
 function targetItems(pos,exclude){
   const out=[]; const seen=new Set();
   for(const n of boardLabels(exclude)){ const ic=n.icon&&iconFor(n.icon); seen.add(n.label.toLowerCase()); out.push({label:n.label,hint:'on the board',img:ic&&ic.uri,k:'#',insert:n.label}); if(out.length>=5) break; }
+  if(state.emode==='text'&&state.model){ let k=0; const exf=String(exclude||'').trim().toLowerCase(); for(const g of state.model.groups.values()){ const l=g.label.trim(); if(!l||seen.has(l.toLowerCase())||l.toLowerCase()===exf) continue; seen.add(l.toLowerCase()); out.push({label:l,hint:'frame',k:'▢',insert:l}); if(++k>=3) break; } }
   const exl=String(exclude||'').trim().toLowerCase();
   for(const name of COMMON_TEXT){ if(out.length>=8) break; if(seen.has(name.toLowerCase())||name.toLowerCase()===exl) continue; const k=iconMatch(name); const ic=k&&Icons.byKey.get(k); out.push({label:name,hint:ic?iconHint(ic):'new box',img:ic&&ic.uri,k:'□',insert:name}); }
   return {from:pos,items:out};

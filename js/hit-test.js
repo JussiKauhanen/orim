@@ -34,3 +34,19 @@ function linkAt(p,pad,from){
   }
   return best;
 }
+
+// A frame's border or title under p (not its empty inside), so frames can start connections
+// without stealing plain arrows drawn inside them.
+function frameEdgeAt(p,tol){
+  const m=state.model; if(!m||!state.boxes) return null; tol=tol||10/state.view.z;
+  const out=PAL_LIVE.frameOut; let best=null,ba=Infinity;
+  for(const [gid,b] of state.boxes){
+    if(!m.groups.has(gid)) continue;
+    const title=out?(p.y>=b.y-30&&p.y<b.y&&p.x>=b.x&&p.x<=b.x+Math.min(b.w,260)):(p.y>=b.y&&p.y<=b.y+30&&p.x>=b.x&&p.x<=b.x+b.w);
+    const inX=p.x>=b.x-tol&&p.x<=b.x+b.w+tol, inY=p.y>=b.y-tol&&p.y<=b.y+b.h+tol;
+    const edge=inX&&inY&&(Math.abs(p.x-b.x)<=tol||Math.abs(p.x-b.x-b.w)<=tol||Math.abs(p.y-b.y)<=tol||Math.abs(p.y-b.y-b.h)<=tol);
+    if(!title&&!edge) continue;
+    const a=b.w*b.h; if(a<ba){ ba=a; best=gid; }
+  }
+  return best;
+}

@@ -31,7 +31,7 @@ function parseQuick(text,opt){
   const stripQ=x=>x.trim().replace(/^["'`]|["'`]$/g,'').trim();
   const hasArrow=lines.some(l=>{ const t=l.trim(); const b=bulletRe.exec(t); return QA_RE.test(b?b[2]:t); });
   const cur=()=>stack.length?stack[stack.length-1]:null;
-  const node=(name)=>{ name=stripQ(name); if(!name) return null; const key=name.toLowerCase(); let n=q.nodes.get(key); if(!n){ n={key,label:name,group:cur(),shape:null}; q.nodes.set(key,n); q.order.push(key); } return n; };
+  const node=(name)=>{ name=stripQ(name); if(!name) return null; const key=name.toLowerCase(); let n=q.nodes.get(key); if(!n){ for(const x of q.nodes.values()) if(x.label.toLowerCase()===key){ n=x; break; } } if(!n){ n={key,label:name,group:cur(),shape:null}; q.nodes.set(key,n); q.order.push(key); } return n; };
   const newGroup=(label,list)=>{ const lb=stripQ(label)||'Group'; const ex=q.groups.find(g=>g.label.toLowerCase()===lb.toLowerCase()); if(ex){ if(!list) ex.list=false; return ex; } const g={key:'g'+q.groups.length,label:lb,parent:list?null:cur(),list:!!list}; q.groups.push(g); return g; };
   const indentOf=l=>/^\s*/.exec(l.replace(/\t/g,'    '))[0].length;
   for(let i=0;i<lines.length;i++){
@@ -86,6 +86,9 @@ function modelToQuick(m){
   const ref=new Map(), needDecl=new Set();
   const linked=new Set(); for(const e of m.edges){ linked.add(e.from); linked.add(e.to); }
   for(const n of nonSticky){ if(linked.has(n.id)&&quickSafe(n.label)&&cnt.get(n.label.toLowerCase())===1) ref.set(n.id,n.label); else { ref.set(n.id,n.id); needDecl.add(n.id); } }
+  // Frames in arrows are written by name; a box with the same name wins, so the frame falls back to its id.
+  const gcnt=new Map(); for(const g of m.groups.values()){ const k=g.label.toLowerCase(); gcnt.set(k,(gcnt.get(k)||0)+1); }
+  for(const g of m.groups.values()) if(linked.has(g.id)) ref.set(g.id,quickSafe(g.label)&&gcnt.get(g.label.toLowerCase())===1&&!cnt.has(g.label.toLowerCase())?g.label:g.id);
   if(m.dir&&m.dir!=='LR') L.push('direction: '+({TB:'down',TD:'down',BT:'up',RL:'left'}[m.dir]||'right'));
   const decl=n=>needDecl.has(n.id)?n.id+': '+String(n.label).replace(/\n/g,' '):n.label;
   for(const n of nonSticky) if(!n.group&&needDecl.has(n.id)) L.push(decl(n));
@@ -122,8 +125,16 @@ function applyQuickText(text){
   for(const g of q.groups){ const id=gmap.get(g.key); let par=g.parent?gmap.get(g.parent)||null:null; const old=cur.groups.get(id); if(!par&&g.list&&old&&old.parent&&m.groups.has(old.parent)&&old.parent!==id&&!isDescIn(m,old.parent,id)) par=old.parent; m.groups.get(id).parent=par; }
   const byLabel=new Map(); for(const n of cur.nodes.values()) if(n.shape!=='sticky'){ const k=n.label.toLowerCase(); if(!byLabel.has(k)) byLabel.set(k,n); }
   const used=new Set(); const kmap=new Map(); const curIdLower=new Map(); for(const n of cur.nodes.values()) curIdLower.set(n.id.toLowerCase(),n);
+  const frameByName=new Map(), dupe=new Set();
+  for(const id of m.groupOrder){ const g=m.groups.get(id); const k=g.label.toLowerCase(); if(frameByName.has(k)&&frameByName.get(k)!==id) dupe.add(k); else frameByName.set(k,id); }
+  for(const k of dupe) frameByName.delete(k);
+  for(const id of m.groupOrder) if(!frameByName.has(id.toLowerCase())) frameByName.set(id.toLowerCase(),id);
+  const boxNamed=new Set(); for(const n of cur.nodes.values()) if(n.shape!=='sticky'){ boxNamed.add(n.id.toLowerCase()); boxNamed.add(n.label.toLowerCase()); }
   for(const key of q.order){
-    const qn=q.nodes.get(key); let ex=curIdLower.get(key); if(ex&&ex.shape==='sticky') ex=null; if(!ex) ex=byLabel.get(qn.label.toLowerCase()); if(ex&&used.has(ex.id)) ex=null;
+    const qn=q.nodes.get(key);
+    // A bare name used in arrows that matches a frame, with no box of that name: it is the frame.
+    if(!qn.group&&!qn.shape&&qn.label.toLowerCase()===key&&frameByName.has(key)&&!boxNamed.has(key)){ kmap.set(key,frameByName.get(key)); continue; }
+    let ex=curIdLower.get(key); if(ex&&ex.shape==='sticky') ex=null; if(!ex) ex=byLabel.get(qn.label.toLowerCase()); if(ex&&used.has(ex.id)) ex=null;
     const id=ex?ex.id:idFrom(qn.label,taken); if(ex) used.add(ex.id); kmap.set(key,id);
     let shape,icon=null;
     if(qn.shape){ shape=qn.shape; if(shape.startsWith('icon:')){ icon=shape.slice(5); shape='icon'; } }

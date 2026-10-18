@@ -219,10 +219,10 @@ function renderOverlay(){
   if(!d||d.mode==='connect'){ pid=state.hover; if(!pid&&sn.length===1&&state.sel.size===1) pid=sn[0].id; }
   if(d&&d.mode==='connect') pid=null;
   if(pid&&!state.editing&&(state.tool==='select'||state.tool==='connector')){
-    const n=m.nodes.get(pid);
-    if(n){ const o=14*u,r=5*u;
-      for(const [s,x,y] of [['t',n.x+n.w/2,n.y-o],['r',n.x+n.w+o,n.y+n.h/2],['b',n.x+n.w/2,n.y+n.h+o],['l',n.x-o,n.y+n.h/2]])
-        h+='<g class="port" data-kind="port" data-id="'+esc(n.id)+'" data-side="'+s+'"><circle cx="'+x+'" cy="'+y+'" r="'+(11*u)+'" style="fill:transparent"/><circle cx="'+x+'" cy="'+y+'" r="'+r+'" style="fill:var(--panel);stroke:var(--accent);stroke-width:'+(1.5*u)+'"/></g>';
+    const n=nodeRect(m,pid,state.boxes); const isG=!m.nodes.has(pid);
+    if(n){ const o=14*u,r=5*u; const top=isG&&PAL_LIVE.frameOut?n.y-30-o:n.y-o;
+      for(const [s,x,y] of [['t',n.x+n.w/2,top],['r',n.x+n.w+o,n.y+n.h/2],['b',n.x+n.w/2,n.y+n.h+o],['l',n.x-o,n.y+n.h/2]])
+        h+='<g class="port" data-kind="port" data-id="'+esc(pid)+'" data-side="'+s+'"><circle cx="'+x+'" cy="'+y+'" r="'+(11*u)+'" style="fill:transparent"/><circle cx="'+x+'" cy="'+y+'" r="'+r+'" style="fill:var(--panel);stroke:var(--accent);stroke-width:'+(1.5*u)+'"/></g>';
     }
   }
   if(d&&d.mode==='draw'&&d.pts.length){
@@ -259,7 +259,7 @@ function renderOverlay(){
     if(r.w>4||r.h>4) h+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="'+(d.shape==='frame'?12:4)+'" style="fill:none;stroke:var(--accent);stroke-width:'+(1.5*u)+';stroke-dasharray:'+(5*u)+' '+(4*u)+';pointer-events:none"/>';
   }
   if(!d&&state.pendingFrom&&state.pendPt){
-    const a=m.nodes.get(state.pendingFrom); const t=state.hover&&state.hover!==state.pendingFrom?nodeRect(m,state.hover,state.boxes):null;
+    const a=nodeRect(m,state.pendingFrom,state.boxes); const t=state.hover&&state.hover!==state.pendingFrom?nodeRect(m,state.hover,state.boxes):null;
     if(a){
       const g=edgeGeom(a,t||{x:state.pendPt.x-1,y:state.pendPt.y-1,w:2,h:2},0);
       h+='<rect x="'+(a.x-5*u)+'" y="'+(a.y-5*u)+'" width="'+(a.w+10*u)+'" height="'+(a.h+10*u)+'" rx="'+(8*u)+'" style="fill:none;stroke:var(--accent);stroke-width:'+(2*u)+';stroke-dasharray:'+(5*u)+' '+(4*u)+';pointer-events:none"/>';
@@ -268,7 +268,7 @@ function renderOverlay(){
     }
   }
   if(d&&d.mode==='connect'){
-    const a=m.nodes.get(d.from); const t=d.target?nodeRect(m,d.target,state.boxes):null;
+    const a=nodeRect(m,d.from,state.boxes); const t=d.target?nodeRect(m,d.target,state.boxes):null;
     if(a){
       const bR=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2};
       const g=edgeGeom(a,bR,0);
