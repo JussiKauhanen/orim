@@ -315,7 +315,7 @@ function layoutLines(m,boxes){
     if(p&&p.w) L.push('%% @pos '+gid+' '+r1(p.x)+' '+r1(p.y)+' '+r1(p.w)+' '+r1(p.h));
   }
   (m.edges||[]).forEach((e,i)=>{ if(e.route&&e.route!=='curved') L.push('%% @route '+i+' '+e.route); });
-  for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&m.nodes.has(a0.from)?' from='+a0.from:'')+(a0.to&&m.nodes.has(a0.to)?' to='+a0.to:'')); }
+  for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }
   for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
   for(const c of (m.threads||[])){

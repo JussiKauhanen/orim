@@ -246,12 +246,12 @@ function renderOverlay(){
       for(const [end,pt] of [[0,g.p0],[1,g.p3]]) h+='<circle class="handle" data-kind="ehandle" data-idx="'+i+'" data-end="'+end+'" cx="'+pt.x+'" cy="'+pt.y+'" r="'+(6*u)+'" style="fill:var(--panel);stroke:var(--accent);stroke-width:'+(2*u)+';cursor:move"/>'; }
   }
   if(d&&d.mode==='eend'){
-    const e=m.edges[d.idx]; const fixedId=d.end?e.from:e.to; const fr=nodeRect(m,fixedId,state.boxes); const t=d.target?m.nodes.get(d.target):null;
+    const e=m.edges[d.idx]; const fixedId=d.end?e.from:e.to; const fr=nodeRect(m,fixedId,state.boxes); const t=d.target?nodeRect(m,d.target,state.boxes):null;
     if(fr){ const tr=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2}; const g=d.end?edgeGeom(fr,tr,0,e.route):edgeGeom(tr,fr,0,e.route);
       h+='<path d="'+g.d+'" style="fill:none;stroke:var(--accent);stroke-width:1.8;stroke-dasharray:6 4;pointer-events:none"/>'; }
   }
-  if(d&&state.snapTarget&&(d.mode==='eend'||d.mode==='aend'||d.mode==='farrow')){ const t=m.nodes.get(state.snapTarget); if(t) h+='<rect x="'+(t.x-5*u)+'" y="'+(t.y-5*u)+'" width="'+(t.w+10*u)+'" height="'+(t.h+10*u)+'" rx="'+(8*u)+'" style="fill:color-mix(in srgb,var(--accent) 6%,transparent);stroke:var(--accent);stroke-width:'+(2*u)+';pointer-events:none"/>'; }
-  if(d&&d.mode==='farrow'&&Math.hypot(d.cur.x-d.start.x,d.cur.y-d.start.y)>2) h+=arrowsMarkup(m,PAL_LIVE,false,[{kind:state.arrowKind,x1:d.start.x,y1:d.start.y,x2:(state.snapTarget&&m.nodes.get(state.snapTarget)?clipToRect(m.nodes.get(state.snapTarget),d.start).x:d.cur.x),y2:(state.snapTarget&&m.nodes.get(state.snapTarget)?clipToRect(m.nodes.get(state.snapTarget),d.start).y:d.cur.y),w:state.arrowW,color:ARROW_COLORS[state.arrowColor]||'#1a1a1a'}]).replace('<g class="farrow"','<g class="farrow" style="pointer-events:none;opacity:.8"');
+  if(d&&state.snapTarget&&(d.mode==='eend'||d.mode==='aend'||d.mode==='farrow')){ const t=nodeRect(m,state.snapTarget,state.boxes); if(t) h+='<rect x="'+(t.x-5*u)+'" y="'+(t.y-5*u)+'" width="'+(t.w+10*u)+'" height="'+(t.h+10*u)+'" rx="'+(8*u)+'" style="fill:color-mix(in srgb,var(--accent) 6%,transparent);stroke:var(--accent);stroke-width:'+(2*u)+';pointer-events:none"/>'; }
+  if(d&&d.mode==='farrow'&&Math.hypot(d.cur.x-d.start.x,d.cur.y-d.start.y)>2) h+=arrowsMarkup(m,PAL_LIVE,false,[{kind:state.arrowKind,x1:d.start.x,y1:d.start.y,x2:(state.snapTarget&&nodeRect(m,state.snapTarget,state.boxes)?clipToRect(nodeRect(m,state.snapTarget,state.boxes),d.start).x:d.cur.x),y2:(state.snapTarget&&nodeRect(m,state.snapTarget,state.boxes)?clipToRect(nodeRect(m,state.snapTarget,state.boxes),d.start).y:d.cur.y),w:state.arrowW,color:ARROW_COLORS[state.arrowColor]||'#1a1a1a'}]).replace('<g class="farrow"','<g class="farrow" style="pointer-events:none;opacity:.8"');
   if(state.frameOffer&&!d){ const r=state.frameOffer; h+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="'+(PAL_LIVE.frameOut?2:12)+'" style="fill:color-mix(in srgb,var(--accent) 5%,transparent);stroke:var(--accent);stroke-width:'+(1.5*u)+';stroke-dasharray:'+(6*u)+' '+(4*u)+';pointer-events:none"/>'; }
   if(d&&d.mode==='marquee'){ const r=normRect(d.start,d.cur); h+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" style="fill:color-mix(in srgb,var(--accent) 8%,transparent);stroke:var(--accent);stroke-width:'+u+';pointer-events:none"/>'; }
   if(d&&d.mode==='create'){
@@ -259,7 +259,7 @@ function renderOverlay(){
     if(r.w>4||r.h>4) h+='<rect x="'+r.x+'" y="'+r.y+'" width="'+r.w+'" height="'+r.h+'" rx="'+(d.shape==='frame'?12:4)+'" style="fill:none;stroke:var(--accent);stroke-width:'+(1.5*u)+';stroke-dasharray:'+(5*u)+' '+(4*u)+';pointer-events:none"/>';
   }
   if(!d&&state.pendingFrom&&state.pendPt){
-    const a=m.nodes.get(state.pendingFrom); const t=state.hover&&state.hover!==state.pendingFrom?m.nodes.get(state.hover):null;
+    const a=m.nodes.get(state.pendingFrom); const t=state.hover&&state.hover!==state.pendingFrom?nodeRect(m,state.hover,state.boxes):null;
     if(a){
       const g=edgeGeom(a,t||{x:state.pendPt.x-1,y:state.pendPt.y-1,w:2,h:2},0);
       h+='<rect x="'+(a.x-5*u)+'" y="'+(a.y-5*u)+'" width="'+(a.w+10*u)+'" height="'+(a.h+10*u)+'" rx="'+(8*u)+'" style="fill:none;stroke:var(--accent);stroke-width:'+(2*u)+';stroke-dasharray:'+(5*u)+' '+(4*u)+';pointer-events:none"/>';
@@ -268,7 +268,7 @@ function renderOverlay(){
     }
   }
   if(d&&d.mode==='connect'){
-    const a=m.nodes.get(d.from); const t=d.target?m.nodes.get(d.target):null;
+    const a=m.nodes.get(d.from); const t=d.target?nodeRect(m,d.target,state.boxes):null;
     if(a){
       const bR=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2};
       const g=edgeGeom(a,bR,0);

@@ -175,11 +175,12 @@ API -> Cache, Key Vault
 | `# Heading` or `Heading:` | frame for the list items below it |
 | `- item` | sticky note |
 
-Help while typing stays out of the way:
+Suggestions work like VS Code:
 
-- The best match appears as grey text after the cursor. Press Tab or → to take it, or keep typing.
-- Pause on a line and a short list appears that fits where you are: names to start with on an empty line, arrow types after a name, targets after an arrow, and label or chain options after a connection. Typing narrows the list; Tab inserts, Esc hides it.
-- The pause adapts. Taking suggestions keeps it short; ignoring or hiding them makes it longer, so experienced users rarely see the list. Ctrl+Space opens it at any time.
+- The list opens as you type (10 ms, VS Code's quick suggestion delay) and narrows with each letter. It also opens after an arrow, a comma, or when you start an arrow with `-`, `<` or `=`.
+- Tab inserts. Enter inserts only when the suggestion changes what you typed, so Enter at the end of a finished line is still a new line. ↑↓ choose, Esc hides the list until the next word.
+- Ctrl+Space opens it anywhere, including on an empty line for starters such as frames and sticky notes.
+- When the list is closed, the best match shows as grey text after the cursor; Tab or → takes it.
 - When new boxes appear outside the view, the board pans and zooms to show them, and new items flash briefly.
 
 ## Ask an AI

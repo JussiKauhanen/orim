@@ -36,8 +36,8 @@ function onDown(e){
   if(tool==='connector'){
     const nid=(kind==='node'&&tgt.dataset.id)||nodeAt(p);
     if(state.pendingFrom){
-      const from=state.pendingFrom; state.pendingFrom=null;
-      if(nid&&nid!==from&&state.model.nodes.has(from)){ addToolEdge(from,nid); return; }
+      const from=state.pendingFrom; state.pendingFrom=null; const to=nid||linkAt(p,0,from);
+      if(to&&to!==from&&state.model.nodes.has(from)){ addToolEdge(from,to); return; }
       renderOverlay(); if(!nid) return;
     }
     if(nid&&state.arrowKind!=='block'){ state.drag={mode:'connect',from:nid,side:null,start:p,cur:p,target:null,moved:false}; renderOverlay(); }
@@ -114,7 +114,7 @@ function onMove(e){
       if(state.hover){ const n=m.nodes.get(state.hover); if(n&&p.x>=n.x-pad&&p.x<=n.x+n.w+pad&&p.y>=n.y-pad&&p.y<=n.y+n.h+pad) hid=state.hover; }
       if(!hid) hid=nodeAt(p,0);
     }
-    if(state.pendingFrom){ state.pendPt=p; state.hover=hid; renderOverlay(); return; }
+    if(state.pendingFrom){ state.pendPt=p; state.hover=hid||linkAt(p,0,state.pendingFrom); renderOverlay(); return; }
     if(hid!==state.hover){ state.hover=hid; renderOverlay(); }
     return;
   }
@@ -135,17 +135,17 @@ function onMove(e){
     if(e.shiftKey){ h=Math.max(24,c.includes('s')?o.h+(p.y-d.start.y):o.h-(p.y-d.start.y)); }
     im.w=r10(w); im.h=r10(h); im.x=r10(c.includes('w')?o.x+o.w-w:o.x); im.y=r10(c.includes('n')?o.y+o.h-h:o.y); d.moved=true; render(); return;
   }
-  if(d.mode==='farrow'){ d.cur=e.shiftKey?snapAngle(d.start,p):p; const t=nodeAt(d.cur,10/state.view.z); state.snapTarget=t&&t!==d.fromNode?t:null; renderOverlay(); return; }
+  if(d.mode==='farrow'){ d.cur=e.shiftKey?snapAngle(d.start,p):p; const t=linkAt(d.cur,10/state.view.z,d.fromNode); state.snapTarget=t&&t!==d.fromNode?t:null; renderOverlay(); return; }
   if(d.mode==='aend'){
     const a=m.arrows.find(x=>x.id===d.id); if(!a) return; const ra=resolveArrow(m,a);
     const o=d.end?{x:ra.x1,y:ra.y1}:{x:ra.x2,y:ra.y2}; const q=e.shiftKey?snapAngle(o,p):p; const z=state.view.z;
     let att=null; const on=d.orig&&m.nodes.get(d.orig);
     if(on&&q.x>=on.x-24/z&&q.x<=on.x+on.w+24/z&&q.y>=on.y-24/z&&q.y<=on.y+on.h+24/z) att=d.orig;
-    else { const hit=nodeAt(q,10/z); const other=d.end?a.from:a.to; if(hit&&!(hit===other&&a.kind!=='block')) att=hit; }
+    else { const other=d.end?a.from:a.to; const hit=linkAt(q,10/z,other); if(hit&&!(hit===other&&a.kind!=='block')) att=hit; }
     if(d.end){ a.to=att; a.x2=r10(q.x); a.y2=r10(q.y); } else { a.from=att; a.x1=r10(q.x); a.y1=r10(q.y); }
     state.snapTarget=att; d.moved=true; render(); return;
   }
-  if(d.mode==='eend'){ d.cur=p; d.moved=true; const e2=m.edges[d.idx]; const other=e2?(d.end?e2.from:e2.to):null; const t=nodeAt(p,10/state.view.z); d.target=t&&t!==other?t:null; state.snapTarget=d.target; renderOverlay(); return; }
+  if(d.mode==='eend'){ d.cur=p; d.moved=true; const e2=m.edges[d.idx]; const other=e2?(d.end?e2.from:e2.to):null; const t=linkAt(p,10/state.view.z,other); d.target=t&&t!==other?t:null; state.snapTarget=d.target; renderOverlay(); return; }
   if(d.mode==='emove'){
     const now=performance.now(); if(d.lt){ const dt=Math.max(1,now-d.lt); d.vel=d.vel*0.55+Math.hypot(e.clientX-d.lx,e.clientY-d.ly)/dt*0.45; } d.lt=now; d.lx=e.clientX; d.ly=e.clientY;
     const dist=Math.hypot(e.clientX-d.sx,e.clientY-d.sy);
@@ -166,7 +166,7 @@ function onMove(e){
   if(d.mode==='erase'){ d.cur=p; if(eraseAt(p)) lInk.innerHTML=inkMarkup(m,PAL_LIVE,true); renderOverlay(); return; }
   if(d.mode==='connect'){
     d.cur=p; if(Math.hypot(p.x-d.start.x,p.y-d.start.y)*state.view.z>4) d.moved=true;
-    d.target=nodeAt(p,6/state.view.z,new Set([d.from])); renderOverlay(); return;
+    d.target=linkAt(p,6/state.view.z,d.from); renderOverlay(); return;
   }
   if(d.mode==='gresize'){
     const o=d.orig; const dx=p.x-d.start.x,dy=p.y-d.start.y;

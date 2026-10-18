@@ -37,7 +37,6 @@ function parseQuick(text,opt){
   for(let i=0;i<lines.length;i++){
     const raw=lines[i]; let t=raw.trim().replace(/;$/,''); if(!t) continue;
     if(/^(\/\/|%%)/.test(t)) continue;
-    if(/^#\s/.test(t)&&hasArrow&&!lines.some(l=>bulletRe.test(l.trim()))) continue;
     let mm;
     if((mm=/^direction\s*:\s*(right|left|down|up)$/i.exec(t))){ q.dir={right:'LR',left:'RL',down:'TB',up:'BT'}[mm[1].toLowerCase()]; q.dirSet=true; continue; }
     if(t==='}'){ stack.pop(); continue; }
@@ -148,8 +147,12 @@ function applyQuickText(text){
   const curEdge=new Map(); cur.edges.forEach(e=>{ const k=e.from+'\u0001'+e.to; if(!curEdge.has(k)) curEdge.set(k,e); });
   for(const e of q.edges){ const from=kmap.get(e.from),to=kmap.get(e.to); if(!from||!to) continue; const old=curEdge.get(from+'\u0001'+to);
     const ne={from,to,line:e.line,head:e.head,tail:e.tail,label:e.label}; if(old){ if(old.route) ne.route=old.route; if(old.width) ne.width=old.width; if(old.color) ne.color=old.color; if(e.line==='solid'&&old.line==='dotted') ne.line='dotted'; } m.edges.push(ne); }
-  for(const a of m.arrows){ if(a.from&&!m.nodes.has(a.from)) a.from=null; if(a.to&&!m.nodes.has(a.to)) a.to=null; }
+  for(const a of m.arrows){ if(a.from&&!m.nodes.has(a.from)&&!m.groups.has(a.from)) a.from=null; if(a.to&&!m.nodes.has(a.to)&&!m.groups.has(a.to)) a.to=null; }
   resolveGeometry(m,state.cache);
+  // Empty frames have no content to size them: keep their saved box, or give new ones a spot beside the board.
+  const emptyNew=m.groupOrder.filter(gid=>!groupHasMembers(m,gid)&&!(m.pos.get(gid)&&m.pos.get(gid).w));
+  if(emptyNew.length){ const others=m.groupOrder.filter(g=>!emptyNew.includes(g)); const tmp={...m,groupOrder:others}; const b=contentBounds(tmp);
+    const x0=b?SNAP(b.x+b.w+80):0, y0=b?SNAP(b.y):0; emptyNew.forEach((gid,k)=>m.pos.set(gid,{x:x0,y:y0+k*220,w:280,h:180})); }
   state.code=serializeMermaid(m); reparse(); render(); saveLocal();
   revealNew(prevIds);
 }

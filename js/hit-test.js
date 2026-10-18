@@ -18,3 +18,19 @@ function groupAt(p,excludeNodes,excludeGroup){
   }
   return best;
 }
+
+// What a connector end can attach to at p: a shape first, otherwise the frame under the point.
+// Frames that hold the source are skipped, so dropping inside your own frame still makes a new shape.
+function linkAt(p,pad,from){
+  const m=state.model; if(!m) return null;
+  const n=nodeAt(p,pad||0,from?new Set([from]):null); if(n) return n;
+  const boxes=state.boxes||groupBoxes(m); let best=null,ba=Infinity;
+  const srcGroup=from&&(m.nodes.has(from)?m.nodes.get(from).group:from);
+  for(const [gid,b] of boxes){
+    if(gid===from) continue;
+    if(srcGroup&&(gid===srcGroup||isDesc(m,srcGroup,gid))) continue;
+    if(from&&m.groups.has(from)&&isDesc(m,gid,from)) continue;
+    if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y-(PAL_LIVE.frameOut?30:0)&&p.y<=b.y+b.h){ const a=b.w*b.h; if(a<ba){ ba=a; best=gid; } }
+  }
+  return best;
+}

@@ -47,7 +47,7 @@ function setEmode(md){
   flushEditorHist(); state.emode=md; LS.set('mab.emode',md);
   for(const b of document.querySelectorAll('#modeSeg [data-emode]')) b.setAttribute('aria-pressed',String(b.dataset.emode===md));
   $('#layoutToggle').parentElement.hidden=md==='text'; $('#formatBtn').hidden=md==='text';
-  ta.setAttribute('aria-label',md==='text'?'Board as simple text':'Mermaid code'); ta.placeholder=md==='text'?'Browser -> API -> Database\n\n# Ideas\n- First sticky note\n\nPause for a moment to see suggestions,\nor press Ctrl+Space.':'';
+  ta.setAttribute('aria-label',md==='text'?'Board as simple text':'Mermaid code'); ta.placeholder=md==='text'?'Browser -> API -> Database\n\n# Ideas\n- First sticky note\n\nSuggestions appear as you type.\nCtrl+Space shows them anywhere.':'';
   acClose(); setEditorFromCode();
 }
 function setEditorFromCode(){
@@ -71,25 +71,26 @@ function paintEditor(){
 }
 function syncScroll(){ hl.style.transform='translate('+(-ta.scrollLeft)+'px,'+(-ta.scrollTop)+'px)'; gutterIn.style.transform='translateY('+(-ta.scrollTop)+'px)'; }
 let parseT=0;
-ta.addEventListener('input',()=>{
-  const v=ta.value;
+ta.addEventListener('input',e=>{
+  const v=ta.value; const typedData=e&&e.inputType&&e.inputType.startsWith('insert')&&e.inputType!=='insertLineBreak'?e.data:null;
   if(state.emode==='text'){
     paintEditor(); state.textTyping=true;
     clearTimeout(parseT); parseT=setTimeout(()=>{ applyQuickText(ta.value); paintEditor(); },160);
     clearTimeout(H.timer); H.timer=setTimeout(()=>{ H.timer=0; state.textTyping=false; histPush(state.code); saveLocal(); },700);
-    acUpdate(false); updateGhost(); acSchedule(); return;
+    if(AC.open&&typedData!=null&&!acTrigger(typedData)) acClose();
+    acUpdate(false); updateGhost(); acSchedule(typedData); return;
   }
   if(state.showLayout) state.code=v;
   else { const L=layoutPart(state.code); state.code=v.replace(/\s+$/,'')+(L.length?'\n\n'+L.join('\n'):'')+'\n'; }
   paintEditor();
   clearTimeout(parseT); parseT=setTimeout(()=>{ const prev=nodeIds(); reparse(); paintEditor(); render(); if(!state.errors.length) revealNew(prev); },90);
   clearTimeout(H.timer); H.timer=setTimeout(()=>{ H.timer=0; idleSyncLayout(); histPush(state.code); saveLocal(); },650);
-  saveLocal(); acUpdate(false); updateGhost(); acSchedule();
+  if(AC.open&&typedData!=null&&!acTrigger(typedData)) acClose();
+  saveLocal(); acUpdate(false); updateGhost(); acSchedule(typedData);
 });
-ta.addEventListener('keyup',e=>{ if(/^(Arrow|Home|End|PageUp|PageDown)/.test(e.key)){ if(!AC.open){ updateGhost(); acSchedule(); } } });
-ta.addEventListener('focus',()=>acSchedule());
+ta.addEventListener('keyup',e=>{ if(/^(Arrow|Home|End|PageUp|PageDown)/.test(e.key)){ if(!AC.open){ updateGhost(); } } });
 ta.addEventListener('blur',()=>{ clearTimeout(ACP.t); setTimeout(()=>{ if(document.activeElement!==ta){ acClose(); setGhost(null); } },150); if(state.emode==='text'&&state.textTyping){ clearTimeout(parseT); applyQuickText(ta.value); state.textTyping=false; flushEditorHist(); } });
-ta.addEventListener('click',()=>{ acClose(); setGhost(null); acSchedule(); });
+ta.addEventListener('click',()=>{ acClose(); setGhost(null); });
 $('#modeSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-emode]'); if(b&&b.dataset.emode!==state.emode) setEmode(b.dataset.emode); });
 ta.addEventListener('scroll',()=>{ syncScroll(); acClose(); });
 const acEl=$('#ac'); const AC={items:[],i:0,from:0,open:false};
@@ -99,19 +100,37 @@ const MM_ARROWS=[['-->','arrow'],['-->|label|','arrow with label'],['-.->','dott
 const QT_ARROWS=[['->','arrow'],['<-','reverse arrow'],['<->','both ways'],['--','plain line'],['=>','thick arrow']];
 let cwCache=0;
 function charW(){ if(cwCache) return cwCache; const c=document.createElement('canvas').getContext('2d'); c.font='13px '+getComputedStyle(ta).fontFamily; cwCache=c.measureText('MMMMMMMMMM').width/10||7.8; return cwCache; }
-/* Assist: inline ghost completion while typing, a suggestion list after a pause.
-   The pause adapts: accepted suggestions keep it short, ignored ones make it longer,
-   so people who never use it are left alone. Ctrl+Space always opens it. */
-const ACP={delay:LS.get('orim.acDelay',2600),t:0};
-function acPace(d){ ACP.delay=Math.max(1600,Math.min(9000,ACP.delay+d)); LS.set('orim.acDelay',ACP.delay); }
+/* Assist, timed like VS Code: the list opens as you type (editor.quickSuggestionsDelay, 10 ms),
+   on word characters and on trigger characters (an arrow, a comma, "-" "<" "=").
+   Enter accepts only when it changes the text ("smart"), so Enter at the end of a line is a new line.
+   Esc hides it until you start another word. Ctrl+Space opens it anywhere, including empty lines. */
+const ACP={delay:10,t:0,escFrom:-1};
+function acPace(){}
 function acClose(reason){
-  if(AC.open&&AC.auto&&reason==='esc') acPace(1500);
-  else if(AC.open&&AC.auto&&reason==='ignore') acPace(500);
+  if(AC.open&&reason==='esc') ACP.escFrom=AC.from;
   AC.open=false; AC.auto=false; AC.nav=false; acEl.hidden=true;
 }
-function acSchedule(){
-  clearTimeout(ACP.t); if(AC.open) return;
-  ACP.t=setTimeout(()=>{ if(document.activeElement!==ta||AC.open||ta.selectionStart!==ta.selectionEnd) return; const r=assistCandidates(); if(r&&r.items.length) acShow(r,true); },ACP.delay);
+function acTrigger(data){
+  if(data==null||data==='') return false;
+  const ch=data.slice(-1);
+  if(/[\p{L}\p{N}_\-<=>.|:,]/u.test(ch)) return true;
+  if(ch===' '){ const v=ta.value,pos=ta.selectionStart; const before=v.slice(v.lastIndexOf('\n',pos-1)+1,pos);
+    return state.emode==='mermaid'?/(-->|---|==>|-\.->|\|)\s*$/.test(before):(QA_END.test(before)||/,\s*$/.test(before)); }
+  return false;
+}
+function acSchedule(data){
+  clearTimeout(ACP.t);
+  if(AC.open||!acTrigger(data)) return;
+  ACP.t=setTimeout(()=>{
+    if(document.activeElement!==ta||AC.open||ta.selectionStart!==ta.selectionEnd) return;
+    const v=ta.value,pos=ta.selectionStart; const before=v.slice(v.lastIndexOf('\n',pos-1)+1,pos);
+    if(!before.trim()) return;
+    const r=assistCandidates(); if(!r||!r.items.length) return;
+    if(r.from===ACP.escFrom) return; ACP.escFrom=-1;
+    const typed=v.slice(r.from,pos).trim().toLowerCase();
+    if(typed&&r.items.length===1&&r.items[0].insert.trim().toLowerCase()===typed) return;
+    acShow(r,true);
+  },ACP.delay);
 }
 function acShow(r,auto){ AC.items=r.items.slice(0,8); AC.from=r.from; AC.i=0; AC.open=true; AC.auto=!!auto; AC.nav=false; AC.chain=r.chain; setGhost(null); acRender(); }
 const QA_END=/(<->|<=>|-->|->|<-|--|=>|→|←|↔|⇒)\s*$/;
@@ -214,7 +233,7 @@ function acUpdate(force){
   const keepNav=AC.nav; acShow(r,AC.auto); AC.nav=keepNav&&false;
 }
 function acRender(){
-  acEl.innerHTML=AC.items.map((it,i)=>'<button type="button" role="option" data-ac="'+i+'" aria-selected="'+(i===AC.i)+'">'+(it.img?'<img src="'+it.img+'" alt="">':'<span class="k">'+(it.k||'·')+'</span>')+'<span class="t">'+esc(it.label)+'</span><small>'+esc(it.hint||'')+'</small></button>').join('')+'<div class="foot">'+(AC.auto?'Tab to insert · ↑↓ to choose · Esc to hide':'Tab or Enter to insert · Esc to close')+'</div>';
+  acEl.innerHTML=AC.items.map((it,i)=>'<button type="button" role="option" data-ac="'+i+'" aria-selected="'+(i===AC.i)+'">'+(it.img?'<img src="'+it.img+'" alt="">':'<span class="k">'+(it.k||'·')+'</span>')+'<span class="t">'+esc(it.label)+'</span><small>'+esc(it.hint||'')+'</small></button>').join('')+'<div class="foot">'+'Tab or Enter to insert · ↑↓ to choose · Esc to hide'+'</div>';
   acEl.hidden=false;
   const v=ta.value,pos=AC.from; const ls=v.lastIndexOf('\n',pos-1)+1; const line=v.slice(0,pos).split('\n').length-1; const col=pos-ls;
   const cw=charW(); const host=ta.parentElement.getBoundingClientRect();
@@ -225,7 +244,7 @@ function acRender(){
   acEl.style.left=left+'px'; acEl.style.top=top+'px';
 }
 function acAccept(i){
-  const it=AC.items[i]; if(!it) return; const pos=ta.selectionStart; const wasAuto=AC.auto; const chain=AC.chain||it.chainNext;
+  const it=AC.items[i]; if(!it) return; const pos=ta.selectionStart; const wasAuto=AC.auto; const chain=AC.chain||it.chainNext||/(->|<-|<->|--|=>|-->|---|==>|-\.->|--o|--x|-->\|label\|)\s$/.test(it.insert);
   let from=AC.from; if(it.insert.startsWith(' ')&&/\s$/.test(ta.value.slice(0,from))) it.insert=it.insert.trimStart();
   if(/^(->|<-|<->|--|=>|, )/.test(it.insert)&&!/\s$/.test(ta.value.slice(0,from))&&!it.noTrim&&it.insert[0]!==',') it.insert=' '+it.insert;
   ta.setSelectionRange(from,pos); ta.setRangeText(it.insert,from,pos,'end');
@@ -244,8 +263,13 @@ ta.addEventListener('keydown',e=>{
     return;
   }
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); e.stopImmediatePropagation(); AC.nav=true; AC.i=(AC.i+(e.key==='ArrowDown'?1:AC.items.length-1))%AC.items.length; acRender(); return; }
-  if(e.key==='Tab'||e.key==='Enter'&&(AC.nav||!AC.auto)){ e.preventDefault(); e.stopImmediatePropagation(); acAccept(AC.i); return; }
-  if(e.key==='Enter'){ acClose('ignore'); return; }
+  if(e.key==='Enter'&&!AC.nav&&AC.auto){
+    // Smart Enter: take the suggestion only if it changes what you typed; otherwise it is a new line.
+    const typed=ta.value.slice(AC.from,ta.selectionStart).trim().toLowerCase();
+    const same=!typed||AC.items.some(it=>it.insert.trim().toLowerCase()===typed||it.label.trim().toLowerCase()===typed);
+    if(same){ acClose(); return; }
+  }
+  if(e.key==='Tab'||e.key==='Enter'){ e.preventDefault(); e.stopImmediatePropagation(); acAccept(AC.i); return; }
   if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); acClose('esc'); updateGhost(); return; }
   if(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Home'||e.key==='End') acClose();
 },true);

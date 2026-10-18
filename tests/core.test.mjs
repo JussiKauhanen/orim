@@ -89,6 +89,20 @@ test('comments: threads on shapes and on the board', () => {
   assert.equal(r.model.threads[1].done, true);
 });
 
+test('free arrows can end on a frame', () => {
+  const r = roundTrip(`flowchart LR
+  subgraph g [Frame]
+  end
+  a --> g
+%% @pos g 300 0 280 180
+%% @arrow a1 straight 0 0 100 40 2 #1a1a1a to=g
+`);
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.arrows[0].to, 'g');
+  assert.ok(r.s2.includes('to=g'));
+});
+
 test('reports errors with line numbers', () => {
   const r = roundTrip('flowchart LR\n  A -->\n  subgraph x [X]\n    B\n');
   assert.ok(r.errors.some((e) => e.line === 1));

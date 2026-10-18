@@ -233,7 +233,8 @@ function blockArrowPts(a){
   return [[a.x1+n.x*sw,a.y1+n.y*sw],[bx+n.x*sw,by+n.y*sw],[bx+n.x*hw,by+n.y*hw],[a.x2,a.y2],[bx-n.x*hw,by-n.y*hw],[bx-n.x*sw,by-n.y*sw],[a.x1-n.x*sw,a.y1-n.y*sw]].map(q=>q.map(r10).join(' ')).join(' ');
 }
 function resolveArrow(m,a){
-  const nf=a.from&&m.nodes.get(a.from), nt=a.to&&m.nodes.get(a.to);
+  let gb=null; const rectOf=id=>{ if(!id) return null; const n=m.nodes.get(id); if(n) return n; if(!m.groups.has(id)) return null; gb=gb||groupBoxes(m); return gb.get(id)||null; };
+  const nf=rectOf(a.from), nt=rectOf(a.to);
   const okf=nf&&nf.x!=null, okt=nt&&nt.x!=null;
   if(!okf&&!okt) return a;
   const cf=okf?{x:nf.x+nf.w/2,y:nf.y+nf.h/2}:{x:a.x1,y:a.y1}, ct=okt?{x:nt.x+nt.w/2,y:nt.y+nt.h/2}:{x:a.x2,y:a.y2};
