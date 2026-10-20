@@ -65,6 +65,7 @@ flowchart LR
 ## %% lines (canvas data, after the code)
 
 - \`%% @pos id x y [w h]\` is where the user placed a node or frame. Keep it for every item you keep; rename or delete it with the item. New nodes need none: orim places them next to what they connect to. If you rebuild most of the board, delete all @pos and @route lines and orim lays it out again.
+- \`%% @route i kind [from to]\` pins edge number i to sides of its shapes (t r b l, - for automatic); renumber it if you add or remove edges before it.
 - Copy \`%% @route\`, \`@arrow\`, \`@ink\`, \`@image\` and \`@comment\` lines unchanged. \`@comment\` lines are the user's review comments; read them, they may say what to change.
 
 ## Icons

@@ -69,7 +69,7 @@ function edgesMarkup(m,boxes,P,live,pre){
     const sel=live&&state.sel.has('e:'+i);
     const ecol=e.color?(e.color.toLowerCase()==='#1a1a1a'?P.inkBlack:e.color):P.edge; const col=sel?P.accent:ecol;
     const sw=e.width||(e.line==='thick'?P.edgeThick:P.edgeSw);
-    const shp=edgeShape(a,b,off,e.route);
+    const shp=edgeShape(a,b,off,e.route,edgeSides(e));
     const g=geomPath(shp,headInset(e.tail,sw),headInset(e.head,sw));
     const dash=e.line==='dotted'?';stroke-dasharray:'+(4+sw*1.5)+' '+(4+sw*1.5):e.line==='invis'?';stroke-dasharray:2 6;opacity:.45':'';
     out+='<g class="edge'+(sel?' sel':'')+'"'+(live?' data-kind="edge" data-idx="'+i+'"':'')+'>';
@@ -242,12 +242,12 @@ function renderOverlay(){
   const se=[...state.sel].filter(k=>k[0]==='e');
   if(se.length===1&&state.sel.size===1&&!d&&state.tool==='select'){
     const i=+se[0].slice(2); const e=m.edges[i]; const a=e&&nodeRect(m,e.from,state.boxes),b=e&&nodeRect(m,e.to,state.boxes);
-    if(a&&b&&a.x!=null&&b.x!=null){ const g=edgeGeom(a,b,0,e.route);
+    if(a&&b&&a.x!=null&&b.x!=null){ const g=edgeGeom(a,b,0,e.route,edgeSides(e));
       for(const [end,pt] of [[0,g.p0],[1,g.p3]]) h+='<circle class="handle" data-kind="ehandle" data-idx="'+i+'" data-end="'+end+'" cx="'+pt.x+'" cy="'+pt.y+'" r="'+(6*u)+'" style="fill:var(--panel);stroke:var(--accent);stroke-width:'+(2*u)+';cursor:move"/>'; }
   }
   if(d&&d.mode==='eend'){
     const e=m.edges[d.idx]; const fixedId=d.end?e.from:e.to; const fr=nodeRect(m,fixedId,state.boxes); const t=d.target?nodeRect(m,d.target,state.boxes):null;
-    if(fr){ const tr=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2}; const g=d.end?edgeGeom(fr,tr,0,e.route):edgeGeom(tr,fr,0,e.route);
+    if(fr){ const tr=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2}; const ns=t?sideNear(t,d.cur):null; const g=d.end?edgeGeom(fr,tr,0,e.route,{a:e.sa||null,b:ns}):edgeGeom(tr,fr,0,e.route,{a:ns,b:e.sb||null});
       h+='<path d="'+g.d+'" style="fill:none;stroke:var(--accent);stroke-width:1.8;stroke-dasharray:6 4;pointer-events:none"/>'; }
   }
   if(d&&state.snapTarget&&(d.mode==='eend'||d.mode==='aend'||d.mode==='farrow')){ const t=nodeRect(m,state.snapTarget,state.boxes); if(t) h+='<rect x="'+(t.x-5*u)+'" y="'+(t.y-5*u)+'" width="'+(t.w+10*u)+'" height="'+(t.h+10*u)+'" rx="'+(8*u)+'" style="fill:color-mix(in srgb,var(--accent) 6%,transparent);stroke:var(--accent);stroke-width:'+(2*u)+';pointer-events:none"/>'; }
@@ -270,12 +270,14 @@ function renderOverlay(){
   if(d&&d.mode==='connect'){
     const a=nodeRect(m,d.from,state.boxes); const t=d.target?nodeRect(m,d.target,state.boxes):null;
     if(a){
-      const bR=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2};
-      const g=edgeGeom(a,bR,0);
+      const bR=t||{x:d.cur.x-1,y:d.cur.y-1,w:2,h:2}; const ts=t?sideNear(t,d.cur):null;
+      const g=edgeGeom(a,bR,0,null,{a:d.side||null,b:ts});
+      if(t&&ts){ const sp=sidePt(t,ts); h+='<circle cx="'+sp.x+'" cy="'+sp.y+'" r="'+(5*u)+'" style="fill:var(--accent);pointer-events:none"/>'; }
       h+='<path d="'+g.d+'" marker-end="url(#La-s)" style="fill:none;stroke:var(--accent);stroke-width:'+(1.6)+';stroke-dasharray:6 4;pointer-events:none"/>';
       if(t) h+='<rect x="'+(t.x-5*u)+'" y="'+(t.y-5*u)+'" width="'+(t.w+10*u)+'" height="'+(t.h+10*u)+'" rx="'+(8*u)+'" style="fill:none;stroke:var(--accent);stroke-width:'+(2*u)+';pointer-events:none"/>';
     }
   }
+  if(state.guides&&d&&d.mode==='move') for(const g of state.guides) h+='<line x1="'+g.x1+'" y1="'+g.y1+'" x2="'+g.x2+'" y2="'+g.y2+'" style="stroke:#f24726;stroke-width:'+u+';pointer-events:none"/>';
   lOver.innerHTML=h;
 }
 function normRect(a,b){return {x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(a.x-b.x),h:Math.abs(a.y-b.y)};}
@@ -291,6 +293,7 @@ function applyView(){
   $('#zoomPct').textContent=Math.round(v.z*100)+'%';
   if(state.editing) placeEditor();
   if(typeof renderComments==='function') renderComments();
+  if(typeof Mini!=='undefined') Mini.onView();
   if(!ctxEl.hidden) placeCtx();
   if(state.frameOffer) placeFrameOffer();
 }

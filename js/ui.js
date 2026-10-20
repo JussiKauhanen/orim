@@ -2,7 +2,7 @@
  * Menus, help panel, toasts and dialogs.
  */
 'use strict';
-function closeMenus(){ $('#tplMenu').hidden=true; $('#exportMenu').hidden=true; }
+function closeMenus(){ $('#tplMenu').hidden=true; $('#exportMenu').hidden=true; const t=$('#tidyMenu'); if(t) t.hidden=true; }
 function toggleMenu(id){ const el=$(id); const open=el.hidden; closeMenus(); el.hidden=!open; }
 $('#tplBtn').addEventListener('click',e=>{ e.stopPropagation(); toggleMenu('#tplMenu'); });
 $('#exportBtn').addEventListener('click',e=>{ e.stopPropagation(); toggleMenu('#exportMenu'); });

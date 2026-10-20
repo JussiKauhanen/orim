@@ -57,6 +57,9 @@ function buildDrawio(sel){
     const rt=e.route||'curved'; let style='html=1;rounded=1;endArrow='+HD[e.head]+';startArrow='+HD[e.tail]+';endFill='+(e.head==='circle'?0:1)+';startFill='+(e.tail==='circle'?0:1)+';strokeWidth='+(e.width||(e.line==='thick'?4:2))+';strokeColor='+(e.line==='invis'?'none':(e.color||'#1a1a1a'))+';fontSize=12;fontColor=#5f5f5f;labelBackgroundColor=#ffffff;';
     style+=rt==='elbow'?'edgeStyle=orthogonalEdgeStyle;':rt==='straight'?'edgeStyle=none;':'edgeStyle=orthogonalEdgeStyle;curved=1;';
     if(e.line==='dotted') style+='dashed=1;';
+    const SP={t:[0.5,0],r:[1,0.5],b:[0.5,1],l:[0,0.5]};
+    if(e.sa&&SP[e.sa]) style+='exitX='+SP[e.sa][0]+';exitY='+SP[e.sa][1]+';exitDx=0;exitDy=0;';
+    if(e.sb&&SP[e.sb]) style+='entryX='+SP[e.sb][0]+';entryY='+SP[e.sb][1]+';entryDx=0;entryDy=0;';
     cells.push('<mxCell id="'+cid('e:'+i)+'" value="'+dioLabel(e.label)+'" style="'+xa(style)+'" edge="1" parent="1" source="'+ids.get(sk)+'" target="'+ids.get(tk)+'"><mxGeometry relative="1" as="geometry"/></mxCell>'); });
   for(const a0 of m.arrows){ const a=resolveArrow(m,a0); const col=a.color||'#1a1a1a';
     if(a.kind==='block'){ const dx=a.x2-a.x1,dy=a.y2-a.y1,L=Math.hypot(dx,dy)||1,hh=(a.w*4.4+9)*2; const cx=(a.x1+a.x2)/2,cy=(a.y1+a.y2)/2;

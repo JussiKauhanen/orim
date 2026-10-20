@@ -484,3 +484,37 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .cm-ask input:focus,.me-input:focus{outline:none;border-color:var(--accent)}
 .cm-ask small{font-size:11px;color:var(--muted);padding-left:32px}
 .me-input{width:100%;height:34px;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:14px var(--font-ui);text-align:center;background:var(--panel-2);color:var(--fg)}
+
+/* Editing a shape's text in place */
+.label-editor.inplace{background:transparent;border-color:transparent;box-shadow:none;padding:0;border-radius:0;color:var(--fg);caret-color:var(--accent)}
+.label-editor.inplace:focus{outline:none}
+
+/* Tidy up menu opens upward from the zoom bar */
+.zoom .menu-wrap{position:static}
+.menu.up{top:auto;bottom:calc(100% + 8px);left:auto;right:0;min-width:280px}
+
+/* ---- home: whiteboard texture and the welcome band ---- */
+.home{background-color:var(--bg)}
+.home::before{content:"";position:absolute;left:0;right:0;top:0;height:560px;pointer-events:none;background-image:radial-gradient(circle,var(--dot) 1px,transparent 1.4px);background-size:22px 22px;-webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,transparent 100%);opacity:.9}
+.home-top,.home-main{position:relative}
+.welcome{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);align-items:center;gap:24px;margin:16px 0 44px;padding:28px 32px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 18px 40px -28px rgba(16,24,40,.35);overflow:hidden;position:relative}
+.welcome-art{align-self:stretch;display:grid;place-items:center;margin:-28px -32px -28px 0;padding:18px 22px;background-color:var(--board);background-image:radial-gradient(circle,var(--dot) 1px,transparent 1.4px);background-size:18px 18px;border-left:1px solid var(--line)}
+.home .welcome h1{font:600 clamp(26px,3.2vw,36px)/1.1 var(--font-ui);letter-spacing:-.03em;text-align:left;margin:0 0 8px}
+.welcome p{margin:0 0 20px;color:var(--muted);font-size:15px;line-height:1.5;max-width:42ch}
+.welcome-cta{display:flex;flex-wrap:wrap;gap:8px}
+.welcome-cta .btn{height:38px;padding:0 14px;border-radius:9px}
+.welcome-art svg{width:100%;height:auto;display:block}
+.home.landing .welcome{display:none}
+.home:not(.landing) .hero{display:none}
+.tpl .th,.rc .th{transition:border-color .15s,box-shadow .15s,transform .15s}
+.tpl:hover .th,.rc-open:hover .th{transform:translateY(-2px);box-shadow:0 0 0 1px var(--accent),0 10px 24px -14px rgba(16,24,40,.45)}
+.tpl:first-child .th,.tpl:nth-child(2) .th{border-style:dashed;border-color:var(--line-strong)}
+.tpl:first-child:hover .th,.tpl:nth-child(2):hover .th{border-style:solid}
+.sec-head h2{font-size:18px}
+@media (max-width:860px){ .welcome{grid-template-columns:1fr;padding:22px} .welcome-art{display:none} }
+
+/* Minimap: shows while the view moves */
+.minimap{right:14px;bottom:66px;padding:4px;z-index:7;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;pointer-events:none;cursor:pointer}
+.minimap.on{opacity:1;transform:none;pointer-events:auto}
+.minimap canvas{display:block;border-radius:6px;background:var(--board)}
+@media (max-width:760px){ .minimap{display:none} }

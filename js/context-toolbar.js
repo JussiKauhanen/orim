@@ -11,7 +11,7 @@ function selBBox(){
     else if(k[0]==='k'){ const ik=m.inks.find(x=>x.id===id); r=ik?inkBox(ik):null; }
     else if(k[0]==='a'){ const ar=m.arrows.find(x=>x.id===id); r=ar?arrowBox(resolveArrow(m,ar)):null; }
     else if(k[0]==='p'){ r=m.images.find(x=>x.id===id)||null; }
-    else { const e=m.edges[+id]; if(e){ const a=nodeRect(m,e.from,state.boxes),b=nodeRect(m,e.to,state.boxes); if(a&&b){ const g=edgeGeom(a,b,0,e.route); r={x:g.mid.x-20,y:g.mid.y-14,w:40,h:28}; } } }
+    else { const e=m.edges[+id]; if(e){ const a=nodeRect(m,e.from,state.boxes),b=nodeRect(m,e.to,state.boxes); if(a&&b){ const g=edgeGeom(a,b,0,e.route,edgeSides(e)); r={x:g.mid.x-20,y:g.mid.y-14,w:40,h:28}; } } }
     if(r){ x0=Math.min(x0,r.x);y0=Math.min(y0,r.y);x1=Math.max(x1,r.x+r.w);y1=Math.max(y1,r.y+r.h); }
   }
   return x0===Infinity?null:{x:x0,y:y0,w:x1-x0,h:y1-y0};
@@ -62,6 +62,7 @@ function updCtx(){
     html+='<div class="seg2">'+b('route-curved','arCurved','Curved',on(rt==='curved'))+b('route-straight','arLine','Straight',on(rt==='straight'))+b('route-elbow','arElbow','Elbow',on(rt==='elbow'))+'</div>';
     html+=sep+thick(e.width||(e.line==='thick'?3.5:2))+sep+lineColorBtn(e.color);
     html+=sep+b('reverse','reverse','Reverse direction');
+    if(es.some(x=>x.sa||x.sb)) html+=b('autoSides','autoSides','Automatic connection points');
     if(es.length===1) html+=b('editLabel','label',e.label?'Edit label':'Add label');
     html+=sep+b('del','trash','Delete (Del)');
   } else if(k.g&&!k.n&&!k.e&&!k.k&&!k.a&&!k.p){
@@ -124,7 +125,8 @@ ctxEl.addEventListener('click',e=>{
     case 'italic': toggleTextStyle('italic'); break;
     case 'pickIcon': startPick(); break;
     case 'noIcon': mutate(mm=>{ for(const n of selNodes()){ const x=mm.nodes.get(n.id); if(x.shape==='icon'){ x.shape='rect'; x.icon=null; mm.pos.set(x.id,{x:x.x,y:x.y}); x.sized=false; } } }); break;
-    case 'reverse': mutate(mm=>{ for(const i of edgesSel()){ const e=mm.edges[i]; [e.from,e.to]=[e.to,e.from]; [e.head,e.tail]=[e.tail==='none'?e.head:e.tail,e.tail==='none'?'none':e.head]; } }); break;
+    case 'autoSides': mutate(mm=>{ for(const i of edgesSel()){ const e=mm.edges[i]; if(e){ delete e.sa; delete e.sb; } } }); toast('Connection points set to automatic'); break;
+    case 'reverse': mutate(mm=>{ for(const i of edgesSel()){ const e=mm.edges[i]; [e.from,e.to]=[e.to,e.from]; [e.sa,e.sb]=[e.sb,e.sa]; if(!e.sa) delete e.sa; if(!e.sb) delete e.sb; [e.head,e.tail]=[e.tail==='none'?e.head:e.tail,e.tail==='none'?'none':e.head]; } }); break;
     default:
       if(act.startsWith('akind-')){ const v=act.slice(6); mutate(mm=>{ for(const k of state.sel) if(k[0]==='a'){ const a=mm.arrows.find(x=>x.id===k.slice(2)); if(a) a.kind=v; } },{structural:false}); break; }
       if(act.startsWith('route-')){ const v=act.slice(6); mutate(mm=>{ for(const i of edgesSel()) mm.edges[i].route=v==='curved'?null:v; },{structural:false}); break; }

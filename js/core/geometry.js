@@ -34,7 +34,11 @@ function sizeNode(n){
   const fs=labelSize(n); const k=fs/13;
   const maxW=n.sized?Math.max(20,n.shape==='icon'?n.w-6:n.shape==='diamond'?n.w*0.6:n.shape==='text'?n.w-12:n.w-24):(n.shape==='icon'?150*k:n.shape==='text'?320*k:200*k);
   const lines=wrapText(n.label,maxW/(n.bold?1.07:1),fs); n.lines=lines;
-  if(n.sized){ if(n.shape==='text') n.h=Math.max(Math.round(fs*1.3)+10,lines.length*lineH(n)+12); return; }
+  if(n.sized){
+    const th=lines.length*lineH(n);
+    if(n.shape==='text') n.h=Math.max(Math.round(fs*1.3)+10,th+12);
+    else if(n.shape!=='icon'){ const need=n.shape==='diamond'?th*1.7+40:n.shape==='circle'?th+32:n.shape==='cyl'?th+44:th+24; if(need>n.h) n.h=Math.ceil(need/GRID)*GRID; }
+    return; }
   const tw=Math.max(0,...lines.map(l=>measureN(n,l,fs)));
   const th=lines.length*lineH(n);
   switch(n.shape){
@@ -157,22 +161,34 @@ function clipToRect(r,to){
   const s=Math.min(dx?(r.w/2)/Math.abs(dx):Infinity,dy?(r.h/2)/Math.abs(dy):Infinity);
   return s>=1?{x:to.x,y:to.y}:{x:cx+dx*s,y:cy+dy*s};
 }
-function edgeShape(a,b,off,route){
-  route=route||'curved';
+// sides (optional): {a,b} with t|r|b|l for where the connector leaves a and enters b; missing = automatic.
+function edgeShape(a,b,off,route,sides){
+  route=route||'curved'; const fa=sides&&sides.a, fb=sides&&sides.b;
   if(a===b||(a.x===b.x&&a.y===b.y&&a.w===b.w)){
     const p0={x:a.x+a.w*0.72,y:a.y},p3={x:a.x+a.w,y:a.y+a.h*0.3};
     return {type:'bez',p0,c1:{x:p0.x,y:p0.y-56},c2:{x:p3.x+56,y:p3.y},p3};
   }
   const ac={x:a.x+a.w/2,y:a.y+a.h/2},bc={x:b.x+b.w/2,y:b.y+b.h/2};
   if(route==='straight'){
-    let p0=clipToRect(a,bc),p3=clipToRect(b,ac);
+    let p0=fa?sidePt(a,fa):clipToRect(a,fb?sidePt(b,fb):bc),p3=fb?sidePt(b,fb):clipToRect(b,fa?sidePt(a,fa):ac);
     if(off){ const u=unitV(p3.x-p0.x,p3.y-p0.y); p0={x:p0.x-u.y*off*0.5,y:p0.y+u.x*off*0.5}; p3={x:p3.x-u.y*off*0.5,y:p3.y+u.x*off*0.5}; }
     return {type:'poly',pts:[p0,p3]};
   }
   const dx=bc.x-ac.x,dy=bc.y-ac.y; let sa,sb;
   if(Math.abs(dx)/((a.w+b.w)/2+1)>=Math.abs(dy)/((a.h+b.h)/2+1)){sa=dx>0?'r':'l';sb=dx>0?'l':'r';}
   else {sa=dy>0?'b':'t';sb=dy>0?'t':'b';}
+  if(fa) sa=fa; if(fb) sb=fb;
   const p0=sidePt(a,sa),p3=sidePt(b,sb);
+  if(route==='elbow'&&(fa||fb)){
+    // Leave and enter straight out of the chosen sides, with a short stub, then join at right angles.
+    const S=20, q0={x:p0.x+NORM[sa].x*S,y:p0.y+NORM[sa].y*S}, q3={x:p3.x+NORM[sb].x*S,y:p3.y+NORM[sb].y*S};
+    const ha=sa==='r'||sa==='l', hb=sb==='r'||sb==='l'; let mid;
+    if(ha&&hb){ const mx=(q0.x+q3.x)/2+(off||0); mid=[{x:mx,y:q0.y},{x:mx,y:q3.y}]; }
+    else if(!ha&&!hb){ const my=(q0.y+q3.y)/2+(off||0); mid=[{x:q0.x,y:my},{x:q3.x,y:my}]; }
+    else if(ha) mid=[{x:q3.x,y:q0.y}]; else mid=[{x:q0.x,y:q3.y}];
+    const pts=[p0,q0,...mid,q3,p3].filter((pt,i,arr)=>i===0||Math.hypot(pt.x-arr[i-1].x,pt.y-arr[i-1].y)>0.5);
+    return {type:'poly',pts};
+  }
   if(route==='elbow'){
     if(sa==='r'||sa==='l'){ const mx=(p0.x+p3.x)/2+(off||0); return {type:'poly',pts:[p0,{x:mx,y:p0.y},{x:mx,y:p3.y},p3]}; }
     const my=(p0.y+p3.y)/2+(off||0); return {type:'poly',pts:[p0,{x:p0.x,y:my},{x:p3.x,y:my},p3]};
@@ -208,7 +224,10 @@ function geomPath(g,s0,s3){
   let half=total/2,mid=pts[0]; for(let i=1;i<n;i++){ if(half<=seg[i-1]){ const t=seg[i-1]?half/seg[i-1]:0; mid={x:pts[i-1].x+(pts[i].x-pts[i-1].x)*t,y:pts[i-1].y+(pts[i].y-pts[i-1].y)*t}; break; } half-=seg[i-1]; }
   return {d:roundPoly(pts,8),mid,t0,t3,p0,p3};
 }
-function edgeGeom(a,b,off,route){ return geomPath(edgeShape(a,b,off,route),0,0); }
+function edgeGeom(a,b,off,route,sides){ return geomPath(edgeShape(a,b,off,route,sides),0,0); }
+// The side of r nearest to p, or null when p is in the middle (then the connector picks its side itself).
+function sideNear(r,p){ if(!r||!p) return null; const fx=(p.x-r.x)/(r.w||1), fy=(p.y-r.y)/(r.h||1); if(fx>0.3&&fx<0.7&&fy>0.3&&fy<0.7) return null; const d={l:Math.abs(p.x-r.x)/(r.w||1),r:Math.abs(r.x+r.w-p.x)/(r.w||1),t:Math.abs(p.y-r.y)/(r.h||1),b:Math.abs(r.y+r.h-p.y)/(r.h||1)}; return Object.keys(d).sort((x,y)=>d[x]-d[y])[0]; }
+const edgeSides=e=>e&&(e.sa||e.sb)?{a:e.sa||null,b:e.sb||null}:null;
 function headSize(w){ return {hl:7+w*2.4,hw:3.8+w*1.5}; }
 function headMarkup(type,tip,t,w,col,bg,cls){
   if(!type||type==='none') return '';

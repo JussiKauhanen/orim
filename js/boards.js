@@ -69,7 +69,7 @@ const Boards=(()=>{
     state.sel.clear(); state.cache.clear(); H.stack=[]; H.i=-1; closeModal(); closeMenus(); cmClose();
     $('#home').hidden=true; app.hidden=false;
     loadCode(typeof code==='string'?code:'flowchart LR\n',{clearCache:true}); updUndo();
-    requestAnimationFrame(()=>{ applyView(); render(); fit(); });
+    state.viewQuietUntil=performance.now()+1500; requestAnimationFrame(()=>{ applyView(); render(); fit(); });
     setHash('b-'+id); document.title=(m.title||'Untitled board')+' · orim';
   }
   function openNew(code,title){ const id=create(code,title); open(id); return id; }
@@ -100,7 +100,7 @@ const Boards=(()=>{
       o+=bar(g.x+16,g.y+14,Math.min(g.w*0.4,Core.measure(m.groups.get(gid).label,13)),9,'var(--th-edge)',.55); }
     for(const im of m.images) o+='<rect x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" rx="4" style="fill:var(--th-image)"/>';
     for(const e of m.edges){ const a=m.nodes.get(e.from)||boxes.get(e.from),c=m.nodes.get(e.to)||boxes.get(e.to); if(!a||!c||a.x==null||c.x==null||e.line==='invis') continue;
-      const g=edgeGeom(a,c,0,e.route); o+='<path d="'+g.d+'" style="fill:none;stroke:'+(e.color||'var(--th-edge)')+';stroke-width:'+(e.line==='thick'?2.4:1.4)+(e.line==='dotted'?';stroke-dasharray:3 3':'')+'"'+ns+'/>'; }
+      const g=edgeGeom(a,c,0,e.route,edgeSides(e)); o+='<path d="'+g.d+'" style="fill:none;stroke:'+(e.color||'var(--th-edge)')+';stroke-width:'+(e.line==='thick'?2.4:1.4)+(e.line==='dotted'?';stroke-dasharray:3 3':'')+'"'+ns+'/>'; }
     for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=m.styles.get(id)||{};
       if(n.shape==='sticky'){ o+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="2" style="fill:'+(st.fill||'#fff9b1')+'"/>'+lines(n,n.x+n.w/2,n.y+n.h/2,n.w*0.66,n.h*0.06,'#1a1a1a',.28); }
       else if(n.shape==='icon'){ const s=iconSize(n); const ic=iconFor(n.icon); const x=n.x+(n.w-s)/2;
@@ -140,6 +140,29 @@ const Boards=(()=>{
     for(const id of m.nodeOrder){ const n=m.nodes.get(id); o+='<g transform="translate('+n.x+','+n.y+')">'+nodeInner(n,m,PAL_LIVE,false)+'</g>'; }
     return '<svg viewBox="'+[b.x-pad,b.y-pad-24,b.w+pad*2,b.h+pad*2+24].map(Math.round).join(' ')+'" preserveAspectRatio="xMidYMid meet">'+o+'</svg>';
   }
+  /* ---- welcome band for returning users: a greeting and a small board scene ---- */
+  function greeting(){ const h=new Date().getHours(); const part=h<5?'Good evening':h<12?'Good morning':h<18?'Good afternoon':'Good evening'; const n=typeof Me!=='undefined'&&Me.get(); return n?part+', '+n.split(/\s+/)[0]:part; }
+  function renderWelcome(){
+    const t=$('#welcomeTitle'); if(t) t.textContent=greeting();
+    const art=$('#welcomeArt'); if(!art) return;
+    const ic=k=>{ const x=iconFor(k); return x?x.uri:''; };
+    const lines=(x,y,w,n,c)=>{ let s=''; for(let i=0;i<n;i++) s+='<rect x="'+x+'" y="'+(y+i*11)+'" width="'+(i===n-1?w*0.6:w)+'" height="4" rx="2" style="fill:'+c+'"/>'; return s; };
+    const sticky=(x,y,s,rot,fill)=>'<g transform="translate('+x+' '+y+') rotate('+rot+' '+s/2+' '+s/2+')"><rect width="'+s+'" height="'+s+'" rx="3" fill="'+fill+'" filter="url(#wsh)"/>'+lines(14,20,s-28,3,'rgba(29,32,38,.32)')+'</g>';
+    const pa=ic('pp:power-apps'), dv=ic('pp:dataverse'), fn=ic('azure:function-apps');
+    art.innerHTML='<svg viewBox="0 0 440 210" role="img">'+
+      '<defs><filter id="wsh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#101828" flood-opacity=".16"/></filter>'+
+      '<marker id="wah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--fg)"/></marker></defs>'+
+      '<path d="M40 176 C 90 168, 150 186, 196 172" stroke="#ffd02f" stroke-width="14" stroke-linecap="round" fill="none" opacity=".55"/>'+
+      sticky(22,26,92,-5,'#fff9b1')+sticky(104,92,84,4,'#ffcee0')+sticky(28,124,64,-2,'#a6ccf5')+
+      '<g filter="url(#wsh)"><rect x="228" y="34" width="196" height="146" rx="10" style="fill:var(--panel);stroke:var(--line-strong)"/></g>'+
+      '<text x="240" y="27" font-size="11" font-weight="600" style="fill:var(--muted)" font-family="Instrument Sans,system-ui,sans-serif">Power Platform</text>'+
+      (pa?'<image href="'+pa+'" x="246" y="62" width="40" height="40"/>':'')+(dv?'<image href="'+dv+'" x="358" y="62" width="40" height="40"/>':'')+(fn?'<image href="'+fn+'" x="302" y="122" width="38" height="38"/>':'')+
+      lines(244,110,48,1,'var(--line-strong)')+lines(356,110,48,1,'var(--line-strong)')+
+      '<path d="M292 82 H352" style="stroke:var(--fg)" stroke-width="2" fill="none" marker-end="url(#wah)"/>'+
+      '<path d="M378 106 C 378 132, 362 140, 344 140" style="stroke:var(--fg)" stroke-width="2" fill="none" marker-end="url(#wah)" stroke-dasharray="4 4"/>'+
+      '<path d="M118 52 C 160 30, 196 40, 236 66" stroke="#4262ff" stroke-width="2.2" fill="none" marker-end="url(#wah)"/>'+
+      '</svg>';
+  }
   function iconsReady(){ thumbs.clear(); renderStatic(); if(isHome()) renderRecents(); }
   function when(t){
     if(!t) return ''; const d=new Date(t),n=new Date(); const day=x=>new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();
@@ -149,7 +172,7 @@ const Boards=(()=>{
   }
   function renderRecents(){
     const el=$('#homeRecents'); const items=[...list].sort((a,b)=>(b.opened||0)-(a.opened||0));
-    $('#home').classList.toggle('landing',!items.length); $('#recentsSec').hidden=!items.length;
+    $('#home').classList.toggle('landing',!items.length); $('#recentsSec').hidden=!items.length; renderWelcome();
     if(!items.length){ el.innerHTML=''; return; }
     el.className='recents '+view;
     if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
@@ -206,6 +229,7 @@ const Boards=(()=>{
   $('#heroText').addEventListener('click',()=>openQuickText(true));
   $('#heroTry').addEventListener('click',()=>{ const t=TEMPLATES.find(x=>x.id==='pp'); if(t) openNew(t.code); });
   $('#homeImport').addEventListener('click',()=>$('#fileIn').click());
+  $('.welcome-cta').addEventListener('click',e=>{ const b=e.target.closest('[data-welcome]'); if(!b) return; const k=b.dataset.welcome; if(k==='new') openNew('flowchart LR\n','Untitled board'); else if(k==='text') openQuickText(true); else $('#fileIn').click(); });
   $('#homeTheme').addEventListener('click',()=>$('#themeBtn').click());
   $('#homeBtn').addEventListener('click',showHome);
 

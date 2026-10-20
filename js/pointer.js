@@ -99,7 +99,31 @@ function liveLayoutSync(){
   if(rafLayout) return;
   rafLayout=requestAnimationFrame(()=>{ rafLayout=0; if(!state.model) return; state.code=replaceLayout(state.code,state.model); setEditorFromCode(); });
 }
+// Edge scrolling while dragging, like a strategy-game camera: near the edge of the board the view
+// pans toward the pointer, and if you keep pushing it slowly zooms out so more of the board shows.
+const EDGE={raf:0,ev:null,since:0,z0:1};
+const EDGE_MODES=new Set(['move','connect','farrow','eend','aend','marquee','resize','gresize','create','presize']);
+function edgeTrack(e){
+  EDGE.ev={clientX:e.clientX,clientY:e.clientY,pointerId:e.pointerId,shiftKey:e.shiftKey,altKey:e.altKey,metaKey:e.metaKey,ctrlKey:e.ctrlKey,target:e.target,preventDefault(){}};
+  if(!EDGE.raf) EDGE.raf=requestAnimationFrame(edgeTick);
+}
+function edgeTick(){
+  EDGE.raf=0; const d=state.drag, ev=EDGE.ev;
+  if(!d||!ev||!EDGE_MODES.has(d.mode)||pinch){ EDGE.since=0; return; }
+  const {r,left}=visibleArea(); const M=56, x=ev.clientX-r.left, y=ev.clientY-r.top;
+  const k=v=>Math.max(-1.6,Math.min(1.6,v));
+  const fx=x<left+M?k(-(left+M-x)/M):x>r.width-M?k((x-r.width+M)/M):0;
+  const fy=y<M?k(-(M-y)/M):y>r.height-M?k((y-r.height+M)/M):0;
+  if(!fx&&!fy){ EDGE.since=0; return; }
+  const now=performance.now(); if(!EDGE.since){ EDGE.since=now; EDGE.z0=state.view.z; }
+  const sp=f=>f?Math.sign(f)*(2+Math.abs(f)*14):0;
+  state.view.x-=sp(fx); state.view.y-=sp(fy);
+  // After a short push, zoom out gently (to 60% of where you started at most).
+  if(now-EDGE.since>500&&state.view.z>Math.max(0.2,EDGE.z0*0.6)) zoomAt(0.993,r.width/2,r.height/2); else { applyView(); renderOverlay(); }
+  EDGE.raf=-1; onMove(ev); EDGE.raf=requestAnimationFrame(edgeTick);
+}
 function onMove(e){
+  if(state.drag&&EDGE_MODES.has(state.drag.mode)&&e!==EDGE.ev) edgeTrack(e);
   if(pointers.has(e.pointerId)) pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch&&pointers.size===2){
     const pts=[...pointers.values()]; const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y); const cx=(pts[0].x+pts[1].x)/2,cy=(pts[0].y+pts[1].y)/2;
@@ -154,7 +178,7 @@ function onMove(e){
     if(dist>=48||(dist>=12&&d.vel>1.3)){
       const ed=m.edges[d.idx]; const a=ed&&nodeRect(m,ed.from,state.boxes),b=ed&&nodeRect(m,ed.to,state.boxes);
       if(!ed||!a||!b){ state.drag=null; return; }
-      const g=edgeGeom(a,b,0,ed.route); const id=nextArrowId(m);
+      const g=edgeGeom(a,b,0,ed.route,edgeSides(ed)); const id=nextArrowId(m);
       const ar={id,kind:ed.head==='none'&&ed.tail==='none'?'line':(ed.route||'curved'),x1:r10(g.p0.x),y1:r10(g.p0.y),x2:r10(g.p3.x),y2:r10(g.p3.y),w:ed.width||(ed.line==='thick'?3.5:2),color:ed.color||'#1a1a1a',from:null,to:null};
       m.edges.splice(d.idx,1); m.arrows.push(ar); state.sel=new Set(['a:'+id]);
       const c={nodes:new Set(),groups:new Set(),direct:new Set(),inks:new Set(),arrows:new Set([id])};
@@ -215,7 +239,10 @@ function onMove(e){
     if(!d.moved&&Math.hypot(dx,dy)*state.view.z<3) return;
     if(!d.moved){ d.moved=true; state.hover=null; }
     const first=d.orig.values().next().value||d.gorig.values().next().value;
-    if(first&&!e.altKey){ dx=SNAP(first.x+dx)-first.x; dy=SNAP(first.y+dy)-first.y; }
+    // Smart guides (like Miro): line up edges and centres with other shapes; otherwise snap to the grid. Alt turns both off.
+    let gx=null,gy=null; state.guides=null;
+    if(!e.altKey&&d.orig.size&&d.orig.size<=80){ const sn=smartSnap(d,dx,dy); if(sn){ if(sn.dx!=null){ dx=sn.dx; gx=sn.gx; } if(sn.dy!=null){ dy=sn.dy; gy=sn.gy; } state.guides=sn.lines; } }
+    if(first&&!e.altKey){ if(gx==null) dx=SNAP(first.x+dx)-first.x; if(gy==null) dy=SNAP(first.y+dy)-first.y; }
     for(const [id,o] of d.orig){ const n=m.nodes.get(id); n.x=o.x+dx; n.y=o.y+dy; state.cache.set(id,{x:n.x,y:n.y}); }
     for(const [gid,o] of d.gorig){ m.pos.set(gid,{x:o.x+dx,y:o.y+dy,w:o.w,h:o.h}); }
     for(const k of m.inks){ const o=d.korig.get(k.id); if(o) k.pts=o.map(([x,y])=>[r10(x+dx),r10(y+dy)]); }
@@ -241,8 +268,37 @@ function onMove(e){
     render(); liveLayoutSync(); return;
   }
 }
+function smartSnap(d,dx,dy){
+  const m=state.model; const th=7/state.view.z;
+  if(!d.snapPool){
+    const moving=new Set(d.orig.keys());
+    d.snapPool=[...m.nodes.values()].filter(n=>!moving.has(n.id)&&n.x!=null).map(n=>({x:n.x,y:n.y,w:n.w,h:n.h}));
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity; for(const [id,o] of d.orig){ const n=m.nodes.get(id); if(!n) continue; x0=Math.min(x0,o.x); y0=Math.min(y0,o.y); x1=Math.max(x1,o.x+n.w); y1=Math.max(y1,o.y+n.h); }
+    d.snapBox={x:x0,y:y0,w:x1-x0,h:y1-y0};
+  }
+  const b=d.snapBox; if(!isFinite(b.x)) return null;
+  const mx=[b.x+dx,b.x+dx+b.w/2,b.x+dx+b.w], my=[b.y+dy,b.y+dy+b.h/2,b.y+dy+b.h];
+  let bx=null,by=null;
+  for(const r of d.snapPool){
+    const sx=[r.x,r.x+r.w/2,r.x+r.w], sy=[r.y,r.y+r.h/2,r.y+r.h];
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+      if((i===1)!==(j===1)) continue; // centre to centre, edge to edge
+      // Centres win over edges, so connected shapes line up and their arrow runs straight.
+      const c=i===1; const better=(cur,dd)=>!cur||(c&&!cur.c)||(c===cur.c&&Math.abs(dd)<Math.abs(cur.d)-0.01);
+      const ddx=sx[j]-mx[i]; if(Math.abs(ddx)<=th&&better(bx,ddx)) bx={d:ddx,v:sx[j],c};
+      const ddy=sy[j]-my[i]; if(Math.abs(ddy)<=th&&better(by,ddy)) by={d:ddy,v:sy[j],c};
+    }
+  }
+  if(!bx&&!by) return null;
+  const out={dx:bx?dx+bx.d:null,dy:by?dy+by.d:null,gx:bx&&bx.v,gy:by&&by.v,lines:[]};
+  const fx=bx?dx+bx.d:dx, fy=by?dy+by.d:dy; const mb={x:b.x+fx,y:b.y+fy,w:b.w,h:b.h};
+  // Guide lines run from the moving shapes to every shape on the same line.
+  if(bx){ let y0=mb.y,y1=mb.y+mb.h; for(const r of d.snapPool){ if([r.x,r.x+r.w/2,r.x+r.w].some(v=>Math.abs(v-bx.v)<0.5)){ y0=Math.min(y0,r.y); y1=Math.max(y1,r.y+r.h); } } out.lines.push({x1:bx.v,y1:y0-12,x2:bx.v,y2:y1+12}); }
+  if(by){ let x0=mb.x,x1=mb.x+mb.w; for(const r of d.snapPool){ if([r.y,r.y+r.h/2,r.y+r.h].some(v=>Math.abs(v-by.v)<0.5)){ x0=Math.min(x0,r.x); x1=Math.max(x1,r.x+r.w); } } out.lines.push({x1:x0-12,y1:by.v,x2:x1+12,y2:by.v}); }
+  return out;
+}
 function onUp(e){
-  pointers.delete(e.pointerId);
+  pointers.delete(e.pointerId); state.guides=null;
   if(pinch){ if(pointers.size<2) pinch=null; return; }
   const d=state.drag; state.drag=null; board.classList.remove('panning');
   if(!d){ return; }
@@ -267,10 +323,11 @@ function onUp(e){
   if(d.mode==='presize'){ if(d.moved) mutate(()=>{}, {structural:false}); else render(); return; }
   if(d.mode==='eend'){
     const e2=m.edges[d.idx]; if(!e2||!d.moved){ render(); return; }
-    if(d.target){ mutate(mm=>{ const x=mm.edges[d.idx]; if(d.end) x.to=d.target; else x.from=d.target; }); toast('Reconnected'); return; }
+    if(d.target){ const tr=nodeRect(m,d.target,state.boxes); const sd=sideNear(tr,d.cur); const same=(d.end?e2.to:e2.from)===d.target;
+      mutate(mm=>{ const x=mm.edges[d.idx]; if(d.end){ x.to=d.target; if(sd) x.sb=sd; else delete x.sb; } else { x.from=d.target; if(sd) x.sa=sd; else delete x.sa; } }); toast(same?(sd?'Connection point moved':'Connection point set to automatic'):'Reconnected'); return; }
     const a=nodeRect(m,e2.from,state.boxes),b=nodeRect(m,e2.to,state.boxes); if(!a||!b){ render(); return; }
     if(Math.hypot(d.cur.x-(d.end?b.x+b.w/2:a.x+a.w/2),d.cur.y-(d.end?b.y+b.h/2:a.y+a.h/2))*state.view.z<20){ render(); return; }
-    const g=edgeGeom(a,b,0,e2.route); let id=null;
+    const g=edgeGeom(a,b,0,e2.route,edgeSides(e2)); let id=null;
     mutate(mm=>{ id=nextArrowId(mm); const fixed=d.end?g.p0:g.p3;
       const ar={id,kind:e2.head==='none'&&e2.tail==='none'?'line':(e2.route||'curved'),w:e2.width||(e2.line==='thick'?3.5:2),color:e2.color||'#1a1a1a',from:d.end?e2.from:null,to:d.end?null:e2.to};
       if(d.end){ ar.x1=r10(fixed.x); ar.y1=r10(fixed.y); ar.x2=r10(d.cur.x); ar.y2=r10(d.cur.y); } else { ar.x1=r10(d.cur.x); ar.y1=r10(d.cur.y); ar.x2=r10(fixed.x); ar.y2=r10(fixed.y); }
@@ -320,8 +377,9 @@ function onUp(e){
   if(d.mode==='connect'){
     const from=nodeRect(m,d.from,state.boxes); if(!from){ render(); return; }
     if(d.target){
-      if(!d.side&&state.tool==='connector'){ addToolEdge(d.from,d.target); return; }
-      const to=d.target; mutate(mm=>{ mm.edges.push({from:d.from,to,line:'solid',head:'arrow',tail:'none',label:''}); });
+      const tr=nodeRect(m,d.target,state.boxes); const sb=sideNear(tr,p);
+      if(!d.side&&state.tool==='connector'){ addToolEdge(d.from,d.target,{a:null,b:sb}); return; }
+      const to=d.target; mutate(mm=>{ const ne={from:d.from,to,line:'solid',head:'arrow',tail:'none',label:''}; if(d.side) ne.sa=d.side; if(sb) ne.sb=sb; mm.edges.push(ne); });
       state.sel=new Set(['e:'+(state.model.edges.length-1)]); selChanged(); setTool('select'); return;
     }
     if(!d.moved&&!d.side&&state.tool==='connector'){ state.pendingFrom=d.from; state.pendPt=p; renderOverlay(); toast('Now click the shape to connect to'); return; }
@@ -331,7 +389,7 @@ function onUp(e){
     if(d.moved){ cx=p.x; cy=p.y; }
     else { const side=d.side||'r'; const gap=88; cx=from.x+from.w/2+(side==='r'?from.w/2+gap+60:side==='l'?-(from.w/2+gap+60):0); cy=from.y+from.h/2+(side==='b'?from.h/2+gap+26:side==='t'?-(from.h/2+gap+26):0); }
     const nid=createNode({shape,cx,cy,group:groupAt({x:cx,y:cy})||null},mm=>{});
-    if(nid){ mutate(mm=>{ mm.edges.push({from:d.from,to:nid,line:'solid',head:'arrow',tail:'none',label:''}); }); state.sel=new Set(['n:'+nid]); selChanged(); setTool('select'); openEditor('node',nid); }
+    if(nid){ mutate(mm=>{ const ne={from:d.from,to:nid,line:'solid',head:'arrow',tail:'none',label:''}; if(d.side&&!d.moved){ ne.sa=d.side; ne.sb={l:'r',r:'l',t:'b',b:'t'}[d.side]; } else if(d.side) ne.sa=d.side; mm.edges.push(ne); }); state.sel=new Set(['n:'+nid]); selChanged(); setTool('select'); openEditor('node',nid); }
     return;
   }
   if(d.mode==='create'){
@@ -360,9 +418,9 @@ function queueEdit(id,caretEnd,kind){ state.pendingEdit={id,caretEnd,kind:kind||
 function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model) return; if(pe.kind==='edge'){ if(!state.model.edges[pe.id]) return; openEditor('edge',pe.id); } else { if(!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); } if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
 board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
 function snapAngle(o,p){ const dx=p.x-o.x,dy=p.y-o.y,L=Math.hypot(dx,dy),a=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*(Math.PI/4); return {x:o.x+Math.cos(a)*L,y:o.y+Math.sin(a)*L}; }
-function addToolEdge(from,to){
+function addToolEdge(from,to,sides){
   const k=state.arrowKind; const route=k==='line'?'straight':(k==='block'?'straight':k);
-  mutate(mm=>{ const e={from,to,line:'solid',head:k==='line'?'none':'arrow',tail:'none',label:''}; if(route!=='curved') e.route=route; if(state.arrowW!==2) e.width=state.arrowW; if(state.arrowColor) e.color=ARROW_COLORS[state.arrowColor]; mm.edges.push(e); });
+  mutate(mm=>{ const e={from,to,line:'solid',head:k==='line'?'none':'arrow',tail:'none',label:''}; if(sides&&sides.a) e.sa=sides.a; if(sides&&sides.b) e.sb=sides.b; if(route!=='curved') e.route=route; if(state.arrowW!==2) e.width=state.arrowW; if(state.arrowColor) e.color=ARROW_COLORS[state.arrowColor]; mm.edges.push(e); });
   state.sel=new Set(['e:'+(state.model.edges.length-1)]); selChanged(); setTool('select');
 }
 function nextArrowId(mm){ const ids=new Set(mm.arrows.map(x=>x.id)); let n=mm.arrows.length+1; while(ids.has('a'+n)) n++; return 'a'+n; }
@@ -377,6 +435,7 @@ function arrowToEdge(a){
   let idx=-1;
   mutate(mm=>{ const x=mm.arrows.find(q=>q.id===a.id); if(!x) return; mm.arrows=mm.arrows.filter(q=>q.id!==a.id);
     const e={from:x.from,to:x.to,line:'solid',head:x.kind==='line'?'none':'arrow',tail:'none',label:''};
+    const bx=groupBoxes(mm); const ra=nodeRect(mm,x.from,bx), rb=nodeRect(mm,x.to,bx); const s1=ra&&sideNear(ra,{x:x.x1,y:x.y1}), s2=rb&&sideNear(rb,{x:x.x2,y:x.y2}); if(s1) e.sa=s1; if(s2) e.sb=s2;
     const route=x.kind==='line'?'straight':x.kind; if(route!=='curved') e.route=route; if(x.w&&x.w!==2) e.width=x.w; if(x.color&&x.color!=='#1a1a1a') e.color=x.color;
     mm.edges.push(e); idx=mm.edges.length-1; });
   state.sel=new Set(['e:'+idx]); selChanged(); toast('Connected both shapes');
@@ -479,7 +538,12 @@ board.addEventListener('dblclick',e=>{
 board.addEventListener('wheel',e=>{
   e.preventDefault();
   const r=boardRect(); const k=e.deltaMode===1?16:e.deltaMode===2?r.height:1;
-  if(e.ctrlKey||e.metaKey){ zoomAt(Math.exp(-e.deltaY*k*0.0085),e.clientX-r.left,e.clientY-r.top); }
+  if(e.ctrlKey||e.metaKey){
+    // Mouse wheels send big steps (about 100 per notch): zoom about 10% per notch, like Miro and Figma.
+    // Trackpad pinches send many small steps: keep those smooth.
+    const dy=e.deltaY*k; const notch=Math.abs(dy)>=40&&Number.isInteger(e.deltaY);
+    const f=notch?Math.pow(1.1,-Math.sign(dy)*Math.min(3,Math.abs(dy)/100)):Math.exp(-Math.max(-60,Math.min(60,dy))*0.006);
+    zoomAt(f,e.clientX-r.left,e.clientY-r.top); }
   else { state.view.x-=(e.shiftKey&&!e.deltaX?e.deltaY:e.deltaX)*k; state.view.y-=(e.shiftKey&&!e.deltaX?0:e.deltaY)*k; applyView(); }
 },{passive:false});
 boardPane.addEventListener('dragover',e=>{ if(e.dataTransfer&&([...e.dataTransfer.types].includes('application/x-mab-icon')||[...e.dataTransfer.types].includes('Files'))){ e.preventDefault(); e.dataTransfer.dropEffect='copy'; } });

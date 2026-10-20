@@ -157,7 +157,7 @@ function applyQuickText(text){
   }
   const curEdge=new Map(); cur.edges.forEach(e=>{ const k=e.from+'\u0001'+e.to; if(!curEdge.has(k)) curEdge.set(k,e); });
   for(const e of q.edges){ const from=kmap.get(e.from),to=kmap.get(e.to); if(!from||!to) continue; const old=curEdge.get(from+'\u0001'+to);
-    const ne={from,to,line:e.line,head:e.head,tail:e.tail,label:e.label}; if(old){ if(old.route) ne.route=old.route; if(old.width) ne.width=old.width; if(old.color) ne.color=old.color; if(e.line==='solid'&&old.line==='dotted') ne.line='dotted'; } m.edges.push(ne); }
+    const ne={from,to,line:e.line,head:e.head,tail:e.tail,label:e.label}; if(old){ if(old.route) ne.route=old.route; if(old.sa) ne.sa=old.sa; if(old.sb) ne.sb=old.sb; if(old.width) ne.width=old.width; if(old.color) ne.color=old.color; if(e.line==='solid'&&old.line==='dotted') ne.line='dotted'; } m.edges.push(ne); }
   for(const a of m.arrows){ if(a.from&&!m.nodes.has(a.from)&&!m.groups.has(a.from)) a.from=null; if(a.to&&!m.nodes.has(a.to)&&!m.groups.has(a.to)) a.to=null; }
   resolveGeometry(m,state.cache);
   // Empty frames have no content to size them: keep their saved box, or give new ones a spot beside the board.

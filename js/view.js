@@ -54,9 +54,45 @@ $('#zoomIn').addEventListener('click',()=>{const r=boardRect();zoomAt(1.2,r.widt
 $('#zoomOut').addEventListener('click',()=>{const r=boardRect();zoomAt(1/1.2,r.width/2,r.height/2);});
 $('#zoomPct').addEventListener('click',()=>{const r=boardRect();zoomAt(1/state.view.z,r.width/2,r.height/2);});
 $('#zoomFit').addEventListener('click',fit);
-$('#tidyBtn').addEventListener('click',tidy);
+$('#tidyBtn').addEventListener('click',e=>{ e.stopPropagation(); toggleMenu('#tidyMenu'); });
+$('#tidyMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-tidy]'); if(!b) return; closeMenus(); if(b.dataset.tidy==='auto') tidy(); else lineUp(); });
+// Auto layout: rearranges everything from the connections (dagre).
 function tidy(){
   const m=state.model; if(!m||!m.nodes.size) return;
   for(const gid of m.groupOrder) if(groupHasMembers(m,gid)) m.pos.delete(gid);
-  autoLayout(m); mutate(()=>{}, {structural:false}); fit(); toast('Layout tidied');
+  autoLayout(m); mutate(()=>{}, {structural:false}); fit(); toast('Rearranged. Undo with Ctrl+Z');
+}
+// Line up: keeps your layout and only straightens it. Shapes whose centres are nearly in a row or column
+// are put exactly in line, then overlaps are pushed apart. Works on the selection, or on everything.
+function lineUp(){
+  const m=state.model; if(!m||!m.nodes.size||state.fatal) return;
+  const picked=[...state.sel].filter(k=>k[0]==='n').map(k=>k.slice(2));
+  const ids=picked.length>=2?picked:[...m.nodeOrder];
+  const before=new Map(ids.map(id=>{ const n=m.nodes.get(id); return [id,n?n.x+','+n.y:'']; }));
+  mutate(mm=>{
+    const nodes=ids.map(id=>mm.nodes.get(id)).filter(n=>n&&n.x!=null);
+    const by=new Map(); for(const n of nodes){ const k=n.group||''; if(!by.has(k)) by.set(k,[]); by.get(k).push(n); }
+    for(const list of by.values()){ alignAxis(list,'y'); alignAxis(list,'x'); separate(list); }
+    for(const n of nodes) state.cache.set(n.id,{x:n.x,y:n.y});
+  },{structural:false});
+  const changed=ids.filter(id=>{ const n=state.model.nodes.get(id); return n&&before.get(id)!==n.x+','+n.y; }).length;
+  toast(changed?'Lined up '+changed+(changed===1?' shape':' shapes')+'. Undo with Ctrl+Z':'Already lined up');
+}
+function alignAxis(list,ax){
+  const W=ax==='x'?'w':'h'; const c=n=>n[ax]+n[W]/2;
+  const s=[...list].sort((a,b)=>c(a)-c(b)); let cl=[];
+  const flush=()=>{ if(cl.length>1){ const cs=cl.map(c).sort((a,b)=>a-b); const t=Math.round(cs[Math.floor((cs.length-1)/2)]/4)*4; for(const n of cl) n[ax]=t-n[W]/2; } cl=[]; };
+  for(const n of s){ if(cl.length&&c(n)-c(cl[0])>Math.max(16,0.45*Math.min(n[W],cl[0][W]))) flush(); cl.push(n); }
+  flush();
+}
+function separate(list){
+  const G=24;
+  for(let pass=0;pass<6;pass++){ let moved=false; const s=[...list].sort((a,b)=>a.x-b.x||a.y-b.y);
+    for(let i=0;i<s.length;i++) for(let j=i+1;j<s.length;j++){ const a=s[i],b=s[j];
+      const ox=Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x), oy=Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y);
+      if(ox<=0||oy<=0) continue;
+      const sameRow=Math.abs((a.y+a.h/2)-(b.y+b.h/2))<1, sameCol=Math.abs((a.x+a.w/2)-(b.x+b.w/2))<1;
+      if(sameRow||(!sameCol&&ox<=oy)) b.x=a.x+a.w+G; else b.y=a.y+a.h+G;
+      moved=true; }
+    if(!moved) break; }
 }

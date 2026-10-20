@@ -23,6 +23,18 @@
       <button type="button" class="me-btn" data-me hidden></button>
     </header>
     <main class="home-main">
+      <section class="welcome" aria-labelledby="welcomeTitle">
+        <div class="welcome-text">
+          <h1 id="welcomeTitle">Welcome back</h1>
+          <p>Pick up where you left off, start fresh, or paste some text and get a board.</p>
+          <div class="welcome-cta">
+            <button type="button" class="btn primary" data-welcome="new"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
+            <button type="button" class="btn" data-welcome="text"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M4 12h16M4 17h7"/></svg>From text</button>
+            <button type="button" class="btn" data-welcome="import"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>Import</button>
+          </div>
+        </div>
+        <div class="welcome-art" id="welcomeArt" aria-hidden="true"></div>
+      </section>
       <section class="hero">
         <h1>Draw it. Or just write it.</h1>
         <p class="tag">Mermaid and a whiteboard, side by side, with Azure and Power Platform icons built in. Everything stays in your browser.</p>
@@ -157,7 +169,11 @@
       </div>
       <div class="flyout island" id="flyout" hidden></div>
       <div class="zoom island" id="zoomBar">
-        <button type="button" class="tidy" id="tidyBtn" title="Auto-arrange everything (Shift+L)">Tidy up</button>
+        <div class="menu-wrap"><button type="button" class="tidy" id="tidyBtn" aria-haspopup="true" title="Line up or rearrange shapes">Tidy up</button>
+          <div class="menu up" id="tidyMenu" hidden>
+            <button type="button" data-tidy="line"><b>Line up</b><small>Straighten rows and columns, keep your layout (Shift+L)</small></button>
+            <button type="button" data-tidy="auto"><b>Auto layout</b><small>Rearrange everything from the connections</small></button>
+          </div></div>
         <span class="vsep"></span>
         <button type="button" class="ibtn" id="zoomOut" title="Zoom out (Ctrl+-)" aria-label="Zoom out"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
         <button type="button" class="zoom-pct" id="zoomPct" title="Reset to 100%">100%</button>
@@ -184,7 +200,7 @@
       <dt><kbd>Ctrl</kbd> <kbd>G</kbd></dt><dd>Group into a frame, add <kbd>Shift</kbd> to ungroup</dd>
       <dt><kbd>Del</kbd></dt><dd>Delete selection</dd>
       <dt><kbd>Shift</kbd> <kbd>1</kbd></dt><dd>Fit to screen</dd>
-      <dt><kbd>Shift</kbd> <kbd>L</kbd></dt><dd>Tidy up layout</dd>
+      <dt><kbd>Shift</kbd> <kbd>L</kbd></dt><dd>Line up shapes (selection or all)</dd>
       <dt><kbd>Alt</kbd> drag</dt><dd>Move without grid snap</dd>
       <dt>Scroll</dt><dd>Pan. <kbd>Ctrl</kbd> + scroll or pinch to zoom</dd>
       <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Undo, works for code and canvas</dd>
@@ -263,6 +279,7 @@ User <- Email -- Logic App
   <script src="js/tooltips.js"></script>
   <script src="js/me.js"></script>
   <script src="js/comments.js"></script>
+  <script src="js/minimap.js"></script>
   <script src="js/boards.js"></script>
   <script src="js/main.js"></script>
 </body>

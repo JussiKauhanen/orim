@@ -31,7 +31,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){ const k=[...state.sel]; if(k.length===1){ e.preventDefault(); openEditor(k[0][0]==='n'?'node':k[0][0]==='e'?'edge':'group',k[0][0]==='e'?+k[0].slice(2):k[0].slice(2)); } return; }
   if(e.key.startsWith('Arrow')&&state.sel.size){ e.preventDefault(); const s=e.shiftKey?1:GRID; nudge(e.key==='ArrowLeft'?-s:e.key==='ArrowRight'?s:0,e.key==='ArrowUp'?-s:e.key==='ArrowDown'?s:0); return; }
   if(e.shiftKey&&(e.code==='Digit1')){ e.preventDefault(); fit(); return; }
-  if(e.shiftKey&&key==='l'){ e.preventDefault(); tidy(); return; }
+  if(e.shiftKey&&key==='l'){ e.preventDefault(); lineUp(); return; }
   if(e.key.length===1&&!e.altKey&&state.sel.size===1&&[...state.sel][0][0]==='n'&&e.key!==' '){
     const id=[...state.sel][0].slice(2); const n=state.model&&state.model.nodes.get(id);
     if(n&&n.shape!=='icon'){ e.preventDefault(); openEditor('node',id); const ed=state.editing; if(ed){ ed.el.value=e.key; ed.el.setSelectionRange(1,1); placeEditor(); } return; }

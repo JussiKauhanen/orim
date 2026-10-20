@@ -103,6 +103,19 @@ test('free arrows can end on a frame', () => {
   assert.ok(r.s2.includes('to=g'));
 });
 
+test('connector sides are kept', () => {
+  const r = roundTrip(`flowchart LR
+  a --> b
+  b --> c
+%% @route 0 curved r t
+%% @route 1 elbow - l
+`);
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.edges[0].sa, 'r'); assert.equal(r.model.edges[0].sb, 't'); assert.equal(r.model.edges[0].route, undefined);
+  assert.equal(r.model.edges[1].sa, undefined); assert.equal(r.model.edges[1].sb, 'l'); assert.equal(r.model.edges[1].route, 'elbow');
+});
+
 test('reports errors with line numbers', () => {
   const r = roundTrip('flowchart LR\n  A -->\n  subgraph x [X]\n    B\n');
   assert.ok(r.errors.some((e) => e.line === 1));

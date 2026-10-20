@@ -212,8 +212,8 @@ function parseMermaid(src){
       if(am){ let msgs=[]; try{ msgs=JSON.parse(am[5]).filter(x=>x&&typeof x.t==='string').map(x=>{ const q={t:x.t,d:+x.d||0}; if(typeof x.a==='string'&&x.a) q.a=x.a; return q; }); }catch(_){}
         const fl=am[4]||''; const on=/on=(\S+)/.exec(fl);
         m.threads.push({id:am[1],x:+am[2],y:+am[3],on:on?on[1]:null,done:/\bdone\b/.test(fl),msgs}); continue; }
-      am=/^%%\s*@route\s+(\d+)\s+(straight|elbow|curved)\s*$/.exec(t);
-      if(am){ pendRoute.set(+am[1],am[2]); continue; }
+      am=/^%%\s*@route\s+(\d+)\s+(straight|elbow|curved)(?:\s+([trbl-])\s+([trbl-]))?\s*$/.exec(t);
+      if(am){ pendRoute.set(+am[1],{r:am[2],a:am[3]&&am[3]!=='-'?am[3]:null,b:am[4]&&am[4]!=='-'?am[4]:null}); continue; }
       if(LAYOUT_MARK.test(t)) continue;
       (header?m.comments:m.pre).push(t); continue;
     }
@@ -267,7 +267,7 @@ function parseMermaid(src){
   if(!fatal&&stack.length) errors.push({line:stack[stack.length-1].line,msg:'subgraph "'+stack[stack.length-1].label+'" needs a closing "end"'});
   for(const id of [...m.nodes.keys()]) if(m.groups.has(id)) removeNode(id);
   for(const L of pendLink) for(const i of L.idx){ const e=m.edges[i]; if(!e) continue; if(L.width) e.width=L.width; if(L.color) e.color=L.color; }
-  for(const [i,r] of pendRoute){ if(m.edges[i]) m.edges[i].route=r; }
+  for(const [i,r] of pendRoute){ const e=m.edges[i]; if(!e) continue; if(r.r!=='curved') e.route=r.r; if(r.a) e.sa=r.a; if(r.b) e.sb=r.b; }
   for(const n of m.nodes.values()) if(n.group&&!m.groups.has(n.group)) n.group=null;
   return {model:m,errors,fatal};
 }
@@ -314,7 +314,7 @@ function layoutLines(m,boxes){
     const p=m.pos.get(gid);
     if(p&&p.w) L.push('%% @pos '+gid+' '+r1(p.x)+' '+r1(p.y)+' '+r1(p.w)+' '+r1(p.h));
   }
-  (m.edges||[]).forEach((e,i)=>{ if(e.route&&e.route!=='curved') L.push('%% @route '+i+' '+e.route); });
+  (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb; if((e.route&&e.route!=='curved')||sd) L.push('%% @route '+i+' '+(e.route||'curved')+(sd?' '+(e.sa||'-')+' '+(e.sb||'-'):'')); });
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }
   for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
