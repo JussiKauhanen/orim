@@ -17,11 +17,9 @@ function histPush(code){
   H.i=H.stack.length-1; updUndo();
 }
 function flushEditorHist(){ if(H.timer){ clearTimeout(H.timer); H.timer=0; if(state.emode==='text'&&state.textTyping){ clearTimeout(parseT); applyQuickText(ta.value); state.textTyping=false; } else idleSyncLayout(); histPush(state.code); } }
-function updUndo(){ $('#undoBtn').disabled=$('#undoBtn2').disabled=H.i<=0; $('#redoBtn').disabled=$('#redoBtn2').disabled=H.i>=H.stack.length-1; }
+function updUndo(){ $('#undoBtn').disabled=H.i<=0; $('#redoBtn').disabled=H.i>=H.stack.length-1; }
 $('#undoBtn').addEventListener('click',()=>undo());
 $('#redoBtn').addEventListener('click',()=>redo());
-$('#undoBtn2').addEventListener('click',()=>undo());
-$('#redoBtn2').addEventListener('click',()=>redo());
 function undo(){ flushEditorHist(); if(H.i<=0) return; H.i--; loadCode(H.stack[H.i],{history:false}); updUndo(); }
 function redo(){ flushEditorHist(); if(H.i>=H.stack.length-1) return; H.i++; loadCode(H.stack[H.i],{history:false}); updUndo(); }
 

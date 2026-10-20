@@ -169,7 +169,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .edge{cursor:move}.handle.e,.handle.w{cursor:ew-resize}
 
 .island{position:absolute;background:var(--panel);border:1px solid var(--island-border);border-radius:10px;box-shadow:var(--shadow)}
-.leftbar{position:absolute;left:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:6;max-height:calc(100% - 28px)}
+.leftbar{position:absolute;left:14px;top:calc(50% - 30px);transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:6;max-height:calc(100% - 104px)}
 .leftbar .island{position:static}
 .leftbar .tools{min-height:0}
 .tools{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;overflow-y:auto;scrollbar-width:none}
@@ -558,14 +558,24 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .ai-dots b{width:5px;height:5px;border-radius:50%;background:currentColor;animation:aiDot 1.2s infinite ease-in-out}
 .ai-dots b:nth-child(2){animation-delay:.15s}.ai-dots b:nth-child(3){animation-delay:.3s}
 @keyframes aiDot{0%,80%,100%{opacity:.25}40%{opacity:1}}
-.ai-empty{margin:auto 0;color:var(--muted);font-size:13px;line-height:1.5}
-.ai-empty b{display:block;color:var(--fg);font-size:14px;margin-bottom:4px}
-.ai-try{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.ai-try button{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:9px;padding:7px 10px;font:13px var(--font-ui);text-align:left;cursor:pointer}
-.ai-try button:hover{border-color:var(--accent)}
-.ai-input{border-top:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:8px;flex:none}
-.ai-input textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:13.5px/1.45 var(--font-ui);background:var(--panel-2);color:var(--fg);min-height:64px;max-height:180px}
-.ai-input textarea:focus{outline:none;border-color:var(--accent)}
+.ai-empty{margin:auto 0 4px;color:var(--muted);font-size:13px;line-height:1.5;padding:0 4px}
+.ai-empty b{display:block;color:var(--fg);font-size:16px;font-weight:600;margin-bottom:2px}
+.ai-empty p{margin:0 0 6px;font-size:12.5px}
+.ai-try{display:flex;flex-direction:column;gap:2px;margin:8px -8px 0}
+.ai-try button{display:flex;align-items:center;gap:12px;border:0;background:none;color:var(--fg);border-radius:9px;padding:9px 8px;font:14px var(--font-ui);text-align:left;cursor:pointer}
+.ai-try .ai-ico svg.i{width:19px;height:19px;stroke-width:1.8}
+.ai-try .ai-ico{display:grid;place-items:center}
+.ai-try button:hover{background:var(--panel-2)}
+.ai-input{padding:8px 12px 12px;flex:none}
+.ai-box{border:1px solid var(--line-strong);border-radius:16px;padding:10px 10px 8px 14px;background:var(--panel);display:flex;flex-direction:column;gap:4px;transition:border-color .15s,box-shadow .15s}
+.ai-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.ai-input textarea{width:100%;resize:none;border:0;padding:2px 0;font:14px/1.45 var(--font-ui);background:transparent;color:var(--fg);min-height:44px;max-height:180px}
+.ai-input textarea:focus{outline:none}
+.ai-round{width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--accent);color:#fff;flex:none}
+.ai-round:disabled{background:var(--panel-2);color:var(--faint);cursor:default}
+.ai-round.stop{background:var(--fg);color:var(--panel)}
+.ai-round svg.i{width:16px;height:16px;stroke-width:2.2}
+.ai-bar .toggle{font-size:12px}
 .ai-bar{display:flex;align-items:center;gap:8px}
 .ai-bar .grow{flex:1}
 .ai-sel{font-size:12px;color:var(--muted)}
@@ -627,39 +637,42 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .ui-dots{display:flex;gap:4px;padding:0 4px}
 .ui-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line-strong);background:var(--c);cursor:pointer;padding:0}
 .ui-dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
-.tools .ai-tool{position:relative}
-.tools .ai-tool:hover{background:color-mix(in srgb,#8b5cf6 12%,transparent)}
-.ai-empty .ai-hi{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,#8b5cf6 10%,var(--panel));margin-bottom:10px}
-.ai-empty .ai-hi svg.i{width:22px;height:22px}
+.ai-empty .ai-hi{display:inline-grid;place-items:center;margin-bottom:10px}
+.ai-empty .ai-hi svg.i{width:34px;height:34px}
 .ai-try button b{display:inline;font-size:13px;margin:0;color:var(--fg);font-weight:600}
 .ai-try button{color:var(--muted)}
-/* AI at work: a blurred sketch drifting at the side of the canvas */
-.ai-ghost{position:absolute;right:0;top:0;bottom:0;width:min(46%,520px);pointer-events:none;z-index:5;opacity:0;transition:opacity .4s ease;
-  -webkit-mask-image:linear-gradient(to right,transparent,#000 38%);mask-image:linear-gradient(to right,transparent,#000 38%)}
+/* AI at work: clear in the middle, soft all around, with a sketch drifting in the soft ring */
+.ai-ghost{position:absolute;inset:0;pointer-events:none;z-index:5;opacity:0;transition:opacity .45s ease;overflow:hidden}
 .ai-ghost.on{opacity:1}
-.ai-ghost svg{position:absolute;inset:6% 4% 14% 0;width:100%;height:80%}
-.ai-ghost .gh-card{fill:var(--panel);stroke:var(--line-strong);stroke-width:1.2}
-.ai-ghost .gh-line{fill:var(--line-strong);opacity:.7}
-.ai-ghost .gh-ink{opacity:.55}
-.ai-ghost .gh{animation:ghDrift 4.6s ease-in-out infinite alternate}
-.ai-ghost .gh-wire{fill:none;stroke:#8b5cf6;stroke-opacity:.45;stroke-width:2;stroke-dasharray:6 7;animation:ghWire 3.2s linear infinite}
-.ai-ghost .gh-cursor{animation:ghCursor 7s ease-in-out infinite}
-.gh-pill{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);z-index:6;opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px;padding:7px 12px 7px 9px;border-radius:999px;background:var(--panel);box-shadow:var(--shadow);font:500 12.5px var(--font-ui);color:var(--fg);white-space:nowrap}
+.gh-veil{position:absolute;inset:0;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);background:color-mix(in srgb,var(--board) 38%,transparent);
+  -webkit-mask-image:radial-gradient(ellipse 34% 36% at 50% 48%,transparent 55%,#000 100%);mask-image:radial-gradient(ellipse 34% 36% at 50% 48%,transparent 55%,#000 100%)}
+.gh-wires{position:absolute;inset:0;width:100%;height:100%;filter:blur(1.5px)}
+.gh-wires path{fill:none;stroke:var(--muted);stroke-opacity:.35;stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-dasharray:6 7;animation:ghWire 3.2s linear infinite}
+.ai-ghost .gh{position:absolute;filter:blur(2.4px);animation:ghDrift 4.8s ease-in-out infinite alternate}
+.gh-card{height:64px;background:var(--panel);border:1px solid var(--line-strong);border-radius:10px;padding:12px 14px;box-sizing:border-box;opacity:.9}
+.gh-card i{display:block;width:45%;height:8px;border-radius:4px;opacity:.6;margin-bottom:10px}
+.gh-card b{display:block;height:6px;border-radius:3px;background:var(--line-strong);margin-bottom:6px}
+.gh-card b+b{width:60%}
+.gh-dot{display:flex;flex-direction:column;align-items:center;gap:7px}
+.gh-dot span{width:34px;height:34px;border-radius:50%;opacity:.5}
+.gh-dot b{width:44px;height:6px;border-radius:3px;background:var(--line-strong)}
+.gh-cursor{position:absolute;left:0;top:0;display:flex;align-items:flex-start;animation:ghCursor 9s ease-in-out infinite}
+.gh-cursor svg{width:16px;height:16px;fill:#1a1a1a;stroke:#fff;stroke-width:1.2;stroke-linejoin:round}
+.gh-cursor span{margin:12px 0 0 -2px;background:#ffd23f;color:#1a1a1a;font:600 11px var(--font-ui);padding:2px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.gh-pill{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);z-index:6;opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border-radius:999px;background:var(--panel);box-shadow:var(--shadow);font:500 12.5px var(--font-ui);color:var(--fg);white-space:nowrap}
 .gh-pill.on{opacity:1}
-.gh-pill .gh-spark{display:grid;place-items:center;animation:ghSpin 6s linear infinite}
-.gh-pill .gh-spark svg.i{width:16px;height:16px}
+.gh-pill .gh-spark{display:grid;place-items:center}
+.gh-pill .gh-spark svg.i{width:20px;height:20px}
+.ai-busy .empty-hint{display:none}
 @keyframes ghDrift{from{transform:translate(0,0)}to{transform:translate(var(--dx),var(--dy))}}
 @keyframes ghWire{to{stroke-dashoffset:-26}}
-@keyframes ghCursor{0%{transform:translate(170px,110px)}25%{transform:translate(310px,214px)}50%{transform:translate(270px,360px)}75%{transform:translate(96px,270px)}100%{transform:translate(170px,110px)}}
-@keyframes ghSpin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.ai-ghost .gh,.ai-ghost .gh-wire,.ai-ghost .gh-cursor,.gh-pill .gh-spark{animation:none}}
+@keyframes ghCursor{0%{left:12%;top:16%}18%{left:78%;top:12%}36%{left:86%;top:50%}54%{left:74%;top:80%}72%{left:14%;top:74%}86%{left:20%;top:46%}100%{left:12%;top:16%}}
+@media (prefers-reduced-motion:reduce){.ai-ghost .gh,.gh-wires path,.gh-cursor{animation:none}.gh-cursor{left:78%;top:12%}}
 /* AI on the home page */
-.ai-grad{background:linear-gradient(90deg,#ff5fb7,#8b5cf6 45%,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent}
-.btn svg.spark{width:16px;height:16px}
-.btn.primary svg.spark{color:#fff}
-.btn.ai-btn svg.spark{color:#8b5cf6}
-.btn.ai-btn{border-color:color-mix(in srgb,#8b5cf6 35%,var(--line))}
-.btn.ai-btn:hover{background:color-mix(in srgb,#8b5cf6 8%,var(--panel))}
+.ai-grad{background:linear-gradient(transparent 64%,#ffd23f 64%,#ffd23f 90%,transparent 90%);padding:0 .06em;border-radius:2px}
+.ai-mk{display:inline-grid;place-items:center}
+.btn .ai-mk svg.i{width:18px;height:18px}
+.btn.ai-btn:hover{background:color-mix(in srgb,#ffd23f 16%,var(--panel))}
 .rl-act{display:flex;justify-content:center}
 .rl-act .ibtn{width:28px;height:28px}
 .rl-act .ibtn:hover{color:var(--danger)}
@@ -672,13 +685,22 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .sc-chips{display:flex;gap:6px;margin-top:6px}
 .sc-chips i{font-style:normal;font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
 .sc-dots{display:inline-flex;gap:3px}
-.sc-dots b{width:5px;height:5px;border-radius:50%;background:#8b5cf6;opacity:.35;animation:scDot 1.2s infinite}
+.sc-dots b{width:5px;height:5px;border-radius:50%;background:#e0a800;opacity:.35;animation:scDot 1.2s infinite}
 .sc-dots b:nth-child(2){animation-delay:.2s}.sc-dots b:nth-child(3){animation-delay:.4s}
 @keyframes scDot{50%{opacity:1}}
 .sc-input{margin-top:auto;border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--faint);background:var(--panel-2)}
 @media (max-width:760px){ .shot-chat{display:none} }
-.tpl[data-tpl-id="ai"] .th{background:linear-gradient(135deg,color-mix(in srgb,#ff7ac6 14%,var(--panel)),color-mix(in srgb,#8b5cf6 12%,var(--panel)) 50%,color-mix(in srgb,#3b82f6 14%,var(--panel)));border-style:solid;border-color:color-mix(in srgb,#8b5cf6 30%,var(--line))}
-.th-ai svg.i{width:38px;height:38px}
+.tpl[data-tpl-id="ai"] .th{background:color-mix(in srgb,#ffd23f 18%,var(--panel));border-style:solid;border-color:color-mix(in srgb,#ffd23f 55%,var(--line))}
+.th-ai svg.i{width:46px;height:46px}
+/* the AI button, bottom left of the board, and the AI tab */
+.ai-fab{position:absolute;left:14px;bottom:14px;z-index:6;width:48px;height:48px;border:0;border-radius:15px;background:var(--panel);box-shadow:var(--shadow);padding:5px;cursor:pointer;display:grid;place-items:center;transition:transform .15s ease}
+.ai-fab svg.i{width:38px;height:38px}
+.ai-fab:hover{transform:translateY(-1px)}
+.ai-fab:active{transform:none}
+.mode-seg button[data-emode="ai"]{display:inline-flex;align-items:center;gap:4px;background:#fff1bd;color:#1a1a1a}
+.mode-seg button[data-emode="ai"][aria-pressed="true"]{background:#ffd23f;color:#1a1a1a}
+.mode-seg .ai-tab-mark svg.i{width:13px;height:13px}
+@media (max-width:760px){ .ai-fab{left:8px;bottom:8px;width:42px;height:42px} .ai-fab svg.i{width:32px;height:32px} .leftbar{max-height:calc(100% - 80px)} }
 
 </style>
 </head>
@@ -699,7 +721,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
           <p>Pick up where you left off, or tell the AI what you need and watch it draw: diagrams, screens, docs and tickets.</p>
           <div class="welcome-cta">
             <button type="button" class="btn primary" data-welcome="new"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
-            <button type="button" class="btn ai-btn" data-welcome="ai"><svg class="i spark" viewBox="0 0 24 24" style="stroke:none"><path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="currentColor"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="currentColor"/></svg>Start with AI</button>
+            <button type="button" class="btn ai-btn" data-welcome="ai"><span class="ai-mk"></span>Start with AI</button>
             <button type="button" class="btn" data-welcome="text"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M4 12h16M4 17h7"/></svg>From text</button>
             <button type="button" class="btn" data-welcome="import"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>Import</button>
           </div>
@@ -710,7 +732,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
         <h1>Describe it. <span class="ai-grad">Watch it draw.</span></h1>
         <p class="tag">Architecture diagrams with real Azure and Power Platform icons, UI mockups, docs and tickets, on one board. Ask the AI, write Mermaid or plain text, or drag things around. Everything stays in your browser.</p>
         <div class="hero-cta">
-          <button type="button" class="btn primary lg" id="heroAI"><svg class="i spark" viewBox="0 0 24 24" style="stroke:none"><path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="currentColor"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="currentColor"/></svg>Start with AI</button>
+          <button type="button" class="btn primary lg" id="heroAI"><span class="ai-mk"></span>Start with AI</button>
           <button type="button" class="btn lg" id="heroTry">Open an example</button>
           <button type="button" class="btn lg ghost" id="heroStart">Start a blank board</button>
           <button type="button" class="btn lg ghost" id="heroText" hidden>Turn text into a board</button>
@@ -807,7 +829,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
   <main class="work" id="work">
     <section class="pane code-pane" id="codePane" aria-label="Mermaid code">
       <div class="pane-head">
-        <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button><button type="button" data-emode="ai" title="Tell Claude what to change on the board">AI</button></div>
+        <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button><button type="button" data-emode="ai" title="Tell Claude what to change on the board"><span class="ai-tab-mark"></span>AI</button></div>
         <span class="chip err" id="status" hidden></span>
         <span class="grow"></span>
         <label class="toggle" title="Show the positions and drawings stored as %% comments"><input type="checkbox" id="layoutToggle"><span>Canvas data</span></label>
@@ -825,15 +847,15 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
       <div class="problems" id="problems" hidden></div>
       <div class="ai-pane" id="aiPane" hidden>
         <div class="ai-log" id="aiLog" aria-live="polite"></div>
-        <form class="ai-input" id="aiForm">
-          <textarea id="aiIn" rows="3" placeholder="Tell Claude what to change, for example: add a Redis cache between the API and the database" aria-label="Request for Claude"></textarea>
+        <form class="ai-input" id="aiForm"><div class="ai-box">
+          <textarea id="aiIn" rows="2" placeholder="Where shall we start?" aria-label="Request for Claude"></textarea>
           <div class="ai-bar">
             <label class="toggle" title="Slower, for bigger changes and questions that need thought"><input type="checkbox" id="aiDeep"><span>Think harder</span></label>
             <span class="ai-sel" id="aiSel"></span><span class="grow"></span>
-            <button type="button" class="btn sm" id="aiStop" hidden>Stop</button>
-            <button type="submit" class="btn primary sm" id="aiSend">Send</button>
+            <button type="button" class="ai-round stop" id="aiStop" hidden title="Stop" aria-label="Stop"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" style="fill:currentColor;stroke:none"/></svg></button>
+            <button type="submit" class="ai-round" id="aiSend" title="Send (Enter)" aria-label="Send"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
           </div>
-        </form>
+        </div></form>
       </div>
     </section>
     <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Resize panels" tabindex="0"></div>
@@ -855,11 +877,8 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
       </aside>
       <div class="leftbar" id="leftbar">
         <div class="tools island" id="tools" role="toolbar" aria-label="Tools" aria-orientation="vertical"></div>
-        <div class="undo-isl island">
-          <button type="button" class="ibtn" id="undoBtn2" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
-          <button type="button" class="ibtn" id="redoBtn2" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg class="i" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
-        </div>
       </div>
+      <button type="button" class="ai-fab" id="aiFab" title="Ask Claude" aria-label="Ask Claude"></button>
       <div class="flyout island" id="flyout" hidden></div>
       <div class="zoom island" id="zoomBar">
         <div class="menu-wrap"><button type="button" class="tidy" id="tidyBtn" aria-haspopup="true" title="Line up or rearrange shapes">Tidy up</button>
@@ -8610,11 +8629,9 @@ function histPush(code){
   H.i=H.stack.length-1; updUndo();
 }
 function flushEditorHist(){ if(H.timer){ clearTimeout(H.timer); H.timer=0; if(state.emode==='text'&&state.textTyping){ clearTimeout(parseT); applyQuickText(ta.value); state.textTyping=false; } else idleSyncLayout(); histPush(state.code); } }
-function updUndo(){ $('#undoBtn').disabled=$('#undoBtn2').disabled=H.i<=0; $('#redoBtn').disabled=$('#redoBtn2').disabled=H.i>=H.stack.length-1; }
+function updUndo(){ $('#undoBtn').disabled=H.i<=0; $('#redoBtn').disabled=H.i>=H.stack.length-1; }
 $('#undoBtn').addEventListener('click',()=>undo());
 $('#redoBtn').addEventListener('click',()=>redo());
-$('#undoBtn2').addEventListener('click',()=>undo());
-$('#redoBtn2').addEventListener('click',()=>redo());
 function undo(){ flushEditorHist(); if(H.i<=0) return; H.i--; loadCode(H.stack[H.i],{history:false}); updUndo(); }
 function redo(){ flushEditorHist(); if(H.i>=H.stack.length-1) return; H.i++; loadCode(H.stack[H.i],{history:false}); updUndo(); }
 
@@ -11003,12 +11020,12 @@ $('#libPickCancel').addEventListener('click',endPick);
  * Left toolbar, tool fly-outs, tool switching.
  */
 'use strict';
-const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons'],['ai','aiSpark','Ask Claude to build or change the board','AI']];
+const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons']];
 state.inkColor=LS.get('mab.inkColor',{pen:0,hl:0}); state.stickyColor=LS.get('mab.stickyColor',0); state.lastShape='rect'; state.lastInk='pen'; state.fly=null;
 const INK_TOOLS=['pen','hl','eraser'];
 state.arrowKind=LS.get('mab.arrowKind','curved'); state.arrowW=LS.get('mab.arrowW',2); state.arrowColor=LS.get('mab.arrowColor',0);
 function renderTools(){
-  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn'+(t[0]==='ai'?' ai-tool':'')+'" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+(t[0]==='ai'?aiSpark():ico(t[1]))+'</span></button>').join('');
+  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+ico(t[1])+'</span></button>').join('');
   updTools();
 }
 function updTools(){
@@ -11080,11 +11097,10 @@ $('#flyout').addEventListener('click',e=>{
 });
 state.uiPreset=LS.get('orim.uiPreset','blank'); state.uiPick={dev:'mobile'};
 function toolFamily(t){ return SHAPE_TOOLS.includes(t)?'shapes':INK_TOOLS.includes(t)?'ink':t==='sticky'?'sticky':t==='connector'?'connector':t==='ui'?'ui':null; }
-// The AI button: a colourful sparkle like Miro's, which opens the AI tab beside the board.
-// Each copy gets its own gradient id: a gradient inside a hidden part of the page does not paint elsewhere.
-let aiSparkN=0;
-function aiSpark(){ const id='aiSparkG'+(++aiSparkN); return ('<svg class="i" viewBox="0 0 24 24" style="stroke:none"><defs><linearGradient id="aiSparkG" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff7ac6"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>'+
-  '<path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="url(#aiSparkG)"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="#ff7ac6"/><path d="M18 16.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#3b82f6"/></svg>').replace(/aiSparkG/g,id); }
+// The AI mark: dark sparkles on a warm yellow tile. Plain sparkles (no tile) for use on a yellow background.
+function aiSpark(plain){ return '<svg class="i ai-mark" viewBox="0 0 24 24" style="stroke:none">'+(plain?'':'<rect x="1" y="1" width="22" height="22" rx="6" fill="#ffd23f"/>')+
+  '<path d="M11 6.2l1.25 3.35a2.2 2.2 0 0 0 1.3 1.3L16.9 12l-3.35 1.25a2.2 2.2 0 0 0-1.3 1.3L11 17.9l-1.25-3.35a2.2 2.2 0 0 0-1.3-1.3L5.1 12l3.35-1.25a2.2 2.2 0 0 0 1.3-1.3z" fill="#1a1a1a"/>'+
+  '<path d="M16.6 4.6l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5z" fill="#1a1a1a"/><path d="M7 15.6l.45 1.15 1.15.45-1.15.45L7 18.8l-.45-1.15-1.15-.45 1.15-.45z" fill="#1a1a1a"/></svg>'; }
 function openAITab(){ setMode('split'); setEmode('ai'); setTimeout(()=>{ const i=$('#aiIn'); if(i&&!i.disabled) i.focus(); },60); }
 function setTool(t,fromBar){
   if(t==='ai'){ openAITab(); return; }
@@ -11108,6 +11124,10 @@ $('#tools').addEventListener('click',e=>{ const b=e.target.closest('[data-tool]'
 $('#tools').addEventListener('pointerdown',e=>e.stopPropagation());
 $('#zoomBar').addEventListener('pointerdown',e=>e.stopPropagation());
 $('#leftbar').addEventListener('pointerdown',e=>e.stopPropagation());
+
+$('#aiFab').innerHTML=aiSpark();
+$('#aiFab').addEventListener('click',()=>{ if(state.mode==='split'&&state.emode==='ai'){ const i=$('#aiIn'); if(i) i.focus(); return; } openAITab(); });
+{ const t=document.querySelector('#modeSeg .ai-tab-mark'); if(t) t.innerHTML=aiSpark(true); for(const el of document.querySelectorAll('.ai-mk')) el.innerHTML=aiSpark(); }
 
 </script>
   <script>
@@ -11923,28 +11943,28 @@ function openAskAI(){
  * while Claude is still writing. The whole request is one undo step.
  */
 'use strict';
-/* While Claude works: a soft, blurred sketch of a board being drawn at the side of the canvas, with a
- * cursor drifting between the pieces, so the board does not sit still while the answer is coming. */
+/* While Claude works: the board stays sharp in the middle and goes soft around it, and in that soft
+ * ring a sketch of a board drifts slowly while a "Claude" cursor moves from piece to piece. */
 const Ghost=(()=>{
   let el=null, pill=null, hideT=0;
+  // Pieces sit around the edge of the view (x, y in % of the board), never in the clear middle.
+  const CARDS=[[6,10,170,'#4262ff'],[72,8,190,'#0ca789'],[80,44,150,'#9510ac'],[70,76,200,'#f24726'],[8,70,180,'#fac710'],[34,84,140,'#4262ff']];
+  const DOTS=[[22,22,'#4262ff'],[90,24,'#9510ac'],[92,66,'#0ca789'],[18,48,'#f24726'],[52,92,'#fac710'],[48,6,'#0ca789']];
   function build(){
     el=document.createElement('div'); el.className='ai-ghost'; el.setAttribute('aria-hidden','true');
-    const card=(x,y,w,h,d,c)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" class="gh-card"/>'+
-      '<rect x="'+(x+14)+'" y="'+(y+14)+'" width="'+(w*0.45)+'" height="8" rx="4" class="gh-ink" style="fill:'+c+'"/><rect x="'+(x+14)+'" y="'+(y+30)+'" width="'+(w-28)+'" height="6" rx="3" class="gh-line"/><rect x="'+(x+14)+'" y="'+(y+42)+'" width="'+(w*0.6)+'" height="6" rx="3" class="gh-line"/></g>';
-    const dot=(x,y,r,c,d)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><circle cx="'+x+'" cy="'+y+'" r="'+r+'" style="fill:'+c+';opacity:.55"/><rect x="'+(x-22)+'" y="'+(y+r+8)+'" width="44" height="6" rx="3" class="gh-line"/></g>';
-    el.innerHTML='<svg viewBox="0 0 420 520" preserveAspectRatio="xMidYMid meet"><defs><filter id="ghBlur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter></defs><g filter="url(#ghBlur)" opacity=".8">'+
-      '<path class="gh-wire" d="M150 104 C 220 104, 230 190, 300 196"/><path class="gh-wire" d="M120 150 C 120 250, 140 300, 196 330" style="animation-delay:-1.2s"/><path class="gh-wire" d="M300 236 C 300 320, 290 360, 250 380" style="animation-delay:-2.1s"/>'+
-      card(30,62,150,64,[3,-2,0],'#8b5cf6')+card(230,180,150,60,[-3,2,-1.6],'#3b82f6')+card(176,318,170,70,[2,3,-3.1],'#ff7ac6')+
-      dot(80,250,16,'#3b82f6',[2,-3,-0.8])+dot(330,420,14,'#8b5cf6',[-2,2,-2.4])+dot(110,440,13,'#0ca789',[3,1,-4])+'</g>'+
-      '<g class="gh-cursor"><path d="M0 0l12 4.5-5 1.6-1.8 5.2z" style="fill:#8b5cf6;stroke:#fff;stroke-width:1.2;stroke-linejoin:round"/><rect x="10" y="10" width="44" height="17" rx="8.5" style="fill:#8b5cf6"/><text x="32" y="22" text-anchor="middle" style="fill:#fff;font:600 10px var(--font-ui)">Claude</text></g>'+
-      '</svg>';
+    let h='<div class="gh-veil"></div><svg class="gh-wires" viewBox="0 0 100 100" preserveAspectRatio="none">'+
+      '<path d="M14 18 C 30 10, 50 4, 76 14"/><path d="M84 20 C 96 34, 92 52, 86 58" style="animation-delay:-1s"/><path d="M84 62 C 88 76, 80 84, 74 86" style="animation-delay:-2s"/><path d="M14 30 C 6 46, 8 62, 14 74" style="animation-delay:-.5s"/><path d="M20 80 C 30 92, 44 92, 50 90" style="animation-delay:-1.5s"/></svg>';
+    CARDS.forEach(([x,y,w,c],k)=>{ h+='<div class="gh gh-card" style="left:'+x+'%;top:'+y+'%;width:'+w+'px;--dx:'+[4,-5,3,-4,5,-3][k]+'px;--dy:'+[-3,4,-4,3,2,-4][k]+'px;animation-delay:'+(-k*0.9)+'s"><i style="background:'+c+'"></i><b></b><b></b></div>'; });
+    DOTS.forEach(([x,y,c],k)=>{ h+='<div class="gh gh-dot" style="left:'+x+'%;top:'+y+'%;--dx:'+[3,-3,2,-2,3,-3][k]+'px;--dy:'+[2,-3,3,-2,-3,2][k]+'px;animation-delay:'+(-k*1.3)+'s"><span style="background:'+c+'"></span><b></b></div>'; });
+    h+='<div class="gh-cursor"><svg viewBox="0 0 16 16"><path d="M1 1l13 5-5.5 1.8L6.6 13z"/></svg><span>Claude</span></div>';
+    el.innerHTML=h;
     pill=document.createElement('div'); pill.className='gh-pill'; pill.setAttribute('role','status'); pill.innerHTML='<span class="gh-spark">'+aiSpark()+'</span><span class="gh-text">Claude is thinking</span>';
     boardPane.appendChild(el); boardPane.appendChild(pill);
   }
   return {
-    start(){ if(!el) build(); clearTimeout(hideT); pill.querySelector('.gh-text').textContent='Claude is thinking'; el.hidden=pill.hidden=false; requestAnimationFrame(()=>{ el.classList.add('on'); pill.classList.add('on'); }); },
+    start(){ if(!el) build(); clearTimeout(hideT); pill.querySelector('.gh-text').textContent='Claude is thinking'; el.hidden=pill.hidden=false; boardPane.classList.add('ai-busy'); requestAnimationFrame(()=>{ el.classList.add('on'); pill.classList.add('on'); }); },
     phase(p){ if(pill&&p) pill.querySelector('.gh-text').textContent='Claude is changing the board'; },
-    stop(){ if(!el) return; el.classList.remove('on'); pill.classList.remove('on'); hideT=setTimeout(()=>{ if(el){ el.hidden=true; pill.hidden=true; } },450); }
+    stop(){ if(!el) return; el.classList.remove('on'); pill.classList.remove('on'); boardPane.classList.remove('ai-busy'); hideT=setTimeout(()=>{ if(el){ el.hidden=true; pill.hidden=true; } },500); }
   };
 })();
 const AI=(()=>{
@@ -12191,11 +12211,11 @@ Rules:
     if(!list.length){
       if(known&&!sample) h='<div class="ai-empty"><b>Claude works here when orim is opened inside Claude</b>Open the copy of orim shared from Claude to use this tab: it uses your own Claude account and needs no setup. Here, use Export, then Ask an AI, to copy a prompt for any AI chat.</div>';
       else { const blank=!state.model||(!state.model.nodes.size&&!state.model.groups.size);
-        // Starters that show what the AI can make here: diagrams, screens, docs, tables and tickets.
-        const T=blank?[['Create','a simple web shop on Azure: front end, API, database and sign-in'],['Mock up','a login, a product list and a profile screen for mobile'],['Compare','Crystallize and Optimizely in a table, and link the parts to a diagram'],['Plan','a customer portal: a short spec doc, the database tables and the first tickets']]
-          :[['Expand','this with the services it is missing, like monitoring and secrets'],['Plan it out','with a spec doc, the database tables and tickets for the work'],['Mock up','the screens a user would see, and connect them to the services'],['Explain','what this board shows, in a document card']];
-        h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What should we build?':'What should we do with this board?')+'</b>Describe it and Claude builds it here while it answers: architecture with real Azure icons, screens, docs, tables and tickets. Each request is one undo step, and selected shapes are what "this" means.<div class="ai-try">'+
-          T.map(([v,r])=>{ const t=v+' '+r; return '<button type="button" data-try="'+esc(t)+'"><b>'+esc(v)+'</b> '+esc(r)+'</button>'; }).join('')+'</div></div>'; }
+        // Starters, like Miro's: a short label, a coloured icon, and the full request it fills in.
+        const T=blank?[['shapes','#4262ff','Draw a web shop on Azure','Create a simple web shop on Azure: front end, API, database and sign-in'],['phone','#9510ac','Mock up mobile screens','Mock up a login, a product list and a profile screen for mobile'],['table','#0ca789','Compare two products','Compare Crystallize and Optimizely in a table, and link the parts to a diagram'],['ticket','#f24726','Plan a project with tickets','Plan a customer portal: a short spec doc, the database tables and the first tickets']]
+          :[['shapes','#4262ff','Expand this board','Expand this with the services it is missing, like monitoring and secrets'],['ticket','#f24726','Plan it out with docs and tickets','Plan this out with a spec doc, the database tables and tickets for the work'],['phone','#9510ac','Mock up the screens','Mock up the screens a user would see, and connect them to the services'],['doc','#0ca789','Explain this board','Explain what this board shows, in a document card']];
+        h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What are we building today?':'What should we do with this board?')+'</b><p>Claude builds on the board as it answers. Each request is one undo step.</p><div class="ai-try">'+
+          T.map(([ic,c,l,t])=>'<button type="button" data-try="'+esc(t)+'" title="'+esc(t)+'"><span class="ai-ico" style="color:'+c+'">'+ico(ic)+'</span><span>'+esc(l)+'</span></button>').join('')+'</div></div>'; }
     }
     for(const t of list){
       if(t.role==='user') h+='<div class="ai-msg me">'+esc(t.content)+'</div>';
@@ -12205,7 +12225,8 @@ Rules:
           (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+'</div>'; }
     }
     log.innerHTML=h; log.scrollTop=log.scrollHeight;
-    sendBtn.disabled=busy||(known&&!sample); inp.disabled=known&&!sample; stopBtn.hidden=!busy;
+    inp.placeholder=!state.model||(!state.model.nodes.size&&!state.model.groups.size)?'Where shall we start?':'What should change?';
+    sendBtn.disabled=busy||(known&&!sample); sendBtn.hidden=busy; inp.disabled=known&&!sample; stopBtn.hidden=!busy;
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').length; selEl.textContent=sel?sel+' selected':'';
   }
   async function send(text){

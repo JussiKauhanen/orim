@@ -29,7 +29,7 @@
           <p>Pick up where you left off, or tell the AI what you need and watch it draw: diagrams, screens, docs and tickets.</p>
           <div class="welcome-cta">
             <button type="button" class="btn primary" data-welcome="new"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
-            <button type="button" class="btn ai-btn" data-welcome="ai"><svg class="i spark" viewBox="0 0 24 24" style="stroke:none"><path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="currentColor"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="currentColor"/></svg>Start with AI</button>
+            <button type="button" class="btn ai-btn" data-welcome="ai"><span class="ai-mk"></span>Start with AI</button>
             <button type="button" class="btn" data-welcome="text"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M4 12h16M4 17h7"/></svg>From text</button>
             <button type="button" class="btn" data-welcome="import"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>Import</button>
           </div>
@@ -40,7 +40,7 @@
         <h1>Describe it. <span class="ai-grad">Watch it draw.</span></h1>
         <p class="tag">Architecture diagrams with real Azure and Power Platform icons, UI mockups, docs and tickets, on one board. Ask the AI, write Mermaid or plain text, or drag things around. Everything stays in your browser.</p>
         <div class="hero-cta">
-          <button type="button" class="btn primary lg" id="heroAI"><svg class="i spark" viewBox="0 0 24 24" style="stroke:none"><path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="currentColor"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="currentColor"/></svg>Start with AI</button>
+          <button type="button" class="btn primary lg" id="heroAI"><span class="ai-mk"></span>Start with AI</button>
           <button type="button" class="btn lg" id="heroTry">Open an example</button>
           <button type="button" class="btn lg ghost" id="heroStart">Start a blank board</button>
           <button type="button" class="btn lg ghost" id="heroText" hidden>Turn text into a board</button>
@@ -137,7 +137,7 @@
   <main class="work" id="work">
     <section class="pane code-pane" id="codePane" aria-label="Mermaid code">
       <div class="pane-head">
-        <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button><button type="button" data-emode="ai" title="Tell Claude what to change on the board">AI</button></div>
+        <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button><button type="button" data-emode="ai" title="Tell Claude what to change on the board"><span class="ai-tab-mark"></span>AI</button></div>
         <span class="chip err" id="status" hidden></span>
         <span class="grow"></span>
         <label class="toggle" title="Show the positions and drawings stored as %% comments"><input type="checkbox" id="layoutToggle"><span>Canvas data</span></label>
@@ -155,15 +155,15 @@
       <div class="problems" id="problems" hidden></div>
       <div class="ai-pane" id="aiPane" hidden>
         <div class="ai-log" id="aiLog" aria-live="polite"></div>
-        <form class="ai-input" id="aiForm">
-          <textarea id="aiIn" rows="3" placeholder="Tell Claude what to change, for example: add a Redis cache between the API and the database" aria-label="Request for Claude"></textarea>
+        <form class="ai-input" id="aiForm"><div class="ai-box">
+          <textarea id="aiIn" rows="2" placeholder="Where shall we start?" aria-label="Request for Claude"></textarea>
           <div class="ai-bar">
             <label class="toggle" title="Slower, for bigger changes and questions that need thought"><input type="checkbox" id="aiDeep"><span>Think harder</span></label>
             <span class="ai-sel" id="aiSel"></span><span class="grow"></span>
-            <button type="button" class="btn sm" id="aiStop" hidden>Stop</button>
-            <button type="submit" class="btn primary sm" id="aiSend">Send</button>
+            <button type="button" class="ai-round stop" id="aiStop" hidden title="Stop" aria-label="Stop"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" style="fill:currentColor;stroke:none"/></svg></button>
+            <button type="submit" class="ai-round" id="aiSend" title="Send (Enter)" aria-label="Send"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
           </div>
-        </form>
+        </div></form>
       </div>
     </section>
     <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Resize panels" tabindex="0"></div>
@@ -185,11 +185,8 @@
       </aside>
       <div class="leftbar" id="leftbar">
         <div class="tools island" id="tools" role="toolbar" aria-label="Tools" aria-orientation="vertical"></div>
-        <div class="undo-isl island">
-          <button type="button" class="ibtn" id="undoBtn2" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
-          <button type="button" class="ibtn" id="redoBtn2" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg class="i" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
-        </div>
       </div>
+      <button type="button" class="ai-fab" id="aiFab" title="Ask Claude" aria-label="Ask Claude"></button>
       <div class="flyout island" id="flyout" hidden></div>
       <div class="zoom island" id="zoomBar">
         <div class="menu-wrap"><button type="button" class="tidy" id="tidyBtn" aria-haspopup="true" title="Line up or rearrange shapes">Tidy up</button>

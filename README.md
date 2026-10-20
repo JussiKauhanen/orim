@@ -14,7 +14,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 
 **Two editors, one board**
 - Split and Canvas views, with a draggable splitter. Going to Canvas fits the board to the larger view. On a phone, Split stacks the code above the board.
-- The colourful sparkle at the bottom of the toolbar opens the AI tab beside the board. The home page has Start with AI too, and the list view's bin icon deletes all boards in this browser after a confirmation.
+- The yellow sparkle button at the bottom left of the board opens the AI tab beside the board (undo and redo are in the top bar). The home page has Start with AI too, and the list view's bin icon deletes all boards in this browser after a confirmation.
 - Mermaid mode: flowchart syntax with highlighting, line errors and autocomplete for keywords, arrows, node ids and icon nodes.
 - Text mode: write `Browser -> API -> Database`, `- list items` and `# Headings`. Basic [D2](https://d2lang.com) also works.
 - Paste any text onto the board to turn it into connected boxes or sticky notes.
@@ -233,7 +233,7 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 - Every request is one undo step, with an Undo button on the reply.
 - Selected shapes are sent along, so "these" means your selection. Open comments are sent too.
 - **Think harder** uses a slower, more capable model for bigger changes.
-- While Claude works, a blurred sketch drifts at the side of the canvas with a status note, and the real changes appear as they arrive.
+- While Claude works, the board stays sharp in the middle and goes soft around the edges, where a sketch drifts and a Claude cursor moves between its pieces; a status note shows what it is doing, and the real changes appear as they arrive.
 - "Make it vertical" or "left to right" changes the flow direction and lays the board out again; pinned connection points turn with it.
 - On GitHub Pages or a local copy the tab explains that it needs Claude; use Export → Ask an AI there.
 

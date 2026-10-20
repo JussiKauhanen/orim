@@ -10,28 +10,28 @@
  * while Claude is still writing. The whole request is one undo step.
  */
 'use strict';
-/* While Claude works: a soft, blurred sketch of a board being drawn at the side of the canvas, with a
- * cursor drifting between the pieces, so the board does not sit still while the answer is coming. */
+/* While Claude works: the board stays sharp in the middle and goes soft around it, and in that soft
+ * ring a sketch of a board drifts slowly while a "Claude" cursor moves from piece to piece. */
 const Ghost=(()=>{
   let el=null, pill=null, hideT=0;
+  // Pieces sit around the edge of the view (x, y in % of the board), never in the clear middle.
+  const CARDS=[[6,10,170,'#4262ff'],[72,8,190,'#0ca789'],[80,44,150,'#9510ac'],[70,76,200,'#f24726'],[8,70,180,'#fac710'],[34,84,140,'#4262ff']];
+  const DOTS=[[22,22,'#4262ff'],[90,24,'#9510ac'],[92,66,'#0ca789'],[18,48,'#f24726'],[52,92,'#fac710'],[48,6,'#0ca789']];
   function build(){
     el=document.createElement('div'); el.className='ai-ghost'; el.setAttribute('aria-hidden','true');
-    const card=(x,y,w,h,d,c)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" class="gh-card"/>'+
-      '<rect x="'+(x+14)+'" y="'+(y+14)+'" width="'+(w*0.45)+'" height="8" rx="4" class="gh-ink" style="fill:'+c+'"/><rect x="'+(x+14)+'" y="'+(y+30)+'" width="'+(w-28)+'" height="6" rx="3" class="gh-line"/><rect x="'+(x+14)+'" y="'+(y+42)+'" width="'+(w*0.6)+'" height="6" rx="3" class="gh-line"/></g>';
-    const dot=(x,y,r,c,d)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><circle cx="'+x+'" cy="'+y+'" r="'+r+'" style="fill:'+c+';opacity:.55"/><rect x="'+(x-22)+'" y="'+(y+r+8)+'" width="44" height="6" rx="3" class="gh-line"/></g>';
-    el.innerHTML='<svg viewBox="0 0 420 520" preserveAspectRatio="xMidYMid meet"><defs><filter id="ghBlur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter></defs><g filter="url(#ghBlur)" opacity=".8">'+
-      '<path class="gh-wire" d="M150 104 C 220 104, 230 190, 300 196"/><path class="gh-wire" d="M120 150 C 120 250, 140 300, 196 330" style="animation-delay:-1.2s"/><path class="gh-wire" d="M300 236 C 300 320, 290 360, 250 380" style="animation-delay:-2.1s"/>'+
-      card(30,62,150,64,[3,-2,0],'#8b5cf6')+card(230,180,150,60,[-3,2,-1.6],'#3b82f6')+card(176,318,170,70,[2,3,-3.1],'#ff7ac6')+
-      dot(80,250,16,'#3b82f6',[2,-3,-0.8])+dot(330,420,14,'#8b5cf6',[-2,2,-2.4])+dot(110,440,13,'#0ca789',[3,1,-4])+'</g>'+
-      '<g class="gh-cursor"><path d="M0 0l12 4.5-5 1.6-1.8 5.2z" style="fill:#8b5cf6;stroke:#fff;stroke-width:1.2;stroke-linejoin:round"/><rect x="10" y="10" width="44" height="17" rx="8.5" style="fill:#8b5cf6"/><text x="32" y="22" text-anchor="middle" style="fill:#fff;font:600 10px var(--font-ui)">Claude</text></g>'+
-      '</svg>';
+    let h='<div class="gh-veil"></div><svg class="gh-wires" viewBox="0 0 100 100" preserveAspectRatio="none">'+
+      '<path d="M14 18 C 30 10, 50 4, 76 14"/><path d="M84 20 C 96 34, 92 52, 86 58" style="animation-delay:-1s"/><path d="M84 62 C 88 76, 80 84, 74 86" style="animation-delay:-2s"/><path d="M14 30 C 6 46, 8 62, 14 74" style="animation-delay:-.5s"/><path d="M20 80 C 30 92, 44 92, 50 90" style="animation-delay:-1.5s"/></svg>';
+    CARDS.forEach(([x,y,w,c],k)=>{ h+='<div class="gh gh-card" style="left:'+x+'%;top:'+y+'%;width:'+w+'px;--dx:'+[4,-5,3,-4,5,-3][k]+'px;--dy:'+[-3,4,-4,3,2,-4][k]+'px;animation-delay:'+(-k*0.9)+'s"><i style="background:'+c+'"></i><b></b><b></b></div>'; });
+    DOTS.forEach(([x,y,c],k)=>{ h+='<div class="gh gh-dot" style="left:'+x+'%;top:'+y+'%;--dx:'+[3,-3,2,-2,3,-3][k]+'px;--dy:'+[2,-3,3,-2,-3,2][k]+'px;animation-delay:'+(-k*1.3)+'s"><span style="background:'+c+'"></span><b></b></div>'; });
+    h+='<div class="gh-cursor"><svg viewBox="0 0 16 16"><path d="M1 1l13 5-5.5 1.8L6.6 13z"/></svg><span>Claude</span></div>';
+    el.innerHTML=h;
     pill=document.createElement('div'); pill.className='gh-pill'; pill.setAttribute('role','status'); pill.innerHTML='<span class="gh-spark">'+aiSpark()+'</span><span class="gh-text">Claude is thinking</span>';
     boardPane.appendChild(el); boardPane.appendChild(pill);
   }
   return {
-    start(){ if(!el) build(); clearTimeout(hideT); pill.querySelector('.gh-text').textContent='Claude is thinking'; el.hidden=pill.hidden=false; requestAnimationFrame(()=>{ el.classList.add('on'); pill.classList.add('on'); }); },
+    start(){ if(!el) build(); clearTimeout(hideT); pill.querySelector('.gh-text').textContent='Claude is thinking'; el.hidden=pill.hidden=false; boardPane.classList.add('ai-busy'); requestAnimationFrame(()=>{ el.classList.add('on'); pill.classList.add('on'); }); },
     phase(p){ if(pill&&p) pill.querySelector('.gh-text').textContent='Claude is changing the board'; },
-    stop(){ if(!el) return; el.classList.remove('on'); pill.classList.remove('on'); hideT=setTimeout(()=>{ if(el){ el.hidden=true; pill.hidden=true; } },450); }
+    stop(){ if(!el) return; el.classList.remove('on'); pill.classList.remove('on'); boardPane.classList.remove('ai-busy'); hideT=setTimeout(()=>{ if(el){ el.hidden=true; pill.hidden=true; } },500); }
   };
 })();
 const AI=(()=>{
@@ -278,11 +278,11 @@ Rules:
     if(!list.length){
       if(known&&!sample) h='<div class="ai-empty"><b>Claude works here when orim is opened inside Claude</b>Open the copy of orim shared from Claude to use this tab: it uses your own Claude account and needs no setup. Here, use Export, then Ask an AI, to copy a prompt for any AI chat.</div>';
       else { const blank=!state.model||(!state.model.nodes.size&&!state.model.groups.size);
-        // Starters that show what the AI can make here: diagrams, screens, docs, tables and tickets.
-        const T=blank?[['Create','a simple web shop on Azure: front end, API, database and sign-in'],['Mock up','a login, a product list and a profile screen for mobile'],['Compare','Crystallize and Optimizely in a table, and link the parts to a diagram'],['Plan','a customer portal: a short spec doc, the database tables and the first tickets']]
-          :[['Expand','this with the services it is missing, like monitoring and secrets'],['Plan it out','with a spec doc, the database tables and tickets for the work'],['Mock up','the screens a user would see, and connect them to the services'],['Explain','what this board shows, in a document card']];
-        h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What should we build?':'What should we do with this board?')+'</b>Describe it and Claude builds it here while it answers: architecture with real Azure icons, screens, docs, tables and tickets. Each request is one undo step, and selected shapes are what "this" means.<div class="ai-try">'+
-          T.map(([v,r])=>{ const t=v+' '+r; return '<button type="button" data-try="'+esc(t)+'"><b>'+esc(v)+'</b> '+esc(r)+'</button>'; }).join('')+'</div></div>'; }
+        // Starters, like Miro's: a short label, a coloured icon, and the full request it fills in.
+        const T=blank?[['shapes','#4262ff','Draw a web shop on Azure','Create a simple web shop on Azure: front end, API, database and sign-in'],['phone','#9510ac','Mock up mobile screens','Mock up a login, a product list and a profile screen for mobile'],['table','#0ca789','Compare two products','Compare Crystallize and Optimizely in a table, and link the parts to a diagram'],['ticket','#f24726','Plan a project with tickets','Plan a customer portal: a short spec doc, the database tables and the first tickets']]
+          :[['shapes','#4262ff','Expand this board','Expand this with the services it is missing, like monitoring and secrets'],['ticket','#f24726','Plan it out with docs and tickets','Plan this out with a spec doc, the database tables and tickets for the work'],['phone','#9510ac','Mock up the screens','Mock up the screens a user would see, and connect them to the services'],['doc','#0ca789','Explain this board','Explain what this board shows, in a document card']];
+        h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What are we building today?':'What should we do with this board?')+'</b><p>Claude builds on the board as it answers. Each request is one undo step.</p><div class="ai-try">'+
+          T.map(([ic,c,l,t])=>'<button type="button" data-try="'+esc(t)+'" title="'+esc(t)+'"><span class="ai-ico" style="color:'+c+'">'+ico(ic)+'</span><span>'+esc(l)+'</span></button>').join('')+'</div></div>'; }
     }
     for(const t of list){
       if(t.role==='user') h+='<div class="ai-msg me">'+esc(t.content)+'</div>';
@@ -292,7 +292,8 @@ Rules:
           (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+'</div>'; }
     }
     log.innerHTML=h; log.scrollTop=log.scrollHeight;
-    sendBtn.disabled=busy||(known&&!sample); inp.disabled=known&&!sample; stopBtn.hidden=!busy;
+    inp.placeholder=!state.model||(!state.model.nodes.size&&!state.model.groups.size)?'Where shall we start?':'What should change?';
+    sendBtn.disabled=busy||(known&&!sample); sendBtn.hidden=busy; inp.disabled=known&&!sample; stopBtn.hidden=!busy;
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').length; selEl.textContent=sel?sel+' selected':'';
   }
   async function send(text){

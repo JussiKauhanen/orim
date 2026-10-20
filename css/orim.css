@@ -156,7 +156,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .edge{cursor:move}.handle.e,.handle.w{cursor:ew-resize}
 
 .island{position:absolute;background:var(--panel);border:1px solid var(--island-border);border-radius:10px;box-shadow:var(--shadow)}
-.leftbar{position:absolute;left:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:6;max-height:calc(100% - 28px)}
+.leftbar{position:absolute;left:14px;top:calc(50% - 30px);transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:6;max-height:calc(100% - 104px)}
 .leftbar .island{position:static}
 .leftbar .tools{min-height:0}
 .tools{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;overflow-y:auto;scrollbar-width:none}
@@ -545,14 +545,24 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .ai-dots b{width:5px;height:5px;border-radius:50%;background:currentColor;animation:aiDot 1.2s infinite ease-in-out}
 .ai-dots b:nth-child(2){animation-delay:.15s}.ai-dots b:nth-child(3){animation-delay:.3s}
 @keyframes aiDot{0%,80%,100%{opacity:.25}40%{opacity:1}}
-.ai-empty{margin:auto 0;color:var(--muted);font-size:13px;line-height:1.5}
-.ai-empty b{display:block;color:var(--fg);font-size:14px;margin-bottom:4px}
-.ai-try{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.ai-try button{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:9px;padding:7px 10px;font:13px var(--font-ui);text-align:left;cursor:pointer}
-.ai-try button:hover{border-color:var(--accent)}
-.ai-input{border-top:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:8px;flex:none}
-.ai-input textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:13.5px/1.45 var(--font-ui);background:var(--panel-2);color:var(--fg);min-height:64px;max-height:180px}
-.ai-input textarea:focus{outline:none;border-color:var(--accent)}
+.ai-empty{margin:auto 0 4px;color:var(--muted);font-size:13px;line-height:1.5;padding:0 4px}
+.ai-empty b{display:block;color:var(--fg);font-size:16px;font-weight:600;margin-bottom:2px}
+.ai-empty p{margin:0 0 6px;font-size:12.5px}
+.ai-try{display:flex;flex-direction:column;gap:2px;margin:8px -8px 0}
+.ai-try button{display:flex;align-items:center;gap:12px;border:0;background:none;color:var(--fg);border-radius:9px;padding:9px 8px;font:14px var(--font-ui);text-align:left;cursor:pointer}
+.ai-try .ai-ico svg.i{width:19px;height:19px;stroke-width:1.8}
+.ai-try .ai-ico{display:grid;place-items:center}
+.ai-try button:hover{background:var(--panel-2)}
+.ai-input{padding:8px 12px 12px;flex:none}
+.ai-box{border:1px solid var(--line-strong);border-radius:16px;padding:10px 10px 8px 14px;background:var(--panel);display:flex;flex-direction:column;gap:4px;transition:border-color .15s,box-shadow .15s}
+.ai-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.ai-input textarea{width:100%;resize:none;border:0;padding:2px 0;font:14px/1.45 var(--font-ui);background:transparent;color:var(--fg);min-height:44px;max-height:180px}
+.ai-input textarea:focus{outline:none}
+.ai-round{width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--accent);color:#fff;flex:none}
+.ai-round:disabled{background:var(--panel-2);color:var(--faint);cursor:default}
+.ai-round.stop{background:var(--fg);color:var(--panel)}
+.ai-round svg.i{width:16px;height:16px;stroke-width:2.2}
+.ai-bar .toggle{font-size:12px}
 .ai-bar{display:flex;align-items:center;gap:8px}
 .ai-bar .grow{flex:1}
 .ai-sel{font-size:12px;color:var(--muted)}
@@ -614,39 +624,42 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .ui-dots{display:flex;gap:4px;padding:0 4px}
 .ui-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line-strong);background:var(--c);cursor:pointer;padding:0}
 .ui-dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
-.tools .ai-tool{position:relative}
-.tools .ai-tool:hover{background:color-mix(in srgb,#8b5cf6 12%,transparent)}
-.ai-empty .ai-hi{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,#8b5cf6 10%,var(--panel));margin-bottom:10px}
-.ai-empty .ai-hi svg.i{width:22px;height:22px}
+.ai-empty .ai-hi{display:inline-grid;place-items:center;margin-bottom:10px}
+.ai-empty .ai-hi svg.i{width:34px;height:34px}
 .ai-try button b{display:inline;font-size:13px;margin:0;color:var(--fg);font-weight:600}
 .ai-try button{color:var(--muted)}
-/* AI at work: a blurred sketch drifting at the side of the canvas */
-.ai-ghost{position:absolute;right:0;top:0;bottom:0;width:min(46%,520px);pointer-events:none;z-index:5;opacity:0;transition:opacity .4s ease;
-  -webkit-mask-image:linear-gradient(to right,transparent,#000 38%);mask-image:linear-gradient(to right,transparent,#000 38%)}
+/* AI at work: clear in the middle, soft all around, with a sketch drifting in the soft ring */
+.ai-ghost{position:absolute;inset:0;pointer-events:none;z-index:5;opacity:0;transition:opacity .45s ease;overflow:hidden}
 .ai-ghost.on{opacity:1}
-.ai-ghost svg{position:absolute;inset:6% 4% 14% 0;width:100%;height:80%}
-.ai-ghost .gh-card{fill:var(--panel);stroke:var(--line-strong);stroke-width:1.2}
-.ai-ghost .gh-line{fill:var(--line-strong);opacity:.7}
-.ai-ghost .gh-ink{opacity:.55}
-.ai-ghost .gh{animation:ghDrift 4.6s ease-in-out infinite alternate}
-.ai-ghost .gh-wire{fill:none;stroke:#8b5cf6;stroke-opacity:.45;stroke-width:2;stroke-dasharray:6 7;animation:ghWire 3.2s linear infinite}
-.ai-ghost .gh-cursor{animation:ghCursor 7s ease-in-out infinite}
-.gh-pill{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);z-index:6;opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px;padding:7px 12px 7px 9px;border-radius:999px;background:var(--panel);box-shadow:var(--shadow);font:500 12.5px var(--font-ui);color:var(--fg);white-space:nowrap}
+.gh-veil{position:absolute;inset:0;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);background:color-mix(in srgb,var(--board) 38%,transparent);
+  -webkit-mask-image:radial-gradient(ellipse 34% 36% at 50% 48%,transparent 55%,#000 100%);mask-image:radial-gradient(ellipse 34% 36% at 50% 48%,transparent 55%,#000 100%)}
+.gh-wires{position:absolute;inset:0;width:100%;height:100%;filter:blur(1.5px)}
+.gh-wires path{fill:none;stroke:var(--muted);stroke-opacity:.35;stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-dasharray:6 7;animation:ghWire 3.2s linear infinite}
+.ai-ghost .gh{position:absolute;filter:blur(2.4px);animation:ghDrift 4.8s ease-in-out infinite alternate}
+.gh-card{height:64px;background:var(--panel);border:1px solid var(--line-strong);border-radius:10px;padding:12px 14px;box-sizing:border-box;opacity:.9}
+.gh-card i{display:block;width:45%;height:8px;border-radius:4px;opacity:.6;margin-bottom:10px}
+.gh-card b{display:block;height:6px;border-radius:3px;background:var(--line-strong);margin-bottom:6px}
+.gh-card b+b{width:60%}
+.gh-dot{display:flex;flex-direction:column;align-items:center;gap:7px}
+.gh-dot span{width:34px;height:34px;border-radius:50%;opacity:.5}
+.gh-dot b{width:44px;height:6px;border-radius:3px;background:var(--line-strong)}
+.gh-cursor{position:absolute;left:0;top:0;display:flex;align-items:flex-start;animation:ghCursor 9s ease-in-out infinite}
+.gh-cursor svg{width:16px;height:16px;fill:#1a1a1a;stroke:#fff;stroke-width:1.2;stroke-linejoin:round}
+.gh-cursor span{margin:12px 0 0 -2px;background:#ffd23f;color:#1a1a1a;font:600 11px var(--font-ui);padding:2px 8px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.gh-pill{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);z-index:6;opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border-radius:999px;background:var(--panel);box-shadow:var(--shadow);font:500 12.5px var(--font-ui);color:var(--fg);white-space:nowrap}
 .gh-pill.on{opacity:1}
-.gh-pill .gh-spark{display:grid;place-items:center;animation:ghSpin 6s linear infinite}
-.gh-pill .gh-spark svg.i{width:16px;height:16px}
+.gh-pill .gh-spark{display:grid;place-items:center}
+.gh-pill .gh-spark svg.i{width:20px;height:20px}
+.ai-busy .empty-hint{display:none}
 @keyframes ghDrift{from{transform:translate(0,0)}to{transform:translate(var(--dx),var(--dy))}}
 @keyframes ghWire{to{stroke-dashoffset:-26}}
-@keyframes ghCursor{0%{transform:translate(170px,110px)}25%{transform:translate(310px,214px)}50%{transform:translate(270px,360px)}75%{transform:translate(96px,270px)}100%{transform:translate(170px,110px)}}
-@keyframes ghSpin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.ai-ghost .gh,.ai-ghost .gh-wire,.ai-ghost .gh-cursor,.gh-pill .gh-spark{animation:none}}
+@keyframes ghCursor{0%{left:12%;top:16%}18%{left:78%;top:12%}36%{left:86%;top:50%}54%{left:74%;top:80%}72%{left:14%;top:74%}86%{left:20%;top:46%}100%{left:12%;top:16%}}
+@media (prefers-reduced-motion:reduce){.ai-ghost .gh,.gh-wires path,.gh-cursor{animation:none}.gh-cursor{left:78%;top:12%}}
 /* AI on the home page */
-.ai-grad{background:linear-gradient(90deg,#ff5fb7,#8b5cf6 45%,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent}
-.btn svg.spark{width:16px;height:16px}
-.btn.primary svg.spark{color:#fff}
-.btn.ai-btn svg.spark{color:#8b5cf6}
-.btn.ai-btn{border-color:color-mix(in srgb,#8b5cf6 35%,var(--line))}
-.btn.ai-btn:hover{background:color-mix(in srgb,#8b5cf6 8%,var(--panel))}
+.ai-grad{background:linear-gradient(transparent 64%,#ffd23f 64%,#ffd23f 90%,transparent 90%);padding:0 .06em;border-radius:2px}
+.ai-mk{display:inline-grid;place-items:center}
+.btn .ai-mk svg.i{width:18px;height:18px}
+.btn.ai-btn:hover{background:color-mix(in srgb,#ffd23f 16%,var(--panel))}
 .rl-act{display:flex;justify-content:center}
 .rl-act .ibtn{width:28px;height:28px}
 .rl-act .ibtn:hover{color:var(--danger)}
@@ -659,10 +672,19 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .sc-chips{display:flex;gap:6px;margin-top:6px}
 .sc-chips i{font-style:normal;font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
 .sc-dots{display:inline-flex;gap:3px}
-.sc-dots b{width:5px;height:5px;border-radius:50%;background:#8b5cf6;opacity:.35;animation:scDot 1.2s infinite}
+.sc-dots b{width:5px;height:5px;border-radius:50%;background:#e0a800;opacity:.35;animation:scDot 1.2s infinite}
 .sc-dots b:nth-child(2){animation-delay:.2s}.sc-dots b:nth-child(3){animation-delay:.4s}
 @keyframes scDot{50%{opacity:1}}
 .sc-input{margin-top:auto;border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--faint);background:var(--panel-2)}
 @media (max-width:760px){ .shot-chat{display:none} }
-.tpl[data-tpl-id="ai"] .th{background:linear-gradient(135deg,color-mix(in srgb,#ff7ac6 14%,var(--panel)),color-mix(in srgb,#8b5cf6 12%,var(--panel)) 50%,color-mix(in srgb,#3b82f6 14%,var(--panel)));border-style:solid;border-color:color-mix(in srgb,#8b5cf6 30%,var(--line))}
-.th-ai svg.i{width:38px;height:38px}
+.tpl[data-tpl-id="ai"] .th{background:color-mix(in srgb,#ffd23f 18%,var(--panel));border-style:solid;border-color:color-mix(in srgb,#ffd23f 55%,var(--line))}
+.th-ai svg.i{width:46px;height:46px}
+/* the AI button, bottom left of the board, and the AI tab */
+.ai-fab{position:absolute;left:14px;bottom:14px;z-index:6;width:48px;height:48px;border:0;border-radius:15px;background:var(--panel);box-shadow:var(--shadow);padding:5px;cursor:pointer;display:grid;place-items:center;transition:transform .15s ease}
+.ai-fab svg.i{width:38px;height:38px}
+.ai-fab:hover{transform:translateY(-1px)}
+.ai-fab:active{transform:none}
+.mode-seg button[data-emode="ai"]{display:inline-flex;align-items:center;gap:4px;background:#fff1bd;color:#1a1a1a}
+.mode-seg button[data-emode="ai"][aria-pressed="true"]{background:#ffd23f;color:#1a1a1a}
+.mode-seg .ai-tab-mark svg.i{width:13px;height:13px}
+@media (max-width:760px){ .ai-fab{left:8px;bottom:8px;width:42px;height:42px} .ai-fab svg.i{width:32px;height:32px} .leftbar{max-height:calc(100% - 80px)} }
