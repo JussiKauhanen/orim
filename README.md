@@ -20,14 +20,9 @@ Everything runs in the browser. There is no backend, no account and no build ste
 
 **Board**
 - Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut.
-- Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color. Frames connect too: hover a frame's border or title for its blue dots, or start the Arrow tool there.
+- Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color.
 - Arrow ends snap to shapes; pull hard to detach.
 - Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
-- Connectors keep their connection points: the side you drag out from and the side you drop on. Drag a connector's end to another side of the same shape to move it, or drop it in the middle of the shape to let orim choose.
-- Dragging something to the edge of the view scrolls the board and, if you keep pushing, zooms out a little.
-- A minimap shows in the corner while you pan or zoom; click or drag in it to jump. Ctrl or Cmd with the mouse wheel zooms about 10% per notch.
-- Dragging shows alignment guides and snaps to other shapes' edges and centres (hold Alt to move freely). Tidy up → Line up straightens rows and columns but keeps your layout; Auto layout rearranges everything.
-- Text in a shape wraps and the shape grows while you type.
 - Lasso empty space to create a frame. Drag frame edges to resize, or pick a format such as 16:9 or A4.
 - Text styling: size, bold, italic, color and highlight.
 - Paste or drop images.
@@ -112,7 +107,6 @@ orim/
 │   ├── tooltips.js         Tooltips
 │   ├── me.js               Your name and avatar for comments
 │   ├── comments.js         Comment pins and threads
-│   ├── minimap.js          Overview while panning and zooming
 │   ├── boards.js           Home page, board list, saving, #b-<id> links
 │   └── main.js             Startup
 ├── assets/
@@ -140,7 +134,7 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 
 ```
 %% @pos   <id> <x> <y> [<w> <h>]                     node or frame position and size
-%% @route <edgeIndex> curved|straight|elbow [<from> <to>]   connector routing; sides t r b l, or - for automatic
+%% @route <edgeIndex> straight|elbow                  connector routing
 %% @arrow <id> <kind> <x1> <y1> <x2> <y2> <w> <color> [from=<id>] [to=<id>]
 %% @ink   <id> pen|hl <color> <w> <x,y> <dx,dy> ...   pen and highlighter strokes
 %% @image <id> <x> <y> <w> <h> [front]               image placement; front = above shapes (pixels live in the board file)
@@ -178,7 +172,6 @@ API -> Cache, Key Vault
 | `A -> B: label` | labelled arrow |
 | `id: Label` | box with an id and a different label |
 | `Name { … }` | frame |
-| `Frame A -> Frame B` | arrow between frames (a box with the same name wins) |
 | `# Heading` or `Heading:` | frame for the list items below it |
 | `- item` | sticky note |
 
@@ -224,7 +217,7 @@ The prompt is about 5,000 characters plus the board. **Download guide (.md)** sa
 | Ctrl+Z, Ctrl+Shift+Z | Undo, redo |
 | Ctrl+D, Ctrl+G, Ctrl+Shift+G | Duplicate, group into frame, ungroup |
 | Ctrl+B, Ctrl+I | Bold, italic |
-| Shift+1, Shift+L | Fit to screen, line up |
+| Shift+1, Shift+L | Fit to screen, tidy up |
 | Alt+1, Alt+2, Alt+3 | Code, Split, Canvas |
 | Esc | Close panel, cancel tool, clear selection |
 
@@ -239,4 +232,4 @@ To update the icons, see the header of `tools/build-icons.py`.
 
 ## Licenses
 
-The orim source has no license file yet; add one before publishing if you want others to reuse the code. Third-party material is listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Microsoft icons are licensed only for architecture diagrams, training material and documentation.
+Third-party material is listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Microsoft icons are licensed only for architecture diagrams, training material and documentation.
