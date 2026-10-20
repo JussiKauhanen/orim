@@ -518,3 +518,9 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .minimap.on{opacity:1;transform:none;pointer-events:auto}
 .minimap canvas{display:block;border-radius:6px;background:var(--board)}
 @media (max-width:760px){ .minimap{display:none} }
+
+.curve-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px 4px}
+.curve-row span{font-size:12.5px;font-weight:500}
+.curve-row .seg2{display:flex;background:var(--panel-2);border-radius:7px;padding:2px}
+.menu .curve-row .seg2 button{width:auto;display:block;padding:4px 9px;font-size:12px;border-radius:5px}
+.menu .curve-row .seg2 button[aria-pressed="true"]{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.12);color:var(--accent)}

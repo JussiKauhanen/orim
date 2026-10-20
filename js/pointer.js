@@ -178,8 +178,8 @@ function onMove(e){
     if(dist>=48||(dist>=12&&d.vel>1.3)){
       const ed=m.edges[d.idx]; const a=ed&&nodeRect(m,ed.from,state.boxes),b=ed&&nodeRect(m,ed.to,state.boxes);
       if(!ed||!a||!b){ state.drag=null; return; }
-      const g=edgeGeom(a,b,0,ed.route,edgeSides(ed)); const id=nextArrowId(m);
-      const ar={id,kind:ed.head==='none'&&ed.tail==='none'?'line':(ed.route||'curved'),x1:r10(g.p0.x),y1:r10(g.p0.y),x2:r10(g.p3.x),y2:r10(g.p3.y),w:ed.width||(ed.line==='thick'?3.5:2),color:ed.color||'#1a1a1a',from:null,to:null};
+      const g=geomPath(edgeShapeAt(m,d.idx,state.boxes),0,0); const id=nextArrowId(m);
+      const ar={id,kind:ed.head==='none'&&ed.tail==='none'?'line':routeOf(m,ed),x1:r10(g.p0.x),y1:r10(g.p0.y),x2:r10(g.p3.x),y2:r10(g.p3.y),w:ed.width||(ed.line==='thick'?3.5:2),color:ed.color||'#1a1a1a',from:null,to:null};
       m.edges.splice(d.idx,1); m.arrows.push(ar); state.sel=new Set(['a:'+id]);
       const c={nodes:new Set(),groups:new Set(),direct:new Set(),inks:new Set(),arrows:new Set([id])};
       state.drag={mode:'move',start:d.start,orig:new Map(),gorig:new Map(),korig:new Map(),aorig:new Map([[id,{x1:ar.x1,y1:ar.y1,x2:ar.x2,y2:ar.y2,att:false}]]),c,key:'a:'+id,moved:true,shift:false,vel:0,lt:0,lx:e.clientX,ly:e.clientY,popped:new Set(),home:new Map(state.boxes),forceStructural:true};
@@ -327,9 +327,9 @@ function onUp(e){
       mutate(mm=>{ const x=mm.edges[d.idx]; if(d.end){ x.to=d.target; if(sd) x.sb=sd; else delete x.sb; } else { x.from=d.target; if(sd) x.sa=sd; else delete x.sa; } }); toast(same?(sd?'Connection point moved':'Connection point set to automatic'):'Reconnected'); return; }
     const a=nodeRect(m,e2.from,state.boxes),b=nodeRect(m,e2.to,state.boxes); if(!a||!b){ render(); return; }
     if(Math.hypot(d.cur.x-(d.end?b.x+b.w/2:a.x+a.w/2),d.cur.y-(d.end?b.y+b.h/2:a.y+a.h/2))*state.view.z<20){ render(); return; }
-    const g=edgeGeom(a,b,0,e2.route,edgeSides(e2)); let id=null;
+    const g=geomPath(edgeShapeAt(m,d.idx,state.boxes),0,0); let id=null;
     mutate(mm=>{ id=nextArrowId(mm); const fixed=d.end?g.p0:g.p3;
-      const ar={id,kind:e2.head==='none'&&e2.tail==='none'?'line':(e2.route||'curved'),w:e2.width||(e2.line==='thick'?3.5:2),color:e2.color||'#1a1a1a',from:d.end?e2.from:null,to:d.end?null:e2.to};
+      const ar={id,kind:e2.head==='none'&&e2.tail==='none'?'line':routeOf(m,e2),w:e2.width||(e2.line==='thick'?3.5:2),color:e2.color||'#1a1a1a',from:d.end?e2.from:null,to:d.end?null:e2.to};
       if(d.end){ ar.x1=r10(fixed.x); ar.y1=r10(fixed.y); ar.x2=r10(d.cur.x); ar.y2=r10(d.cur.y); } else { ar.x1=r10(d.cur.x); ar.y1=r10(d.cur.y); ar.x2=r10(fixed.x); ar.y2=r10(fixed.y); }
       mm.edges.splice(d.idx,1); mm.arrows.push(ar); });
     state.sel=new Set(['a:'+id]); selChanged(); toast('Detached. Drop the end on a shape to connect it again.'); return;
@@ -420,7 +420,7 @@ board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
 function snapAngle(o,p){ const dx=p.x-o.x,dy=p.y-o.y,L=Math.hypot(dx,dy),a=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*(Math.PI/4); return {x:o.x+Math.cos(a)*L,y:o.y+Math.sin(a)*L}; }
 function addToolEdge(from,to,sides){
   const k=state.arrowKind; const route=k==='line'?'straight':(k==='block'?'straight':k);
-  mutate(mm=>{ const e={from,to,line:'solid',head:k==='line'?'none':'arrow',tail:'none',label:''}; if(sides&&sides.a) e.sa=sides.a; if(sides&&sides.b) e.sb=sides.b; if(route!=='curved') e.route=route; if(state.arrowW!==2) e.width=state.arrowW; if(state.arrowColor) e.color=ARROW_COLORS[state.arrowColor]; mm.edges.push(e); });
+  mutate(mm=>{ const e={from,to,line:'solid',head:k==='line'?'none':'arrow',tail:'none',label:''}; if(sides&&sides.a) e.sa=sides.a; if(sides&&sides.b) e.sb=sides.b; if(route!=='curved'&&route!==(mm.curve||'curved')) e.route=route; if(state.arrowW!==2) e.width=state.arrowW; if(state.arrowColor) e.color=ARROW_COLORS[state.arrowColor]; mm.edges.push(e); });
   state.sel=new Set(['e:'+(state.model.edges.length-1)]); selChanged(); setTool('select');
 }
 function nextArrowId(mm){ const ids=new Set(mm.arrows.map(x=>x.id)); let n=mm.arrows.length+1; while(ids.has('a'+n)) n++; return 'a'+n; }
@@ -436,7 +436,7 @@ function arrowToEdge(a){
   mutate(mm=>{ const x=mm.arrows.find(q=>q.id===a.id); if(!x) return; mm.arrows=mm.arrows.filter(q=>q.id!==a.id);
     const e={from:x.from,to:x.to,line:'solid',head:x.kind==='line'?'none':'arrow',tail:'none',label:''};
     const bx=groupBoxes(mm); const ra=nodeRect(mm,x.from,bx), rb=nodeRect(mm,x.to,bx); const s1=ra&&sideNear(ra,{x:x.x1,y:x.y1}), s2=rb&&sideNear(rb,{x:x.x2,y:x.y2}); if(s1) e.sa=s1; if(s2) e.sb=s2;
-    const route=x.kind==='line'?'straight':x.kind; if(route!=='curved') e.route=route; if(x.w&&x.w!==2) e.width=x.w; if(x.color&&x.color!=='#1a1a1a') e.color=x.color;
+    const route=x.kind==='line'?'straight':x.kind; if(route!=='curved'&&route!==(mm.curve||'curved')) e.route=route; if(x.w&&x.w!==2) e.width=x.w; if(x.color&&x.color!=='#1a1a1a') e.color=x.color;
     mm.edges.push(e); idx=mm.edges.length-1; });
   state.sel=new Set(['e:'+idx]); selChanged(); toast('Connected both shapes');
 }

@@ -11,7 +11,7 @@ function selBBox(){
     else if(k[0]==='k'){ const ik=m.inks.find(x=>x.id===id); r=ik?inkBox(ik):null; }
     else if(k[0]==='a'){ const ar=m.arrows.find(x=>x.id===id); r=ar?arrowBox(resolveArrow(m,ar)):null; }
     else if(k[0]==='p'){ r=m.images.find(x=>x.id===id)||null; }
-    else { const e=m.edges[+id]; if(e){ const a=nodeRect(m,e.from,state.boxes),b=nodeRect(m,e.to,state.boxes); if(a&&b){ const g=edgeGeom(a,b,0,e.route,edgeSides(e)); r={x:g.mid.x-20,y:g.mid.y-14,w:40,h:28}; } } }
+    else { const e=m.edges[+id]; if(e){ const a=nodeRect(m,e.from,state.boxes),b=nodeRect(m,e.to,state.boxes); if(a&&b){ const g=geomPath(edgeShapeAt(m,+id,state.boxes),0,0); r={x:g.mid.x-20,y:g.mid.y-14,w:40,h:28}; } } }
     if(r){ x0=Math.min(x0,r.x);y0=Math.min(y0,r.y);x1=Math.max(x1,r.x+r.w);y1=Math.max(y1,r.y+r.h); }
   }
   return x0===Infinity?null:{x:x0,y:y0,w:x1-x0,h:y1-y0};
@@ -58,7 +58,7 @@ function updCtx(){
     if(es.length>1) html+='<span class="ctx-count">'+es.length+' connectors</span>';
     html+='<div class="seg2">'+b('line-solid','lineSolid','Solid line',on(e.line==='solid'))+b('line-dotted','lineDot','Dotted line',on(e.line==='dotted'))+b('line-thick','lineThick','Thick line',on(e.line==='thick'))+'</div>';
     html+='<div class="seg2">'+b('arr-none','arrNone','No arrowheads',on(e.head==='none'))+b('arr-end','arrEnd','Arrow at end',on(e.head!=='none'&&e.tail==='none'))+b('arr-both','arrBoth','Arrows at both ends',on(e.head!=='none'&&e.tail!=='none'))+'</div>';
-    const rt=e.route||'curved';
+    const rt=routeOf(state.model,e);
     html+='<div class="seg2">'+b('route-curved','arCurved','Curved',on(rt==='curved'))+b('route-straight','arLine','Straight',on(rt==='straight'))+b('route-elbow','arElbow','Elbow',on(rt==='elbow'))+'</div>';
     html+=sep+thick(e.width||(e.line==='thick'?3.5:2))+sep+lineColorBtn(e.color);
     html+=sep+b('reverse','reverse','Reverse direction');
@@ -129,7 +129,7 @@ ctxEl.addEventListener('click',e=>{
     case 'reverse': mutate(mm=>{ for(const i of edgesSel()){ const e=mm.edges[i]; [e.from,e.to]=[e.to,e.from]; [e.sa,e.sb]=[e.sb,e.sa]; if(!e.sa) delete e.sa; if(!e.sb) delete e.sb; [e.head,e.tail]=[e.tail==='none'?e.head:e.tail,e.tail==='none'?'none':e.head]; } }); break;
     default:
       if(act.startsWith('akind-')){ const v=act.slice(6); mutate(mm=>{ for(const k of state.sel) if(k[0]==='a'){ const a=mm.arrows.find(x=>x.id===k.slice(2)); if(a) a.kind=v; } },{structural:false}); break; }
-      if(act.startsWith('route-')){ const v=act.slice(6); mutate(mm=>{ for(const i of edgesSel()) mm.edges[i].route=v==='curved'?null:v; },{structural:false}); break; }
+      if(act.startsWith('route-')){ const v=act.slice(6); mutate(mm=>{ for(const i of edgesSel()){ if(v===(mm.curve||'curved')) delete mm.edges[i].route; else mm.edges[i].route=v; } },{structural:false}); break; }
       if(act.startsWith('line-')){ const v=act.slice(5); mutate(mm=>{ for(const i of edgesSel()) mm.edges[i].line=v; }); }
       else if(act.startsWith('arr-')){ const v=act.slice(4); mutate(mm=>{ for(const i of edgesSel()){ const e=mm.edges[i]; if(v==='none'){e.head='none';e.tail='none';} else if(v==='end'){e.head=e.head==='none'?'arrow':e.head;e.tail='none';} else {e.head=e.head==='none'?'arrow':e.head;e.tail=e.tail==='none'?'arrow':e.tail;} } }); }
       else if(act.startsWith('al-')) align(act.slice(3));

@@ -38,12 +38,12 @@ function buildDrawio(sel){
   const backByFrame=new Map(); for(const im of m.images){ if(im.front) continue; const h=imgHome(im); if(!backByFrame.has(h)) backByFrame.set(h,[]); backByFrame.get(h).push(im); }
   for(const im of backByFrame.get(null)||[]) imgCell(im,null);
 
-  for(const gid of order){ const g=m.groups.get(gid),b=boxes.get(gid); if(!b) continue; const st=m.styles.get(gid)||{};
+  for(const gid of order){ const g=m.groups.get(gid),b=boxes.get(gid); if(!b) continue; const st=styleOf(m,gid)||{};
     const fill=st.fill||'#ffffff';
     const style='swimlane;html=1;startSize=30;horizontal=1;align=left;spacingLeft=10;fontStyle=0;fontSize=14;fontColor='+(st.color||'#5f5f5f')+';fillColor='+fill+';swimlaneFillColor='+fill+';strokeColor='+(st.stroke||'#d5d7db')+';swimlaneLine=0;container=1;collapsible=0;rounded=0;';
     cells.push('<mxCell id="'+cid('g:'+gid)+'" value="'+dioLabel(g.label)+'" style="'+xa(style)+'" vertex="1" parent="'+(g.parent&&boxes.has(g.parent)?cid('g:'+g.parent):'1')+'">'+geo(b.x,b.y,b.w,b.h,g.parent&&boxes.has(g.parent)?g.parent:null)+'</mxCell>'); for(const im of backByFrame.get(gid)||[]) imgCell(im,gid); }
   const SH={rect:'rounded=0;',round:'rounded=1;arcSize=20;',stadium:'rounded=1;arcSize=50;',circle:'ellipse;',diamond:'rhombus;',hex:'shape=hexagon;perimeter=hexagonPerimeter2;size=0.15;fixedSize=0;',cyl:'shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=9;',para:'shape=parallelogram;perimeter=parallelogramPerimeter;fixedSize=1;size=16;',sub:'shape=process;backgroundOutline=1;size=0.06;'};
-  for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=m.styles.get(id)||{}; const par=n.group&&boxes.has(n.group)?n.group:null;
+  for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=styleOf(m,id)||{}; const par=n.group&&boxes.has(n.group)?n.group:null;
     let style='whiteSpace=wrap;html=1;'; const fs=st.fontSize||labelSize(n); const fst=(st.bold?1:0)+(st.italic?2:0);
     const txt=';fontSize='+Math.round(fs)+(fst?';fontStyle='+fst:'')+(st.bg?';labelBackgroundColor='+st.bg:'')+';fontColor='+(st.color||'#1a1a1a')+';';
     let x=n.x,y=n.y,w=n.w,h=n.h;
@@ -54,7 +54,7 @@ function buildDrawio(sel){
     cells.push('<mxCell id="'+cid('n:'+id)+'" value="'+dioLabel(n.label)+'" style="'+xa(style)+'" vertex="1" parent="'+(par?cid('g:'+par):'1')+'">'+geo(x,y,w,h,par)+'</mxCell>'); }
   const HD={arrow:'classic',none:'none',circle:'oval',cross:'cross'};
   m.edges.forEach((e,i)=>{ if(!e) return; const sk=m.nodes.has(e.from)?'n:'+e.from:'g:'+e.from, tk=m.nodes.has(e.to)?'n:'+e.to:'g:'+e.to; if(!ids.has(sk)||!ids.has(tk)) return;
-    const rt=e.route||'curved'; let style='html=1;rounded=1;endArrow='+HD[e.head]+';startArrow='+HD[e.tail]+';endFill='+(e.head==='circle'?0:1)+';startFill='+(e.tail==='circle'?0:1)+';strokeWidth='+(e.width||(e.line==='thick'?4:2))+';strokeColor='+(e.line==='invis'?'none':(e.color||'#1a1a1a'))+';fontSize=12;fontColor=#5f5f5f;labelBackgroundColor=#ffffff;';
+    const rt=routeOf(m0,e); let style='html=1;rounded=1;endArrow='+HD[e.head]+';startArrow='+HD[e.tail]+';endFill='+(e.head==='circle'?0:1)+';startFill='+(e.tail==='circle'?0:1)+';strokeWidth='+(e.width||(e.line==='thick'?4:2))+';strokeColor='+(e.line==='invis'?'none':(e.color||'#1a1a1a'))+';fontSize=12;fontColor=#5f5f5f;labelBackgroundColor=#ffffff;';
     style+=rt==='elbow'?'edgeStyle=orthogonalEdgeStyle;':rt==='straight'?'edgeStyle=none;':'edgeStyle=orthogonalEdgeStyle;curved=1;';
     if(e.line==='dotted') style+='dashed=1;';
     const SP={t:[0.5,0],r:[1,0.5],b:[0.5,1],l:[0,0.5]};

@@ -24,6 +24,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Arrow ends snap to shapes; pull hard to detach.
 - Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
 - Connectors keep their connection points: the side you drag out from and the side you drop on. Drag a connector's end to another side of the same shape to move it, or drop it in the middle of the shape to let orim choose.
+- Elbow connectors are routed around shapes with right angles, like Miro. Tidy up → Connectors sets Curved, Straight or Elbow for the whole board; it is saved as Mermaid's own `curve` setting (`basis`, `linear`, `step`), so other Mermaid tools draw it the same way.
 - Dragging something to the edge of the view scrolls the board and, if you keep pushing, zooms out a little.
 - A minimap shows in the corner while you pan or zoom; click or drag in it to jump. Ctrl or Cmd with the mouse wheel zooms about 10% per notch.
 - Dragging shows alignment guides and snaps to other shapes' edges and centres (hold Alt to move freely). Tidy up → Line up straightens rows and columns but keeps your layout; Auto layout rearranges everything.
@@ -148,6 +149,8 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 ```
 
 Icon nodes use Mermaid 11 shape syntax: `fn@{ icon: "azure:function-apps", label: "API" }`. Packs are `azure:`, `pp:` (Power Platform) and `d365:`. Other Mermaid renderers show these as plain nodes unless the same icon pack is registered there.
+
+`classDef`, `class` and `:::name` colours are drawn as Mermaid draws them; a `style` line for a node wins over its class. Auto layout lays out each frame on its own first and then places the frames, so frames stay compact.
 
 Sticky notes are nodes with the `sticky` class. Text styling uses standard `style` properties (`font-size`, `font-weight`, `font-style`, `color`), plus `background` for the highlight.
 

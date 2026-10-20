@@ -56,6 +56,7 @@ flowchart LR
 - Shapes: \`id[Rect]\` \`id(Rounded)\` \`id([Pill])\` \`id[(Database)]\` \`id((Circle))\` \`id{Decision}\` \`id{{Hex}}\` \`id[/Lean/]\` \`id[[Subroutine]]\` \`id["Note"]:::sticky\` \`id@{ shape: text, label: "Plain text" }\` \`id@{ icon: "pack:id", label: "Name" }\`
 - Edges: \`-->\` arrow, \`---\` line, \`-.->\` dotted, \`==>\` thick, \`<-->\` both ways, \`--o\` \`--x\` circle or cross end, \`-->|label|\`. Chains \`a --> b --> c\` and \`a & b --> c\` work. Frames connect by id.
 - Style: \`style id fill:#hex,stroke:#hex,color:#hex,font-size:18px,font-weight:bold,font-style:italic,background:#hex\`; \`linkStyle 0 stroke:#hex,stroke-width:3px\`.
+- Connector style for the whole board is Mermaid's front matter setting \`config: flowchart: curve:\` with \`basis\` (curved), \`linear\` (straight) or \`step\` (elbow). Keep it if present.
 - Direction: LR, RL, TB or BT. Ids: camelCase letters and digits, unique, not a keyword (end, graph, subgraph, style, class, direction). Declare a node once with its label, then use its id.
 - Labels: \`<br>\` for a line break, \`#quot;\` for a quote; quote labels with brackets: \`id["Cache (Redis)"]\`.
 - A node belongs to the frame (subgraph) it is declared in. Frames can nest.

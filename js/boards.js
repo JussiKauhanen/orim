@@ -95,13 +95,13 @@ const Boards=(()=>{
     const lines=(n,cx,cy,maxW,lh,fill,op)=>{ const ls=(n.lines&&n.lines.filter(Boolean))||[]; const k=Math.min(3,Math.max(1,ls.length)); let o=''; const th=k*lh*1.7; for(let i=0;i<k;i++){ const lw=ls[i]?Math.min(maxW,Core.measure(ls[i],labelSize(n))):maxW*0.6; o+=bar(cx-lw/2,cy-th/2+i*lh*1.7+lh*0.35,lw,lh,fill,op); } return o; };
     let o='';
     const boxes=groupBoxes(m);
-    for(const gid of [...m.groupOrder].sort((a,c)=>groupDepth(m,a)-groupDepth(m,c))){ const g=boxes.get(gid); if(!g) continue; const st=m.styles.get(gid);
+    for(const gid of [...m.groupOrder].sort((a,c)=>groupDepth(m,a)-groupDepth(m,c))){ const g=boxes.get(gid); if(!g) continue; const st=styleOf(m,gid);
       o+='<rect x="'+g.x+'" y="'+g.y+'" width="'+g.w+'" height="'+g.h+'" rx="8" style="fill:'+((st&&st.fill)||'var(--th-frame)')+';stroke:var(--th-line);stroke-width:1"'+ns+'/>';
       o+=bar(g.x+16,g.y+14,Math.min(g.w*0.4,Core.measure(m.groups.get(gid).label,13)),9,'var(--th-edge)',.55); }
     for(const im of m.images) o+='<rect x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" rx="4" style="fill:var(--th-image)"/>';
     for(const e of m.edges){ const a=m.nodes.get(e.from)||boxes.get(e.from),c=m.nodes.get(e.to)||boxes.get(e.to); if(!a||!c||a.x==null||c.x==null||e.line==='invis') continue;
-      const g=edgeGeom(a,c,0,e.route,edgeSides(e)); o+='<path d="'+g.d+'" style="fill:none;stroke:'+(e.color||'var(--th-edge)')+';stroke-width:'+(e.line==='thick'?2.4:1.4)+(e.line==='dotted'?';stroke-dasharray:3 3':'')+'"'+ns+'/>'; }
-    for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=m.styles.get(id)||{};
+      const g=edgeGeom(a,c,0,routeOf(m,e),edgeSides(e)); o+='<path d="'+g.d+'" style="fill:none;stroke:'+(e.color||'var(--th-edge)')+';stroke-width:'+(e.line==='thick'?2.4:1.4)+(e.line==='dotted'?';stroke-dasharray:3 3':'')+'"'+ns+'/>'; }
+    for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=styleOf(m,id)||{};
       if(n.shape==='sticky'){ o+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="2" style="fill:'+(st.fill||'#fff9b1')+'"/>'+lines(n,n.x+n.w/2,n.y+n.h/2,n.w*0.66,n.h*0.06,'#1a1a1a',.28); }
       else if(n.shape==='icon'){ const s=iconSize(n); const ic=iconFor(n.icon); const x=n.x+(n.w-s)/2;
         o+=ic?'<image href="'+ic.uri+'" x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'"/>':'<rect x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'" rx="'+(s*0.22)+'" style="fill:'+(PACK_TINT[String(n.icon||'').split(':')[0]]||'#808080')+'"/>';

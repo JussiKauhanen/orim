@@ -112,8 +112,27 @@ test('connector sides are kept', () => {
 `);
   assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
   assert.equal(r.s1, r.s2);
-  assert.equal(r.model.edges[0].sa, 'r'); assert.equal(r.model.edges[0].sb, 't'); assert.equal(r.model.edges[0].route, undefined);
+  assert.equal(r.model.edges[0].sa, 'r'); assert.equal(r.model.edges[0].sb, 't'); assert.equal(r.model.edges[0].route, 'curved');
   assert.equal(r.model.edges[1].sa, undefined); assert.equal(r.model.edges[1].sb, 'l'); assert.equal(r.model.edges[1].route, 'elbow');
+});
+
+test('board connector style from Mermaid curve config', () => {
+  const r = roundTrip(`---
+config:
+  flowchart:
+    curve: step
+---
+flowchart LR
+  a --> b
+  b --> c
+%% @route 1 curved
+`);
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.curve, 'elbow');
+  assert.equal(r.model.edges[0].route, undefined);
+  assert.equal(r.model.edges[1].route, 'curved');
+  assert.ok(r.s2.includes('%% @route 1 curved'));
 });
 
 test('reports errors with line numbers', () => {

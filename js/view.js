@@ -55,7 +55,31 @@ $('#zoomOut').addEventListener('click',()=>{const r=boardRect();zoomAt(1/1.2,r.w
 $('#zoomPct').addEventListener('click',()=>{const r=boardRect();zoomAt(1/state.view.z,r.width/2,r.height/2);});
 $('#zoomFit').addEventListener('click',fit);
 $('#tidyBtn').addEventListener('click',e=>{ e.stopPropagation(); toggleMenu('#tidyMenu'); });
-$('#tidyMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-tidy]'); if(!b) return; closeMenus(); if(b.dataset.tidy==='auto') tidy(); else lineUp(); });
+$('#tidyMenu').addEventListener('click',e=>{
+  const c=e.target.closest('[data-curve]'); if(c){ setBoardCurve(c.dataset.curve); updCurveSeg(); return; }
+  const b=e.target.closest('[data-tidy]'); if(!b) return; closeMenus(); if(b.dataset.tidy==='auto') tidy(); else lineUp(); });
+$('#tidyBtn').addEventListener('click',()=>updCurveSeg());
+function updCurveSeg(){ const cur=(state.model&&state.model.curve)||'curved'; for(const b of document.querySelectorAll('#curveSeg [data-curve]')) b.setAttribute('aria-pressed',String(b.dataset.curve===cur)); }
+// The board's connector style is Mermaid's own curve setting in the front matter,
+// so other Mermaid tools draw the board the same way: step = elbow, linear = straight.
+function setBoardCurve(v){
+  if(!state.model||state.fatal) return;
+  const val={elbow:'step',straight:'linear',curved:'basis'}[v]||'basis';
+  mutate(mm=>{
+    const L=mm.fmExtra.slice(); const ci=L.findIndex(l=>/^\s*curve\s*:/.test(l));
+    if(ci>=0){ if(v==='curved') L.splice(ci,1); else L[ci]=L[ci].replace(/curve\s*:.*/,'curve: '+val); }
+    else if(v!=='curved'){ const fi=L.findIndex(l=>/^\s*flowchart\s*:/.test(l)), gi=L.findIndex(l=>/^config\s*:/.test(l));
+      if(fi>=0){ const ind=/^\s*/.exec(L[fi])[0]+'  '; L.splice(fi+1,0,ind+'curve: '+val); }
+      else if(gi>=0) L.splice(gi+1,0,'  flowchart:','    curve: '+val);
+      else L.push('config:','  flowchart:','    curve: '+val); }
+    // tidy an emptied config block
+    for(let k=L.length-1;k>=0;k--){ if(/^\s*flowchart\s*:\s*$/.test(L[k])&&!(L[k+1]&&/^\s{4,}\S/.test(L[k+1]))) L.splice(k,1); }
+    for(let k=L.length-1;k>=0;k--){ if(/^config\s*:\s*$/.test(L[k])&&!(L[k+1]&&/^\s+\S/.test(L[k+1]))) L.splice(k,1); }
+    mm.fmExtra=L; mm.curve=v;
+    for(const e of mm.edges) if(e.route===v) delete e.route;
+  });
+  toast({curved:'Curved',straight:'Straight',elbow:'Elbow'}[v]+' connectors for this board');
+}
 // Auto layout: rearranges everything from the connections (dagre).
 function tidy(){
   const m=state.model; if(!m||!m.nodes.size) return;

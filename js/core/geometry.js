@@ -83,29 +83,65 @@ function placeNear(n,m,placed){
   }
   n.x=r.x; n.y=r.y;
 }
+// Auto layout, frame by frame (inside out): each frame is laid out on its own and becomes one block,
+// then the level above is laid out with those blocks. Frames stay compact and in one piece, the way
+// Mermaid draws subgraphs. Arrows into a frame count as arrows to its block on the level above.
 function autoLayout(m){
-  const nodes=[...m.nodes.values()];
-  if(!nodes.length) return;
+  if(!m.nodes.size) return;
   if(typeof dagre==='undefined'){ gridLayout(m); return; }
-  try{
-    const g=new dagre.graphlib.Graph({compound:true,multigraph:true});
-    const dir=m.dir==='TD'?'TB':m.dir;
-    g.setGraph({rankdir:dir,nodesep:40,ranksep:72,edgesep:20,marginx:40,marginy:40});
-    g.setDefaultEdgeLabel(()=>({}));
-    const used=new Set();
-    for(const n of nodes){ let p=n.group; while(p){used.add(p); p=m.groups.get(p)&&m.groups.get(p).parent;} }
-    for(const gid of m.groupOrder) if(used.has(gid)) g.setNode('g:'+gid,{label:gid,paddingTop:PAD_TOP,paddingLeft:PAD,paddingRight:PAD,paddingBottom:PAD});
-    for(const gid of m.groupOrder){ const gr=m.groups.get(gid); if(used.has(gid)&&gr.parent&&used.has(gr.parent)) g.setParent('g:'+gid,'g:'+gr.parent); }
-    for(const n of nodes){ g.setNode('n:'+n.id,{width:n.w,height:n.h+(n.group?16:0)}); if(n.group&&used.has(n.group)) g.setParent('n:'+n.id,'g:'+n.group); }
-    m.edges.forEach((e,i)=>{
-      if(m.nodes.has(e.from)&&m.nodes.has(e.to)&&e.from!==e.to){
-        const lw=e.label?Core.measure(e.label,12)+16:0;
-        g.setEdge('n:'+e.from,'n:'+e.to,{width:lw,height:e.label?22:0,labelpos:'c',minlen:1},'e'+i);
-      }
-    });
-    dagre.layout(g);
-    for(const n of nodes){ const p=g.node('n:'+n.id); if(p){ n.x=SNAP(p.x-n.w/2); n.y=SNAP(p.y-n.h/2+(n.group?8:0)); } }
-  }catch(err){ gridLayout(m); }
+  try{ layoutBlocks(m); }catch(err){ gridLayout(m); }
+}
+function layoutBlocks(m){
+  const used=new Set(); for(const n of m.nodes.values()){ let p=n.group,k=0; while(p&&m.groups.has(p)&&k++<60){ used.add(p); p=m.groups.get(p).parent; } }
+  const parentOf=id=>{ const n=m.nodes.get(id); if(n) return n.group&&used.has(n.group)?n.group:null; const g=m.groups.get(id); return g&&g.parent&&used.has(g.parent)?g.parent:null; };
+  const childIn=(id,block)=>{ if(!m.nodes.has(id)&&!used.has(id)) return null; let cur=id,k=0; while(k++<60){ const p=parentOf(cur); if(p===block) return cur; if(p===null) return null; cur=p; } return null; };
+  const blocks=new Map();
+  function layout(block){
+    if(blocks.has(block)) return blocks.get(block);
+    const kids=[]; for(const id of m.nodeOrder) if(m.nodes.has(id)&&parentOf(id)===block) kids.push(id);
+    for(const gid of m.groupOrder) if(used.has(gid)&&parentOf(gid)===block) kids.push(gid);
+    const sz=new Map(kids.map(k=>{ const n=m.nodes.get(k); if(n) return [k,{w:n.w,h:n.h}]; const b=layout(k); return [k,{w:b.w,h:b.h}]; }));
+    const raw=(block&&m.groups.get(block).dir)||m.dir; const dir=raw==='TD'?'TB':(raw||'LR');
+    const ks=new Set(kids), es=[], ext=[];
+    m.edges.forEach((e,i)=>{ const a=childIn(e.from,block), b=childIn(e.to,block);
+      if(a&&b&&a!==b&&ks.has(a)&&ks.has(b)) es.push({a,b,e,i});
+      // Arrows that leave the frame pull their shape toward that side, so the inside lines up with the outside.
+      else if(block!==null&&a&&!b&&ks.has(a)) ext.push({a,b:'>'+e.to,i}); else if(block!==null&&b&&!a&&ks.has(b)) ext.push({a:'<'+e.from,b,i}); });
+    let pos;
+    if(!es.length&&!ext.length&&block!==null) pos=stackLayout(kids,sz,dir);
+    else {
+      const g=new dagre.graphlib.Graph({multigraph:true});
+      g.setGraph({rankdir:dir,nodesep:48,ranksep:76,edgesep:20,marginx:0,marginy:0}); g.setDefaultEdgeLabel(()=>({}));
+      for(const k of kids) g.setNode(k,{width:sz.get(k).w,height:sz.get(k).h});
+      for(const x of ext){ for(const v of [x.a,x.b]) if(!ks.has(v)&&!g.hasNode(v)) g.setNode(v,{width:1,height:1}); g.setEdge(x.a,x.b,{minlen:1,weight:1},'x'+x.i); }
+      for(const x of es){ const lw=x.e.label?Core.measure(x.e.label,12)+16:0; g.setEdge(x.a,x.b,{width:lw,height:x.e.label?22:0,labelpos:'c',minlen:1,weight:2},'e'+x.i); }
+      dagre.layout(g);
+      pos=new Map(kids.map(k=>{ const p=g.node(k); return [k,{x:p.x-sz.get(k).w/2,y:p.y-sz.get(k).h/2}]; }));
+    }
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    for(const k of kids){ const p=pos.get(k),s=sz.get(k); x0=Math.min(x0,p.x); y0=Math.min(y0,p.y); x1=Math.max(x1,p.x+s.w); y1=Math.max(y1,p.y+s.h); }
+    if(!kids.length){ x0=y0=x1=y1=0; }
+    const pl=block===null?0:PAD, pt=block===null?0:PAD_TOP;
+    for(const k of kids){ const p=pos.get(k); p.x=p.x-x0+pl; p.y=p.y-y0+pt; }
+    const r={w:(x1-x0)+(block===null?0:PAD*2),h:(y1-y0)+(block===null?0:PAD_TOP+PAD),pos};
+    blocks.set(block,r); return r;
+  }
+  layout(null);
+  const place=(block,ox,oy)=>{ for(const [k,p] of blocks.get(block).pos){ const n=m.nodes.get(k); if(n){ n.x=SNAP(ox+p.x); n.y=SNAP(oy+p.y); } else place(k,ox+p.x,oy+p.y); } };
+  place(null,40,40);
+}
+// Shapes in a frame with no arrows between them: a neat column (left-to-right boards) or row (top-down).
+function stackLayout(kids,sz,dir){
+  const vert=dir==='LR'||dir==='RL', G=24, perLine=Math.ceil(kids.length/Math.ceil(kids.length/6||1))||1;
+  const lines=[]; kids.forEach((k,i)=>{ if(i%perLine===0) lines.push([]); lines[lines.length-1].push(k); });
+  const pos=new Map(); let off=0;
+  for(const line of lines){
+    const cross=Math.max(...line.map(k=>vert?sz.get(k).w:sz.get(k).h)); let along=0;
+    for(const k of line){ const s=sz.get(k); const c=(cross-(vert?s.w:s.h))/2;
+      pos.set(k,vert?{x:off+c,y:along}:{x:along,y:off+c}); along+=(vert?s.h:s.w)+G; }
+    off+=cross+G*2;
+  }
+  return pos;
 }
 function gridLayout(m){
   let k=0; const cols=Math.ceil(Math.sqrt(m.nodes.size));
@@ -115,7 +151,7 @@ function resolveGeometry(m,cache){
   const placed=new Set(),unplaced=[];
   for(const id of m.nodeOrder){
     const n=m.nodes.get(id); const p=m.pos.get(id); const c=cache&&cache.get(id);
-    const st=m.styles.get(id); n.fsSet=st&&st.fontSize?st.fontSize:null; n.bold=!!(st&&st.bold);
+    const st=styleOf(m,id); n.fsSet=st&&st.fontSize?st.fontSize:null; n.bold=!!(st&&st.bold);
     if(p&&p.w&&p.h){ n.w=p.w; n.h=p.h; n.sized=true; } else n.sized=false;
     sizeNode(n);
     const src=p||c;
@@ -224,6 +260,98 @@ function geomPath(g,s0,s3){
   let half=total/2,mid=pts[0]; for(let i=1;i<n;i++){ if(half<=seg[i-1]){ const t=seg[i-1]?half/seg[i-1]:0; mid={x:pts[i-1].x+(pts[i].x-pts[i-1].x)*t,y:pts[i-1].y+(pts[i].y-pts[i-1].y)*t}; break; } half-=seg[i-1]; }
   return {d:roundPoly(pts,8),mid,t0,t3,p0,p3};
 }
+// ---- Orthogonal routing for elbow connectors ----
+// Right-angle paths that go around shapes, with few bends, the way Miro draws diagrams.
+// Several connectors on one side of a shape are spread along that side, and connectors
+// that would share a channel are nudged apart by making shared segments cost more.
+const ORTHO_M=14;
+function autoSides(a,b){
+  const ac={x:a.x+a.w/2,y:a.y+a.h/2},bc={x:b.x+b.w/2,y:b.y+b.h/2},dx=bc.x-ac.x,dy=bc.y-ac.y;
+  if(Math.abs(dx)/((a.w+b.w)/2+1)>=Math.abs(dy)/((a.h+b.h)/2+1)) return dx>0?['r','l']:['l','r'];
+  return dy>0?['b','t']:['t','b'];
+}
+// items: [{i,from,to,a,b,sa,sb}] (a, b are rects). Returns Map i -> {type:'poly',pts}.
+function orthoRoutes(m,items){
+  const out=new Map(); if(!items.length) return out;
+  const NV={t:[0,-1],b:[0,1],l:[-1,0],r:[1,0]};
+  for(const it of items){ const [sa,sb]=autoSides(it.a,it.b); it.sa=it.sa||sa; it.sb=it.sb||sb; }
+  // Spread the attach points of connectors sharing a side, ordered by where their other end is.
+  const slots=new Map(); const put=(id,side,it,end)=>{ const k=id+'\u0001'+side; if(!slots.has(k)) slots.set(k,[]); slots.get(k).push({it,end}); };
+  for(const it of items){ put(it.from,it.sa,it,0); put(it.to,it.sb,it,1); }
+  for(const [k,list] of slots){
+    const side=k.slice(k.indexOf('\u0001')+1), horiz=side==='t'||side==='b';
+    const other=x=>{ const r=x.end?x.it.a:x.it.b; return horiz?r.x+r.w/2:r.y+r.h/2; };
+    list.sort((p,q)=>other(p)-other(q));
+    list.forEach((sl,j)=>{ const r=sl.end?sl.it.b:sl.it.a, f=(j+1)/(list.length+1);
+      const pt=horiz?{x:r.x+r.w*f,y:side==='t'?r.y:r.y+r.h}:{x:side==='l'?r.x:r.x+r.w,y:r.y+r.h*f};
+      if(sl.end) sl.it.p3=pt; else sl.it.p0=pt; });
+  }
+  const obs=[]; for(const n of m.nodes.values()) if(n.x!=null) obs.push({x0:n.x-ORTHO_M,y0:n.y-ORTHO_M,x1:n.x+n.w+ORTHO_M,y1:n.y+n.h+ORTHO_M});
+  const inside=(x,y)=>{ for(const o of obs) if(x>o.x0+0.5&&x<o.x1-0.5&&y>o.y0+0.5&&y<o.y1-0.5) return true; return false; };
+  const S=ORTHO_M+8;
+  for(const it of items){ it.q0={x:it.p0.x+NV[it.sa][0]*S,y:it.p0.y+NV[it.sa][1]*S}; it.q3={x:it.p3.x+NV[it.sb][0]*S,y:it.p3.y+NV[it.sb][1]*S}; }
+  const xs=new Set(), ys=new Set();
+  for(const o of obs){ xs.add(o.x0); xs.add(o.x1); ys.add(o.y0); ys.add(o.y1); }
+  for(const it of items){ xs.add(it.q0.x); xs.add(it.q3.x); ys.add(it.q0.y); ys.add(it.q3.y); }
+  const mids=set=>{ const v=[...set].sort((p,q)=>p-q); for(let k=0;k+1<v.length;k++) if(v[k+1]-v[k]>ORTHO_M*2) set.add((v[k]+v[k+1])/2); };
+  mids(xs); mids(ys);
+  const X=[...xs].sort((p,q)=>p-q), Y=[...ys].sort((p,q)=>p-q); X.unshift(X[0]-48); X.push(X[X.length-1]+48); Y.unshift(Y[0]-48); Y.push(Y[Y.length-1]+48);
+  const nx=X.length, ny=Y.length; if(nx*ny>40000) return out;
+  const xi=new Map(X.map((v,k)=>[v,k])), yi=new Map(Y.map((v,k)=>[v,k]));
+  const P=(i,j)=>j*nx+i;
+  const free=new Uint8Array(nx*ny), hOk=new Uint8Array(nx*ny), vOk=new Uint8Array(nx*ny), hUse=new Uint16Array(nx*ny), vUse=new Uint16Array(nx*ny);
+  for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){ free[P(i,j)]=inside(X[i],Y[j])?0:1; }
+  for(let j=0;j<ny;j++) for(let i=0;i+1<nx;i++) hOk[P(i,j)]=free[P(i,j)]&&free[P(i+1,j)]&&!inside((X[i]+X[i+1])/2,Y[j])?1:0;
+  for(let j=0;j+1<ny;j++) for(let i=0;i<nx;i++) vOk[P(i,j)]=free[P(i,j)]&&free[P(i,j+1)]&&!inside(X[i],(Y[j]+Y[j+1])/2)?1:0;
+  const DIRS=[[1,0],[-1,0],[0,1],[0,-1]], dirOf=s=>({r:0,l:1,b:2,t:3})[s];
+  const BEND=36;
+  // Longer connectors first get the clean channels; short ones fit around them.
+  const order=[...items].sort((p,q)=>(Math.abs(q.q0.x-q.q3.x)+Math.abs(q.q0.y-q.q3.y))-(Math.abs(p.q0.x-p.q3.x)+Math.abs(p.q0.y-p.q3.y)));
+  const NS=nx*ny*4, dist=new Float64Array(NS), prev=new Int32Array(NS);
+  for(const it of order){
+    const si=xi.get(it.q0.x), sj=yi.get(it.q0.y), ti=xi.get(it.q3.x), tj=yi.get(it.q3.y);
+    if(si==null||sj==null||ti==null||tj==null||!free[P(si,sj)]||!free[P(ti,tj)]) continue;
+    const want=dirOf({r:'l',l:'r',b:'t',t:'b'}[it.sb]); // direction when arriving at the target stub
+    dist.fill(Infinity); prev.fill(-1);
+    const heap=[]; const push=(c,s)=>{ heap.push([c,s]); let k=heap.length-1; while(k>0){ const pk=(k-1)>>1; if(heap[pk][0]<=heap[k][0]) break; [heap[pk],heap[k]]=[heap[k],heap[pk]]; k=pk; } };
+    const pop=()=>{ const top=heap[0], last=heap.pop(); if(heap.length){ heap[0]=last; let k=0; for(;;){ const l=2*k+1,r=l+1; let b=k; if(l<heap.length&&heap[l][0]<heap[b][0]) b=l; if(r<heap.length&&heap[r][0]<heap[b][0]) b=r; if(b===k) break; [heap[b],heap[k]]=[heap[k],heap[b]]; k=b; } } return top; };
+    const hx=(i,j)=>Math.abs(X[i]-X[ti])+Math.abs(Y[j]-Y[tj]);
+    const s0=P(si,sj)*4+dirOf(it.sa); dist[s0]=0; push(hx(si,sj),s0);
+    let goal=-1, alt=-1;
+    while(heap.length){
+      const [f,st]=pop(); const node=st>>2, d=st&3, g=dist[st]; if(f-hx(node%nx,(node/nx)|0)>g+1e-6) continue;
+      const i=node%nx, j=(node/nx)|0;
+      if(i===ti&&j===tj){ if(d===want){ goal=st; break; } if(alt<0) alt=st; }
+      for(let nd=0;nd<4;nd++){
+        const [dx,dy]=DIRS[nd]; const ni=i+dx, nj=j+dy; if(ni<0||nj<0||ni>=nx||nj>=ny) continue;
+        if(dy===0){ const k=P(Math.min(i,ni),j); if(!hOk[k]) continue; }
+        else { const k=P(i,Math.min(j,nj)); if(!vOk[k]) continue; }
+        if(nd===(d^1)) continue; // no U-turns on the spot
+        const len=dy===0?Math.abs(X[ni]-X[i]):Math.abs(Y[nj]-Y[j]);
+        const use=dy===0?hUse[P(Math.min(i,ni),j)]:vUse[P(i,Math.min(j,nj))];
+        const c=g+len*(1+0.6*use)+(nd!==d?BEND:0)+(ni===ti&&nj===tj&&nd!==want?BEND*2:0);
+        const ns=P(ni,nj)*4+nd; if(c<dist[ns]-1e-6){ dist[ns]=c; prev[ns]=st; push(c+hx(ni,nj),ns); }
+      }
+    }
+    if(goal<0) goal=alt; if(goal<0) continue;
+    const path=[]; for(let st=goal;st>=0;st=prev[st]){ const node=st>>2; path.push({x:X[node%nx],y:Y[(node/nx)|0]}); if(st===s0) break; }
+    path.reverse();
+    for(let k=1;k<path.length;k++){ const a0=path[k-1],a1=path[k]; const i0=xi.get(a0.x),j0=yi.get(a0.y),i1=xi.get(a1.x),j1=yi.get(a1.y);
+      if(j0===j1) for(let i=Math.min(i0,i1);i<Math.max(i0,i1);i++) hUse[P(i,j0)]++; else for(let j=Math.min(j0,j1);j<Math.max(j0,j1);j++) vUse[P(i0,j)]++; }
+    const pts=[it.p0,...path,it.p3]; const simp=[pts[0]];
+    for(let k=1;k<pts.length-1;k++){ const a0=simp[simp.length-1],a1=pts[k],a2=pts[k+1]; if((Math.abs(a0.x-a1.x)<0.01&&Math.abs(a1.x-a2.x)<0.01)||(Math.abs(a0.y-a1.y)<0.01&&Math.abs(a1.y-a2.y)<0.01)) continue; simp.push(a1); }
+    simp.push(pts[pts.length-1]);
+    out.set(it.i,{type:'poly',pts:simp});
+  }
+  return out;
+}
+// Mermaid's curve setting (frontmatter config or %%{init}%%) gives the board's connector style.
+function boardCurve(m){
+  const txt=[...(m.fmExtra||[]),...(m.pre||[]),...(m.comments||[])].join('\n');
+  const mm=/["']?curve["']?\s*:\s*["']?(\w+)/.exec(txt); if(!mm) return 'curved';
+  const c=mm[1]; return /^step/.test(c)?'elbow':c==='linear'?'straight':'curved';
+}
+const routeOf=(m,e)=>e.route||m.curve||'curved';
 function edgeGeom(a,b,off,route,sides){ return geomPath(edgeShape(a,b,off,route,sides),0,0); }
 // The side of r nearest to p, or null when p is in the middle (then the connector picks its side itself).
 function sideNear(r,p){ if(!r||!p) return null; const fx=(p.x-r.x)/(r.w||1), fy=(p.y-r.y)/(r.h||1); if(fx>0.3&&fx<0.7&&fy>0.3&&fy<0.7) return null; const d={l:Math.abs(p.x-r.x)/(r.w||1),r:Math.abs(r.x+r.w-p.x)/(r.w||1),t:Math.abs(p.y-r.y)/(r.h||1),b:Math.abs(r.y+r.h-p.y)/(r.h||1)}; return Object.keys(d).sort((x,y)=>d[x]-d[y])[0]; }

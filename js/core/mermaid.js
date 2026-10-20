@@ -141,7 +141,24 @@ function parseStyle(str){
   return st;
 }
 
-function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[]};}
+// classDef / class / :::name colours, as Mermaid draws them. Kept apart from style lines,
+// so the code is written back unchanged; an explicit style line wins over the class.
+function applyClassDefs(m){
+  const defs=new Map(), classOf=new Map(); m.cstyles=new Map();
+  for(const x of m.extras){
+    let mm=/^classDef\s+([\w,-]+)\s+(.+?);?\s*$/.exec(x); if(mm){ for(const nm of mm[1].split(',')) if(nm.trim()) defs.set(nm.trim(),mm[2]); continue; }
+    mm=/^class\s+(.+?)\s+([\w-]+);?\s*$/.exec(x); if(mm) for(const id of mm[1].split(',')) if(id.trim()) classOf.set(id.trim(),mm[2]);
+  }
+  if(!defs.size) return;
+  for(const n of m.nodes.values()){ if(n.shape==='sticky') continue; const c=n.cls||classOf.get(n.id); const src=(c&&defs.get(c))||defs.get('default'); if(src) m.cstyles.set(n.id,parseStyle(src)); }
+  for(const g of m.groups.values()){ const c=classOf.get(g.id); if(c&&defs.has(c)) m.cstyles.set(g.id,parseStyle(defs.get(c))); }
+}
+function styleOf(m,id){
+  const own=m.styles.get(id), c=m.cstyles&&m.cstyles.get(id); if(!c) return own; if(!own) return c;
+  const out={...c}; for(const [k,v] of Object.entries(own)){ if(k==='extra') continue; if(v!=null&&v!==false) out[k]=v; }
+  out.extra=[...(c.extra||[]),...(own.extra||[])]; return out;
+}
+function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[],cstyles:new Map()};}
 const r10=v=>Math.round(v*10)/10;
 function encodeInk(k){
   const pts=k.pts.map(([x,y])=>[r10(x),r10(y)]); if(!pts.length) return '';
@@ -267,8 +284,9 @@ function parseMermaid(src){
   if(!fatal&&stack.length) errors.push({line:stack[stack.length-1].line,msg:'subgraph "'+stack[stack.length-1].label+'" needs a closing "end"'});
   for(const id of [...m.nodes.keys()]) if(m.groups.has(id)) removeNode(id);
   for(const L of pendLink) for(const i of L.idx){ const e=m.edges[i]; if(!e) continue; if(L.width) e.width=L.width; if(L.color) e.color=L.color; }
-  for(const [i,r] of pendRoute){ const e=m.edges[i]; if(!e) continue; if(r.r!=='curved') e.route=r.r; if(r.a) e.sa=r.a; if(r.b) e.sb=r.b; }
+  for(const [i,r] of pendRoute){ const e=m.edges[i]; if(!e) continue; e.route=r.r; if(r.a) e.sa=r.a; if(r.b) e.sb=r.b; }
   for(const n of m.nodes.values()) if(n.group&&!m.groups.has(n.group)) n.group=null;
+  applyClassDefs(m); m.curve=boardCurve(m);
   return {model:m,errors,fatal};
 }
 
@@ -314,7 +332,7 @@ function layoutLines(m,boxes){
     const p=m.pos.get(gid);
     if(p&&p.w) L.push('%% @pos '+gid+' '+r1(p.x)+' '+r1(p.y)+' '+r1(p.w)+' '+r1(p.h));
   }
-  (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb; if((e.route&&e.route!=='curved')||sd) L.push('%% @route '+i+' '+(e.route||'curved')+(sd?' '+(e.sa||'-')+' '+(e.sb||'-'):'')); });
+  (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb; if((e.route&&e.route!==(m.curve||'curved'))||sd) L.push('%% @route '+i+' '+(e.route||m.curve||'curved')+(sd?' '+(e.sa||'-')+' '+(e.sb||'-'):'')); });
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }
   for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
