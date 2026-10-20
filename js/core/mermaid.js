@@ -169,23 +169,29 @@ function cleanTable(d){
 // Documents: {blocks:[{t:'h1'|'h2'|'h3'|'p'|'ul'|'ol', r:[{x:text, b?:1, i?:1}]}]}.
 function cleanDoc(d){
   const T=new Set(['h1','h2','h3','p','ul','ol']);
-  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>({t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; return o; })})):[];
+  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>({t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; const u=safeUrl(x.u); if(u) o.u=u; return o; })})):[];
   if(!blocks.length) blocks=[{t:'p',r:[]}];
-  return {blocks:blocks.slice(0,400)};
+  const out={blocks:blocks.slice(0,400)};
+  // A ticket: a work item type and its fields.
+  if(d&&TICKET_TYPES[d.kind]){ out.kind=d.kind; const f=cleanFields(d.kind,d.fields); if(Object.keys(f).length) out.fields=f; }
+  return out;
 }
-// Markdown (what the AI writes) to document blocks: # ## ### headings, - and 1. lists, **bold**, *italic*.
+// Markdown (what the AI writes) to document blocks: # ## ### headings, - and 1. lists, **bold**, *italic*, [links](https://…).
 function mdToDoc(md){
-  const blocks=[]; const runs=s=>{ const out=[]; const re=/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g; let last=0,m;
-    while((m=re.exec(s))){ if(m.index>last) out.push({x:s.slice(last,m.index)}); const t=m[0]; if(t.startsWith('**')) out.push({x:t.slice(2,-2),b:1}); else out.push({x:t.slice(1,-1),i:1}); last=m.index+t.length; }
+  const blocks=[]; const runs=s=>{ const out=[]; const re=/(\[[^\]]+\]\((?:https?:\/\/|mailto:)[^)\s]+\)|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|https?:\/\/[^\s<>()]+[^\s<>().,;:!?'"])/g; let last=0,m;
+    while((m=re.exec(s))){ if(m.index>last) out.push({x:s.slice(last,m.index)}); const t=m[0];
+      if(t[0]==='['){ const k=t.indexOf(']('); out.push({x:t.slice(1,k),u:t.slice(k+2,-1)}); }
+      else if(/^https?:/.test(t)) out.push({x:t,u:t});
+      else if(t.startsWith('**')) out.push({x:t.slice(2,-2),b:1}); else out.push({x:t.slice(1,-1),i:1}); last=m.index+t.length; }
     if(last<s.length) out.push({x:s.slice(last)}); return out.filter(r=>r.x); };
-  for(const raw of String(md||'').replace(/\r/g,'').split('\n')){ const l=raw.trimEnd(); if(!l.trim()) continue; let m;
+  for(const raw of String(md||'').replace(/\r/g,'').split('\n')){ const l=raw.trimEnd(); if(!l.trim()){ continue; } let m;
     if((m=/^(#{1,3})\s+(.*)$/.exec(l))) blocks.push({t:'h'+m[1].length,r:runs(m[2])});
-    else if((m=/^\s*[-*•]\s+(.*)$/.exec(l))) blocks.push({t:'ul',r:runs(m[1])});
-    else if((m=/^\s*\d+[.)]\s+(.*)$/.exec(l))) blocks.push({t:'ol',r:runs(m[1])});
+    else if((m=/^\s*[-*•]\s*(.*)$/.exec(l))&&/^\s*[-*•](\s|$)/.test(l)) blocks.push({t:'ul',r:runs(m[1])});
+    else if((m=/^\s*\d+[.)]\s*(.*)$/.exec(l))&&/^\s*\d+[.)](\s|$)/.test(l)) blocks.push({t:'ol',r:runs(m[1])});
     else blocks.push({t:'p',r:runs(l.trim())}); }
   return cleanDoc({blocks});
 }
-function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ const s=b.r.map(r=>r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x).join(''); if(b.t==='ol') k++; else k=0; return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:s; }).join('\n'); }
+function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ const s=b.r.map(r=>{ let x=r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x; if(r.u) x=r.x===r.u?r.u:'['+x+']('+r.u+')'; return x; }).join(''); if(b.t==='ol') k++; else k=0; return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:s; }).join('\n'); }
 function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[],cstyles:new Map()};}
 const r10=v=>Math.round(v*10)/10;
 function encodeInk(k){

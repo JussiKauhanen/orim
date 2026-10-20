@@ -94,10 +94,13 @@ function lineUp(){
   const ids=picked.length>=2?picked:[...m.nodeOrder];
   const before=new Map(ids.map(id=>{ const n=m.nodes.get(id); return [id,n?n.x+','+n.y:'']; }));
   mutate(mm=>{
-    const nodes=ids.map(id=>mm.nodes.get(id)).filter(n=>n&&n.x!=null);
+    // Pieces of a mockup screen stay where they were drawn; the screen moves as one block.
+    const inDev=n=>{ let g=n.group&&mm.groups.get(n.group),k=0; while(g&&k++<60){ if(g.dev) return true; g=g.parent&&mm.groups.get(g.parent); } return false; };
+    const nodes=ids.map(id=>mm.nodes.get(id)).filter(n=>n&&n.x!=null&&!inDev(n));
     const by=new Map(); for(const n of nodes){ const k=n.group||''; if(!by.has(k)) by.set(k,[]); by.get(k).push(n); }
     for(const list of by.values()){ alignAxis(list,'y'); alignAxis(list,'x'); separate(list); }
-    for(const n of nodes) state.cache.set(n.id,{x:n.x,y:n.y});
+    if(!(picked.length>=2)) separateBlocks(mm,null);
+    for(const n of mm.nodes.values()) state.cache.set(n.id,{x:n.x,y:n.y});
   },{structural:false});
   const changed=ids.filter(id=>{ const n=state.model.nodes.get(id); return n&&before.get(id)!==n.x+','+n.y; }).length;
   toast(changed?'Lined up '+changed+(changed===1?' shape':' shapes')+'. Undo with Ctrl+Z':'Already lined up');

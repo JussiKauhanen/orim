@@ -10,6 +10,30 @@
  * while Claude is still writing. The whole request is one undo step.
  */
 'use strict';
+/* While Claude works: a soft, blurred sketch of a board being drawn at the side of the canvas, with a
+ * cursor drifting between the pieces, so the board does not sit still while the answer is coming. */
+const Ghost=(()=>{
+  let el=null, pill=null, hideT=0;
+  function build(){
+    el=document.createElement('div'); el.className='ai-ghost'; el.setAttribute('aria-hidden','true');
+    const card=(x,y,w,h,d,c)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" class="gh-card"/>'+
+      '<rect x="'+(x+14)+'" y="'+(y+14)+'" width="'+(w*0.45)+'" height="8" rx="4" class="gh-ink" style="fill:'+c+'"/><rect x="'+(x+14)+'" y="'+(y+30)+'" width="'+(w-28)+'" height="6" rx="3" class="gh-line"/><rect x="'+(x+14)+'" y="'+(y+42)+'" width="'+(w*0.6)+'" height="6" rx="3" class="gh-line"/></g>';
+    const dot=(x,y,r,c,d)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><circle cx="'+x+'" cy="'+y+'" r="'+r+'" style="fill:'+c+';opacity:.55"/><rect x="'+(x-22)+'" y="'+(y+r+8)+'" width="44" height="6" rx="3" class="gh-line"/></g>';
+    el.innerHTML='<svg viewBox="0 0 420 520" preserveAspectRatio="xMidYMid meet"><defs><filter id="ghBlur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter></defs><g filter="url(#ghBlur)" opacity=".8">'+
+      '<path class="gh-wire" d="M150 104 C 220 104, 230 190, 300 196"/><path class="gh-wire" d="M120 150 C 120 250, 140 300, 196 330" style="animation-delay:-1.2s"/><path class="gh-wire" d="M300 236 C 300 320, 290 360, 250 380" style="animation-delay:-2.1s"/>'+
+      card(30,62,150,64,[3,-2,0],'#8b5cf6')+card(230,180,150,60,[-3,2,-1.6],'#3b82f6')+card(176,318,170,70,[2,3,-3.1],'#ff7ac6')+
+      dot(80,250,16,'#3b82f6',[2,-3,-0.8])+dot(330,420,14,'#8b5cf6',[-2,2,-2.4])+dot(110,440,13,'#0ca789',[3,1,-4])+'</g>'+
+      '<g class="gh-cursor"><path d="M0 0l12 4.5-5 1.6-1.8 5.2z" style="fill:#8b5cf6;stroke:#fff;stroke-width:1.2;stroke-linejoin:round"/><rect x="10" y="10" width="44" height="17" rx="8.5" style="fill:#8b5cf6"/><text x="32" y="22" text-anchor="middle" style="fill:#fff;font:600 10px var(--font-ui)">Claude</text></g>'+
+      '</svg>';
+    pill=document.createElement('div'); pill.className='gh-pill'; pill.setAttribute('role','status'); pill.innerHTML='<span class="gh-spark">'+aiSpark()+'</span><span class="gh-text">Claude is thinking</span>';
+    boardPane.appendChild(el); boardPane.appendChild(pill);
+  }
+  return {
+    start(){ if(!el) build(); clearTimeout(hideT); pill.querySelector('.gh-text').textContent='Claude is thinking'; el.hidden=pill.hidden=false; requestAnimationFrame(()=>{ el.classList.add('on'); pill.classList.add('on'); }); },
+    phase(p){ if(pill&&p) pill.querySelector('.gh-text').textContent='Claude is changing the board'; },
+    stop(){ if(!el) return; el.classList.remove('on'); pill.classList.remove('on'); hideT=setTimeout(()=>{ if(el){ el.hidden=true; pill.hidden=true; } },450); }
+  };
+})();
 const AI=(()=>{
   const log=$('#aiLog'), inp=$('#aiIn'), sendBtn=$('#aiSend'), stopBtn=$('#aiStop'), deep=$('#aiDeep'), selEl=$('#aiSel');
   const chats=new Map();            // board id -> [{role:'user'|'assistant', content, view}]
@@ -33,24 +57,30 @@ Commands:
 {"op":"connect","from":"api","to":"cache","label":"reads","line":"solid|dotted|thick","ends":"one|both|none","fromRow":2,"toRow":"Pricing"}   from/to can be shapes, frames or tables; fromRow/toRow attach the line to one table row (number, 0 is the header, or the row's first cell text)
 {"op":"screen","id":"login","device":"mobile|tablet|desktop","preset":"blank|login|main","label":"Login","near":"id"}   a UI mockup screen: a device frame filled with grey wireframe pieces (blank has only a top bar)
 {"op":"add","id":"loginCta","shape":"uiButton","label":"Sign up","in":"login","at":[24,500],"size":[252,44]}   a piece on a screen; at is x,y from the screen's top left, size is w,h; both optional
-  pieces: uiHeading, uiText (label = the text; empty shows grey lines), uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar (bottom menu) and uiSidebar (side menu): one item per line in the label, e.g. "Home\\nSearch\\nProfile"
-  {"op":"update","id":"loginCta","at":[24,560],"size":[252,44]} moves or resizes a piece
+  pieces: uiHeading, uiText (label = the text; empty shows grey lines), uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar (bottom menu), uiSidebar (side menu) and uiTable (a data table; label = column names): one item per line in the label, e.g. "Home\\nSearch\\nProfile"
+  {"op":"update","id":"loginCta","at":[24,560],"size":[252,44],"fill":"#4262ff"} moves, resizes or colours a piece; colours: ${UI_COLORS.slice(1).map(c=>c[0]+' '+c[1].toLowerCase()).join(', ')}; grey when none
 {"op":"table","id":"cmp","title":"Crystallize vs Optimizely","rows":[["","Crystallize","Optimizely"],["Pricing","Usage based","Per seat"]],"colors":{"1,1":"g","1,2":"a"},"near":"id","in":"frameId"}   create or replace a table; row 0 is the header row, column 0 the row names; colors "row,col": g good, a partly, r weak
 {"op":"cell","id":"cmp","row":1,"col":2,"text":"…","color":"g|a|r|none"}   change one cell; row may be a row name; a row or column one past the end is added
 {"op":"doc","id":"notes","title":"Summary","markdown":"# Heading\\n- point with **bold**","near":"cmp","in":"frameId"}   create or replace a document card: # ## ### headings, - and 1. lists, **bold**, *italic*
+{"op":"doc","id":"loginStory","type":"story","title":"Sign in with Entra ID","fields":{"points":3,"priority":2,"tags":"auth; web"},"markdown":"## Description\\nAs a shopper, I want to sign in with my work account, so that …\\n## Acceptance criteria\\n- …","near":"login"}   a ticket: a doc with a work item type
+  type: epic, feature, story (user story), bug or task; leave it out for a plain document. fields by type: epic and feature: priority (1-4), tags; story: points, priority, tags; bug: severity ("1 - Critical" … "4 - Low"), priority, tags; task: remaining (hours), activity (Development, Design, Testing, Documentation, Deployment, Requirements), tags. Tags are separated by ;
+  markdown links: [text](https://…). Updating a doc: send only what changes; fields are merged.
 {"op":"disconnect","from":"api","to":"cache"}
 {"op":"frame","id":"sec","label":"Security","items":["kv","mi"],"in":"parentFrame"}   create or rename a frame and move items into it
 {"op":"unframe","id":"sec"}   remove a frame but keep what is in it
 {"op":"layout"}   rearrange the whole board; only when asked, or after a big restructure
+{"op":"direction","dir":"TB"}   flow direction: TB (top to bottom, vertical), LR (left to right, horizontal), BT or RL; rearranges the board to match. Add "in":"frameId" to change one frame only
 {"op":"say","text":"…"}   a short message to the person
 
 Rules:
 - Reuse existing ids exactly. New ids: camelCase letters and digits, not used yet.
 - Do only what was asked. Keep labels short; use \\n for a line break.
 - Use an icon for a cloud or Microsoft service when one fits (ids listed below); otherwise a plain shape.
-- Mockups: keep them simple and grey, a few pieces per screen. Phone 300x620 (content from y 40), iPad 560x760 (from y 30), desktop 960x600 (from y 34). Start from a preset, then add, update or delete pieces. Connect screens to each other for a flow, or pieces to the screen they open.
+- Mockups: keep them simple and grey, a few pieces per screen. New screens: phone ${DEVICES.mobile.w*MOCK}x${DEVICES.mobile.h*MOCK} (content from y ${DEVICES.mobile.top*MOCK}), iPad ${DEVICES.tablet.w*MOCK}x${DEVICES.tablet.h*MOCK} (from y ${DEVICES.tablet.top*MOCK}), desktop ${DEVICES.desktop.w*MOCK}x${DEVICES.desktop.h*MOCK} (from y ${DEVICES.desktop.top*MOCK}); the board lists each screen's real size. Start from a preset, then add, update or delete pieces. Connect screens to each other for a flow, or pieces to the screen they open.
+- Database tables: a table titled with the table name, header row Column | Type | Key | Notes and one row per column; link foreign keys row to row with fromRow and toRow.
 - Comparisons: one table, with a row per criterion and a column per option; colour cells to show which option is stronger. To link a diagram to a comparison, connect shapes to the table rows they relate to.
 - Longer explanations, notes or summaries: a doc, not a sticky note.
+- Tickets (work items to paste into Azure DevOps, Jira or similar): one doc per item with a type. Stories: Description as "As a …, I want …, so that …" and an Acceptance criteria list; bugs: Repro steps, Expected result, Actual result; tasks: a short Description. Titles short and specific. Connect each parent to its children (epic to feature to story or bug to task) and each ticket to the shapes or screens it changes. Put a set of tickets in a frame (for example the epic or sprint name); they are placed clear of the rest of the board.
 - Sticky note colours: ${STICKY_COLORS.slice(0,8).join(' ')}.
 - A question about the board: answer with say lines only, no changes.
 - Something unclear or impossible: one say line asking or explaining, no changes.
@@ -63,10 +93,10 @@ Rules:
       for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.shape==='table'||n.shape==='doc'||(n.group&&m.groups.get(n.group)&&m.groups.get(n.group).dev)) continue; L.push('- '+id+' | '+String(n.label).replace(/\n/g,' ').slice(0,80)+' | '+(n.shape==='icon'?n.icon:n.shape)+(n.group?' | '+n.group:'')); } }
     const tabs=[...m.nodes.values()].filter(n=>n.shape==='table'); if(tabs.length){ L.push('Tables (id | title | frame), then rows as row number: cells, with [g]/[a]/[r] colours:');
       for(const n of tabs){ L.push('- '+n.id+' | '+(n.label||'')+(n.group?' | '+n.group:'')); n.table.rows.forEach((r,ri)=>L.push('  '+ri+': '+r.map((c,ci)=>String(c).replace(/\n/g,' ').slice(0,60)+(n.table.colors[ri+','+ci]?' ['+n.table.colors[ri+','+ci]+']':'')).join(' | '))); } }
-    const scr=[...m.groups.values()].filter(g=>g.dev); if(scr.length){ L.push('Screens (id | label | device), then their pieces as id | kind | label | x,y,w,h from the screen corner:');
-      for(const g of scr){ const b=state.boxes&&state.boxes.get(g.id); L.push('- '+g.id+' | '+g.label+' | '+g.dev); for(const n of m.nodes.values()) if(n.group===g.id&&b) L.push('  '+n.id+' | '+n.shape+' | '+String(n.label).replace(/\n/g,'\\n').slice(0,60)+' | '+[n.x-b.x,n.y-b.y,n.w,n.h].map(Math.round).join(',')); } }
-    const docs=[...m.nodes.values()].filter(n=>n.shape==='doc'); if(docs.length){ L.push('Documents (id | title | frame), then their text as markdown:');
-      for(const n of docs){ L.push('- '+n.id+' | '+(n.label||'')+(n.group?' | '+n.group:'')); L.push(docToMd(n.doc).split('\n').map(l=>'  '+l).join('\n').slice(0,1500)); } }
+    const scr=[...m.groups.values()].filter(g=>g.dev); if(scr.length){ L.push('Screens (id | label | device | size), then their pieces as id | kind | label | x,y,w,h from the screen corner:');
+      for(const g of scr){ const b=state.boxes&&state.boxes.get(g.id); L.push('- '+g.id+' | '+g.label+' | '+g.dev+(b?' | '+Math.round(b.w)+'x'+Math.round(b.h):'')); for(const n of m.nodes.values()) if(n.group===g.id&&b) L.push('  '+n.id+' | '+n.shape+' | '+String(n.label).replace(/\n/g,'\\n').slice(0,60)+' | '+[n.x-b.x,n.y-b.y,n.w,n.h].map(Math.round).join(',')); } }
+    const docs=[...m.nodes.values()].filter(n=>n.shape==='doc'); if(docs.length){ L.push('Documents and tickets (id | type | title | fields | frame), then their text as markdown:');
+      for(const n of docs){ L.push('- '+n.id+' | '+(TICKET_TYPES[n.doc.kind]?n.doc.kind:'note')+' | '+(n.label||'')+(n.doc.fields?' | '+JSON.stringify(n.doc.fields):'')+(n.group?' | '+n.group:'')); L.push(docToMd(n.doc).split('\n').map(l=>'  '+l).join('\n').slice(0,1500)); } }
     if(m.edges.length){ L.push('Connections:'); for(const e of m.edges) L.push('- '+e.from+(e.ra!=null?' (row '+e.ra+')':'')+(e.line==='dotted'?' -.-> ':e.line==='thick'?' ==> ':e.head==='none'?' --- ':' --> ')+e.to+(e.rb!=null?' (row '+e.rb+')':'')+(e.label?' | '+e.label.replace(/\n/g,' '):'')); }
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').map(k=>k.slice(2)); if(sel.length) L.push('Selected now: '+sel.join(', ')+' ("these", "this" and "selected" mean these).');
     const cm=(m.threads||[]).filter(c=>!c.done&&c.msgs.length); if(cm.length){ L.push('Open comments:'); for(const c of cm) L.push('- on '+(c.on||'the board')+': '+c.msgs.map(q=>(q.a?q.a+': ':'')+q.t.replace(/\n/g,' ')).join(' / ').slice(0,300)); }
@@ -111,15 +141,20 @@ Rules:
   // A piece on a screen: at and size are relative to the screen; without them it goes below the last piece.
   function placePiece(m,n,op,keep){
     const g=n.group&&m.groups.get(n.group); const p=g&&m.pos.get(g.id); if(!g||!g.dev||!p){ if(!keep) place(m,n,null); return; }
-    const D=DEVICES[g.dev]; const num=v=>typeof v==='number'&&isFinite(v)?v:null;
-    if(Array.isArray(op.size)&&num(op.size[0])&&num(op.size[1])){ n.w=Math.max(16,Math.min(p.w,op.size[0])); n.h=Math.max(12,Math.min(p.h,op.size[1])); n.sized=true; }
-    else if(!keep){ n.w=Math.min(n.w,p.w-40); n.sized=true; }
+    const D=DEVICES[g.dev], sc=devScale(m,g.id), k=UI_KINDS[n.shape]; const num=v=>typeof v==='number'&&isFinite(v)?v:null;
+    if(Array.isArray(op.size)&&num(op.size[0])&&num(op.size[1])){ n.w=Math.max(8,Math.min(p.w,op.size[0])); n.h=Math.max(6,Math.min(p.h,op.size[1])); n.sized=true; }
+    else if(!keep){ if(k){ n.w=k.w*sc; n.h=k.h*sc; } n.w=Math.min(n.w,p.w-40*sc); n.sized=true; }
     if(Array.isArray(op.at)&&num(op.at[0])!=null&&num(op.at[1])!=null){ n.x=p.x+Math.max(0,Math.min(p.w-n.w,op.at[0])); n.y=p.y+Math.max(0,Math.min(p.h-n.h,op.at[1])); return; }
     if(keep) return;
-    let bottom=p.y+D.top+8, last=null; for(const o of m.nodes.values()) if(o!==n&&o.group===g.id&&o.x!=null&&o.shape!=='uiTabbar'&&o.shape!=='uiSidebar'&&o.shape!=='uiTopbar'&&o.y+o.h>=bottom){ bottom=o.y+o.h; last=o; }
+    let bottom=p.y+D.top*sc+8*sc, last=null, left=p.x+20*sc;
+    for(const o of m.nodes.values()){ if(o===n||o.group!==g.id||o.x==null) continue;
+      if(o.shape==='uiTopbar') bottom=Math.max(bottom,o.y+o.h+8*sc);
+      if(o.shape==='uiSidebar') left=Math.max(left,o.x+o.w+20*sc); }
+    for(const o of m.nodes.values()) if(o!==n&&o.group===g.id&&o.x!=null&&o.shape!=='uiTabbar'&&o.shape!=='uiSidebar'&&o.shape!=='uiTopbar'&&o.y+o.h>=bottom){ bottom=o.y+o.h; last=o; }
     // Below the lowest piece, lined up with it.
     if(last&&!(Array.isArray(op.size))){ n.w=Math.min(p.w,Math.max(n.w,last.w)); }
-    n.x=n.w>=p.w-1?p.x:last?last.x:p.x+20; n.y=Math.min(p.y+p.h-n.h-D.bottom,bottom+16);
+    n.w=Math.min(n.w,p.x+p.w-left-20*sc>8?Math.max(n.w>=p.w-1?p.w:0,p.x+p.w-left-20*sc):n.w);
+    n.x=n.w>=p.w-1?p.x:last?last.x:left; n.y=Math.min(p.y+p.h-n.h-D.bottom*sc,bottom+16*sc);
   }
   // A free spot for something w x h: beside the shape it relates to, or right of the board.
   function freeSpot(m,w,h,nearId){
@@ -164,7 +199,7 @@ Rules:
       sizeNode(n); done.changed++; done.fresh.push(n.id); return;
     }
     if(k==='screen'){
-      const D=DEVICES[op.device]||DEVICES.mobile; const r=freeSpot(m,D.w,D.h,op.near);
+      const D=DEVICES[op.device]||DEVICES.mobile; const r=freeSpot(m,D.w*MOCK,D.h*MOCK,op.near);
       const res=addScreen(m,{dev:DEVICES[op.device]?op.device:'mobile',preset:['blank','login','main'].includes(op.preset)?op.preset:'blank',label:op.label?label(op.label):'',id:op.id?cleanId(op.id,op.label):null,x:r.x,y:r.y,parent:op.in&&m.groups.has(op.in)?op.in:null});
       done.added++; done.fresh.push(...res.ids); return;
     }
@@ -192,7 +227,15 @@ Rules:
       if(!n){ let id=cleanId(op.id,lb||k); if(taken(id)) id=idFrom(lb||k,taken); n={id,label:lb,shape:k,icon:null,group:op.in&&m.groups.has(op.in)?op.in:null,cls:null}; m.nodes.set(id,n); m.nodeOrder.push(id); }
       else { if(op.title!=null||op.label!=null) n.label=lb; if('in' in op) n.group=op.in&&m.groups.has(op.in)?op.in:null; }
       if(k==='table'){ if(Array.isArray(op.rows)||!n.table) n.table=cleanTable({rows:op.rows,colors:op.colors||(n.table&&!Array.isArray(op.rows)?n.table.colors:{})}); else if(op.colors) n.table=cleanTable({rows:n.table.rows,colors:op.colors}); }
-      else if(op.markdown!=null||op.text!=null||!n.doc) n.doc=mdToDoc(String(op.markdown!=null?op.markdown:op.text||'').replace(/\\n/g,'\n'));
+      else {
+        const ty=op.type===undefined?undefined:(String(op.type||'').toLowerCase().replace(/^user\s*/,'').replace(/^product backlog item$/,'story').replace(/^pbi$/,'story'));
+        const kind=ty===undefined?(n.doc&&n.doc.kind):(TICKET_TYPES[ty]?ty:null);
+        let blocks=n.doc&&n.doc.blocks;
+        if(op.markdown!=null||op.text!=null) blocks=mdToDoc(String(op.markdown!=null?op.markdown:op.text||'').replace(/\\n/g,'\n')).blocks;
+        else if(!blocks||fresh) blocks=kind?ticketTemplate(kind):[{t:'p',r:[]}];
+        const fields={...((n.doc&&n.doc.fields)||{}),...(op.fields&&typeof op.fields==='object'?op.fields:{})};
+        n.doc=cleanDoc({blocks,kind,fields});
+      }
       const cx=n.x; sizeNode(n); if(fresh||cx==null) place(m,n,op.near);
       if(hex(op.fill)) setStyle(m,n.id,{fill:hex(op.fill)});
       if(fresh) done.added++; else done.changed++; done.fresh.push(n.id); return;
@@ -208,13 +251,22 @@ Rules:
     if(k==='disconnect'){ const before=m.edges.length; m.edges=m.edges.filter(e=>!((e.from===op.from&&e.to===op.to)||(e.from===op.to&&e.to===op.from))); if(m.edges.length<before) done.removed++; return; }
     if(k==='frame'){
       let id=op.id&&m.groups.has(op.id)?op.id:null;
-      if(!id){ const lb=label(op.label||'Frame'); id=cleanId(op.id,lb); if(taken(id)) id=idFrom(lb,taken); m.groups.set(id,{id,label:lb.replace(/\n/g,' '),parent:op.in&&m.groups.has(op.in)?op.in:null,dir:null}); m.groupOrder.push(id); done.added++; }
+      if(!id){ const lb=label(op.label||'Frame'); id=cleanId(op.id,lb); if(taken(id)) id=idFrom(lb,taken); m.groups.set(id,{id,label:lb.replace(/\n/g,' '),parent:op.in&&m.groups.has(op.in)?op.in:null,dir:null}); m.groupOrder.push(id); done.added++; done.fresh.push(id); }
       else if(op.label) m.groups.get(id).label=label(op.label).replace(/\n/g,' ');
       for(const it of Array.isArray(op.items)?op.items:[]){ const n=m.nodes.get(it), g=m.groups.get(it); if(n) n.group=id; else if(g&&g.id!==id&&!isDesc(m,id,g.id)) g.parent=id; }
       done.changed++; return;
     }
     if(k==='unframe'){ const g=m.groups.get(op.id); if(!g) return; for(const n of m.nodes.values()) if(n.group===g.id) n.group=g.parent||null; for(const o of m.groups.values()) if(o.parent===g.id) o.parent=g.parent||null;
       m.groups.delete(g.id); m.groupOrder=m.groupOrder.filter(x=>x!==g.id); m.pos.delete(g.id); m.edges=m.edges.filter(e=>e.from!==g.id&&e.to!==g.id); done.changed++; return; }
+    if(k==='direction'){
+      const raw=String(op.dir||op.direction||'').toUpperCase(); const dir={VERTICAL:'TB',DOWN:'TB',TD:'TB',TB:'TB',UP:'BT',BT:'BT',HORIZONTAL:'LR',RIGHT:'LR',LR:'LR',LEFT:'RL',RL:'RL'}[raw];
+      if(!dir) return;
+      if(op.in&&m.groups.has(op.in)) m.groups.get(op.in).dir=dir;
+      else { const was=m.dir||'TB', vert=d=>d==='TB'||d==='TD'||d==='BT';
+        // Pinned connection points turn with the board, so lines still leave the side they flow out of.
+        if(vert(was)!==vert(dir)){ const T=vert(dir)?{r:'b',l:'t',t:'l',b:'r'}:{b:'r',t:'l',r:'b',l:'t'}; for(const e of m.edges){ if(e.sa&&e.ra==null) e.sa=T[e.sa]; if(e.sb&&e.rb==null) e.sb=T[e.sb]; } }
+        m.dir=dir; for(const g of m.groups.values()) if(!g.dev) g.dir=null; }
+      for(const gid of m.groupOrder) if(groupHasMembers(m,gid)&&!m.groups.get(gid).dev) m.pos.delete(gid); autoLayout(m); done.layout=true; done.changed++; return; }
     if(k==='layout'){ for(const gid of m.groupOrder) if(groupHasMembers(m,gid)&&!m.groups.get(gid).dev) m.pos.delete(gid); autoLayout(m); done.layout=true; return; }
   }
   // Show the change on the board without adding an undo step yet.
@@ -225,8 +277,12 @@ Rules:
     const list=chat(); let h='';
     if(!list.length){
       if(known&&!sample) h='<div class="ai-empty"><b>Claude works here when orim is opened inside Claude</b>Open the copy of orim shared from Claude to use this tab: it uses your own Claude account and needs no setup. Here, use Export, then Ask an AI, to copy a prompt for any AI chat.</div>';
-      else h='<div class="ai-empty"><b>Tell Claude what to change</b>It edits the board as it answers, and every request can be undone in one step. Select shapes first to talk about just those.<div class="ai-try">'+
-        ['Add a Redis cache between the API and the database','Put the security services into a frame called Security','Colour the Azure services light blue','What does this diagram show?'].map(t=>'<button type="button" data-try="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div></div>';
+      else { const blank=!state.model||(!state.model.nodes.size&&!state.model.groups.size);
+        // Starters that show what the AI can make here: diagrams, screens, docs, tables and tickets.
+        const T=blank?[['Create','a simple web shop on Azure: front end, API, database and sign-in'],['Mock up','a login, a product list and a profile screen for mobile'],['Compare','Crystallize and Optimizely in a table, and link the parts to a diagram'],['Plan','a customer portal: a short spec doc, the database tables and the first tickets']]
+          :[['Expand','this with the services it is missing, like monitoring and secrets'],['Plan it out','with a spec doc, the database tables and tickets for the work'],['Mock up','the screens a user would see, and connect them to the services'],['Explain','what this board shows, in a document card']];
+        h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What should we build?':'What should we do with this board?')+'</b>Describe it and Claude builds it here while it answers: architecture with real Azure icons, screens, docs, tables and tickets. Each request is one undo step, and selected shapes are what "this" means.<div class="ai-try">'+
+          T.map(([v,r])=>{ const t=v+' '+r; return '<button type="button" data-try="'+esc(t)+'"><b>'+esc(v)+'</b> '+esc(r)+'</button>'; }).join('')+'</div></div>'; }
     }
     for(const t of list){
       if(t.role==='user') h+='<div class="ai-msg me">'+esc(t.content)+'</div>';
@@ -245,12 +301,12 @@ Rules:
     if(!state.model||state.fatal){ toast('Fix the code errors first'); return; }
     flushEditorHist(); histPush(state.code);
     const list=chat(); const turn={role:'assistant',content:'',view:'',pending:true,phase:'Thinking',work:{added:0,linked:0,changed:0,removed:0,layout:false},undoAt:null};
-    const req=input(text); list.push({role:'user',content:text}); list.push(turn); inp.value=''; busy=true; paint();
+    const req=input(text); list.push({role:'user',content:text}); list.push(turn); inp.value=''; busy=true; paint(); Ghost.start();
     const before=state.code, prevIds=nodeIds(); const done={say:[],added:0,linked:0,changed:0,removed:0,layout:false,fresh:[]};
     let pending='', applied=0;
     const eat=line=>{ line=line.trim().replace(/^```\w*$/,''); if(!line) return; let op; try{ op=JSON.parse(line); }catch(_){ return; }
       try{ apply(op,done); applied++; if(op.op!=='say') live(); }catch(err){ console.error(err); }
-      turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; paint(); };
+      turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; Ghost.phase(op&&op.op==='say'?null:'Changing the board'); paint(); };
     ctl=new AbortController();
     try{
       await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick',
@@ -264,7 +320,10 @@ Rules:
       if(c==='not_granted'||c==='sampling_disabled'){ sample=null; }
     }
     // One undo step for the whole request.
-    turn.pending=false; busy=false; ctl=null;
+    turn.pending=false; busy=false; ctl=null; Ghost.stop();
+    // Whatever Claude added or moved is pushed clear of everything else, so nothing ends up on top of something.
+    if(state.code!==before&&state.model&&done.fresh.length&&!done.layout){ const m=state.model; const top=id=>{ let cur=m.nodes.get(id)?m.nodes.get(id).group:id, last=id, k=0; while(cur&&m.groups.has(cur)&&k++<60){ last=cur; cur=m.groups.get(cur).parent; } return last; };
+      const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov)) live(); }catch(err){ console.error(err); } }
     if(state.code!==before){ histPush(state.code); turn.undoAt=H.i-1; setEditorFromCode(); syncTitle(); saveLocal(); revealNew(prevIds);
       setTimeout(()=>{ for(const id of done.fresh.filter(id=>prevIds.has(id)).slice(-12)){ const el=R.nodeEls.get(id); if(!el) continue; el.classList.remove('flash'); void el.getBoundingClientRect(); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } },60); }
     turn.content=turn.view; turn.summary=(turn.view||'')+(done.added||done.linked||done.changed||done.removed?' ['+[done.added&&done.added+' added',done.linked&&done.linked+' connected',done.changed&&done.changed+' changed',done.removed&&done.removed+' removed'].filter(Boolean).join(', ')+']':'');

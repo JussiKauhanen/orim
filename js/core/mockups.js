@@ -18,15 +18,27 @@ const UI_KINDS={
   uiImage:{name:'Image',w:240,h:140,def:''},
   uiTopbar:{name:'Top bar',w:300,h:48,def:'Title'},
   uiTabbar:{name:'Bottom menu',w:300,h:56,def:'Home\nSearch\nProfile'},
-  uiSidebar:{name:'Side menu',w:180,h:360,def:'Home\nProjects\nSettings'}
+  uiSidebar:{name:'Side menu',w:180,h:360,def:'Home\nProjects\nSettings'},
+  uiTable:{name:'Table',w:260,h:150,def:'Name\nStatus\nDate'}
 };
+// Accent colours for pieces, like Miro's wireframe kit. Empty is the grey default.
+const UI_COLORS=[['','Grey'],['#4262ff','Blue'],['#0ca789','Green'],['#fac710','Yellow'],['#f24726','Red'],['#9510ac','Purple'],['#1a1a1a','Black']];
+// New screens and pieces are drawn at half the sizes above, so they sit well next to other shapes.
+// Older boards keep their sizes: a screen's scale is its saved width over the base width.
+const MOCK=0.5;
+function devScale(m,gid){ const g=m.groups.get(gid); if(!g||!g.dev) return MOCK; const p=m.pos.get(gid); return p&&p.w?p.w/DEVICES[g.dev].w:MOCK; }
+// The drawing scale of a piece: its screen's scale, or its size against the base size when loose.
+function uiScale(m,n){ const g=n.group&&m.groups.get(n.group); if(g&&g.dev) return devScale(m,g.id); const k=UI_KINDS[n.shape]; if(!k) return 1;
+  const r=['uiText','uiImage','uiSidebar','uiTable'].includes(n.shape)?n.w/k.w:n.h/k.h; return Math.max(0.3,Math.min(2,r||MOCK)); }
 const SCREEN_PRESETS=[['blank','Blank'],['login','Login'],['main','Main page']];
 const isUi=n=>!!(n&&UI_KINDS[n.shape]);
 const uiItems=label=>String(label||'').split(/\n|\|/).map(s=>s.trim()).filter(Boolean);
 // The pieces of a preset screen, with positions relative to the device's top left corner.
-function screenPieces(dev,preset){
+function screenPieces(dev,preset,s){
+  if(s==null) s=MOCK;
   const D=DEVICES[dev]||DEVICES.mobile, W=D.w, H=D.h, T=D.top, B=D.bottom, out=[];
-  const add=(kind,label,x,y,w,h)=>out.push({kind,label,x,y,w:w||UI_KINDS[kind].w,h:h||UI_KINDS[kind].h});
+  const R=v=>Math.round(v*s*2)/2;
+  const add=(kind,label,x,y,w,h)=>out.push({kind,label,x:R(x),y:R(y),w:R(w||UI_KINDS[kind].w),h:R(h||UI_KINDS[kind].h)});
   const wide=dev==='desktop';
   if(preset==='login'){
     const cw=wide?340:Math.min(W-48,400), x=(W-cw)/2; let y=wide?T+90:T+(dev==='tablet'?150:70);
@@ -70,10 +82,10 @@ function addScreen(m,o){
   const label=String(o.label||({login:'Login',main:'Main page'}[o.preset]||D.name)).replace(/\n/g,' ');
   const gid=o.id&&!taken(o.id)?o.id:idFrom(o.idBase||label,taken);
   m.groups.set(gid,{id:gid,label,parent:o.parent&&m.groups.has(o.parent)?o.parent:null,dir:null,dev}); m.groupOrder.push(gid);
-  const x=Math.round(o.x/8)*8, y=Math.round(o.y/8)*8;
-  m.pos.set(gid,{x,y,w:D.w,h:D.h});
+  const x=Math.round(o.x/8)*8, y=Math.round(o.y/8)*8, s=o.scale||MOCK;
+  m.pos.set(gid,{x,y,w:D.w*s,h:D.h*s});
   const ids=[];
-  for(const p of screenPieces(dev,o.preset)){
+  for(const p of screenPieces(dev,o.preset,s)){
     const id=idFrom(gid+' '+(p.label.split('\n')[0]||UI_KINDS[p.kind].name),taken);
     const n={id,label:p.label,shape:p.kind,icon:null,group:gid,cls:null,x:x+p.x,y:y+p.y,w:p.w,h:p.h,sized:true};
     m.nodes.set(id,n); m.nodeOrder.push(id); ids.push(id);

@@ -34,10 +34,18 @@ function updCtx(){
     html+='<div class="seg2">'+ARROW_KINDS.map(([id,ic,tt])=>b('akind-'+id,ic,tt,'aria-pressed="'+(a0.kind===id)+'"')).join('')+'</div>'+sep+thick(a0.w)+sep+lineColorBtn(a0.color)+sep+b('del','trash','Delete (Del)');
   } else if(k.k&&!k.n&&!k.e&&!k.g&&!k.p){
     html+='<span class="ctx-count">'+k.k+(k.k===1?' drawing':' drawings')+'</span>'+sep+b('del','trash','Delete (Del)');
+  } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p&&selNodes().every(isUi)){
+    // Mockup pieces: an accent colour, the text, and the usual actions.
+    const ns=selNodes(); const cur=(m.styles.get(ns[0].id)||{}).fill||'';
+    if(ns.length>1) html+='<span class="ctx-count">'+ns.length+' selected</span>';
+    html+='<div class="ui-dots">'+UI_COLORS.map(([c,nm])=>'<button type="button" class="ui-dot" data-uicolor="'+c+'" title="'+nm+'" aria-label="'+nm+'" aria-pressed="'+(c===cur)+'" style="--c:'+(c||'var(--wf-ink)')+'"></button>').join('')+'</div>'+sep;
+    if(ns.length===1) html+=b('editLabel','edit','Edit text (Enter)');
+    html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p&&selNodes().every(n=>n.shape==='table'||n.shape==='doc')){
     // Tables and documents: edit them in their own editor; the rest is the frame and copy actions.
     const ns=selNodes(); if(ns.length>1) html+='<span class="ctx-count">'+ns.length+' selected</span>';
-    if(ns.length===1) html+='<button type="button" class="btn" data-act="editLabel" title="Edit (Enter)">'+(ns[0].shape==='table'?'Edit table':'Edit document')+'</button>'+sep;
+    if(ns.length===1) html+='<button type="button" class="btn" data-act="editLabel" title="Edit (Enter)">'+(ns[0].shape==='table'?'Edit table':isTicket(ns[0])?'Edit '+TICKET_TYPES[ns[0].doc.kind].name.toLowerCase():'Edit document')+'</button>'+sep;
+    if(ns.some(n=>n.shape==='doc')) html+=b('copyDocs','copyDoc','Copy as text, for Azure DevOps or any editor');
     html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p){
     const ns=selNodes(); const first=ns[0]; const st=m.styles.get(first.id);
@@ -107,12 +115,15 @@ ctxEl.addEventListener('change',e=>{
   mutate(()=>{ t.edges.forEach(x=>x.width=v===2?null:v); t.arrows.forEach(x=>x.w=v); },{structural});
 });
 ctxEl.addEventListener('click',e=>{
+  const ud=e.target.closest('[data-uicolor]');
+  if(ud){ const c=ud.dataset.uicolor||null; mutate(m=>{ for(const n of selNodes()){ const cur=m.styles.get(n.id)||blankStyle(); cur.fill=c; if(!c&&!cur.stroke&&!cur.color&&!cur.fontSize&&!cur.bold&&!cur.italic&&!cur.bg&&!(cur.extra||[]).length) m.styles.delete(n.id); else m.styles.set(n.id,cur); } }); return; }
   const dot=e.target.closest('[data-acolor]');
   if(dot){ const c=dot.dataset.acolor||null; const t=thickTargets(); mutate(()=>{ t.edges.forEach(x=>x.color=c); t.arrows.forEach(x=>x.color=c||'#1a1a1a'); },{structural:t.edges.length>0}); return; }
   const btn=e.target.closest('[data-act]'); if(!btn) return; const act=btn.dataset.act; const m=state.model;
   const edgesSel=()=>[...state.sel].filter(k=>k[0]==='e').map(k=>+k.slice(2));
   switch(act){
     case 'del': deleteSel(); break;
+    case 'copyDocs': copyDocs(selNodes()); break;
     case 'dup': if(copySel()){ state.pasteN=0; pasteClip(); } break;
     case 'group': groupSel(); break;
     case 'ungroup': ungroupSel(); break;

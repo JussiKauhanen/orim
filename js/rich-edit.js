@@ -42,7 +42,7 @@ const Rich=(()=>{
     document.removeEventListener('pointerdown',outside,true);
     const n=state.model&&state.model.nodes.get(c.id);
     let next=null;
-    if(n){ next=c.kind==='table'?{label:c.title.value.trim(),table:cleanTable({rows:c.rows,colors:c.colors})}:{label:c.title.value.trim(),doc:cleanDoc(readDocFrom(c.body))};
+    if(n){ next=c.kind==='table'?{label:c.title.value.trim(),table:cleanTable({rows:c.rows,colors:c.colors})}:{label:c.title.value.trim(),doc:cleanDoc({...readDocFrom(c.body),kind:c.tkind,fields:c.fields})};
       Object.assign(n,{label:c.orig.label,table:c.orig.table,doc:c.orig.doc,w:c.orig.w,h:c.orig.h,sized:c.orig.sized}); sizeNode(n); }
     c.box.remove(); c.bar.remove();
     const changed=n&&commit&&(next.label!==c.orig.label||JSON.stringify(c.kind==='table'?next.table:next.doc)!==JSON.stringify(c.kind==='table'?c.orig.table:c.orig.doc));
@@ -137,7 +137,7 @@ const Rich=(()=>{
   const BLK={h1:'h1',h2:'h2',h3:'h3',p:'p'};
   function docHtml(doc){
     let h='', list=null;
-    const runs=rs=>rs.map(r=>{ let s=escH(r.x).replace(/\n/g,'<br>'); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; return s; }).join('')||'<br>';
+    const runs=rs=>rs.map(r=>{ let s=escH(r.x).replace(/\n/g,'<br>'); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; if(r.u) s='<a href="'+escH(r.u)+'">'+s+'</a>'; return s; }).join('')||'<br>';
     for(const b of doc.blocks){
       if(b.t==='ul'||b.t==='ol'){ if(list!==b.t){ if(list) h+='</'+list+'>'; h+='<'+b.t+'>'; list=b.t; } h+='<li>'+runs(b.r)+'</li>'; continue; }
       if(list){ h+='</'+list+'>'; list=null; } h+='<'+BLK[b.t]+'>'+runs(b.r)+'</'+BLK[b.t]+'>';
@@ -147,19 +147,20 @@ const Rich=(()=>{
   }
   function readDocFrom(body){
     const blocks=[];
-    const runsOf=el=>{ const out=[]; const walk=(nd,b,i)=>{ if(nd.nodeType===3){ const x=nd.nodeValue.replace(/ /g,' '); if(x) out.push({x,b,i}); return; } if(nd.nodeType!==1) return; const t=nd.tagName;
-        if(t==='BR'){ out.push({x:'\n',b,i}); return; } if(t==='UL'||t==='OL') return;
+    const runsOf=el=>{ const out=[]; const walk=(nd,b,i,u)=>{ if(nd.nodeType===3){ const x=nd.nodeValue.replace(/ /g,' '); if(x) out.push({x,b,i,u}); return; } if(nd.nodeType!==1) return; const t=nd.tagName;
+        if(t==='BR'){ out.push({x:'\n',b,i,u}); return; } if(t==='UL'||t==='OL') return;
         const fw=nd.style&&nd.style.fontWeight, fs=nd.style&&nd.style.fontStyle;
-        const nb=b||t==='B'||t==='STRONG'||fw==='bold'||+fw>=600, ni=i||t==='I'||t==='EM'||fs==='italic';
-        for(const ch of nd.childNodes) walk(ch,nb,ni); };
-      for(const ch of el.childNodes) walk(ch,false,false);
-      while(out.length&&out[out.length-1].x==='\n') out.pop();
-      const m=[]; for(const r of out){ const p=m[m.length-1]; if(p&&!!p.b===!!r.b&&!!p.i===!!r.i) p.x+=r.x; else m.push({x:r.x,b:r.b?1:0,i:r.i?1:0}); }
-      return m.map(r=>{ const o={x:r.x}; if(r.b) o.b=1; if(r.i) o.i=1; return o; }); };
+        const nb=b||t==='B'||t==='STRONG'||fw==='bold'||+fw>=600, ni=i||t==='I'||t==='EM'||fs==='italic', nu=t==='A'?(safeUrl(nd.getAttribute('href'))||u):u;
+        for(const ch of nd.childNodes) walk(ch,nb,ni,nu); };
+      for(const ch of el.childNodes) walk(ch,false,false,null);
+      while(out.length&&!out[out.length-1].x.trim()) out.pop();
+      if(out.length) out[out.length-1]={...out[out.length-1],x:out[out.length-1].x.replace(/\s+$/,'')};
+      const m=[]; for(const r of out){ const p=m[m.length-1]; if(p&&!!p.b===!!r.b&&!!p.i===!!r.i&&(p.u||null)===(r.u||null)) p.x+=r.x; else m.push({x:r.x,b:r.b?1:0,i:r.i?1:0,u:r.u||null}); }
+      return m.map(r=>{ const o={x:r.x}; if(r.b) o.b=1; if(r.i) o.i=1; if(r.u) o.u=r.u; return o; }); };
     const add=(t,el)=>{ const r=runsOf(el); blocks.push({t,r}); };
     let loose=null;
     for(const nd of body.childNodes){
-      if(nd.nodeType===3||(nd.nodeType===1&&/^(B|I|STRONG|EM|SPAN|BR)$/.test(nd.tagName))){ if(!loose){ loose=document.createElement('p'); } loose.appendChild(nd.cloneNode(true)); continue; }
+      if(nd.nodeType===3||(nd.nodeType===1&&/^(B|I|STRONG|EM|SPAN|BR|A)$/.test(nd.tagName))){ if(!loose){ loose=document.createElement('p'); } loose.appendChild(nd.cloneNode(true)); continue; }
       if(loose){ add('p',loose); loose=null; }
       if(nd.nodeType!==1) continue; const t=nd.tagName;
       if(t==='H1'||t==='H2'||t==='H3') add(t.toLowerCase(),nd);
@@ -172,15 +173,26 @@ const Rich=(()=>{
     while(blocks.length>1&&!blocks[blocks.length-1].r.length&&blocks[blocks.length-1].t==='p') blocks.pop();
     return {blocks};
   }
-  function readDoc(){ return cleanDoc(readDocFrom(cur.body)); }
+  function readDoc(){ return cleanDoc({...readDocFrom(cur.body),kind:cur.tkind,fields:cur.fields}); }
   function docOpen(n){
-    cur.box.innerHTML='<div class="rd-head"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M9 11h6M9 15h6"/></svg><input class="rich-title" placeholder="Untitled document" aria-label="Document title"></div><div class="rd-body" contenteditable="true" spellcheck="true"></div>';
+    cur.tkind=n.doc&&TICKET_TYPES[n.doc.kind]?n.doc.kind:null; cur.fields={...((n.doc&&n.doc.fields)||{})};
+    cur.box.innerHTML='<div class="rd-head"><span class="rd-chip"></span><select class="rd-type" aria-label="Type"><option value="">Note</option>'+Object.entries(TICKET_TYPES).map(([k,t])=>'<option value="'+k+'">'+t.name+'</option>').join('')+'</select><input class="rich-title" placeholder="Untitled document" aria-label="Title"></div><div class="rd-fields"></div><div class="rd-body" contenteditable="true" spellcheck="true"></div>';
+    cur.typeEl=cur.box.querySelector('.rd-type'); cur.fieldsEl=cur.box.querySelector('.rd-fields'); cur.typeEl.value=cur.tkind||'';
+    cur.typeEl.addEventListener('change',()=>setKind(cur.typeEl.value||null));
+    cur.fieldsEl.addEventListener('input',e=>{ const k=e.target.dataset.f; if(!k) return; const v=e.target.value; if(v==='') delete cur.fields[k]; else cur.fields[k]=v; live(); place(); });
+    cur.fieldsEl.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); close(true); } });
     cur.title=cur.box.querySelector('.rich-title'); cur.title.value=n.label||'';
     cur.body=cur.box.querySelector('.rd-body'); cur.body.innerHTML=docHtml(n.doc||{blocks:[]});
     cur.box.style.width=(n.w||380)+'px';
     cur.bar.innerHTML=btn('h1','Heading 1','h1')+btn('h2','Heading 2','h2')+btn('h3','Heading 3','h3')+btn('p','Text','para')+'<span class="vsep"></span>'+
       btn('b','Bold (Ctrl+B)','bold')+btn('i','Italic (Ctrl+I)','italic')+'<span class="vsep"></span>'+btn('ul','Bulleted list','list')+btn('ol','Numbered list','olist')+'<span class="vsep"></span>'+
-      btn('expand','Expand','expand')+btn('done','Done');
+      btn('link','Link (Ctrl+K)','link')+'<span class="vsep"></span>'+btn('copy','Copy as text, for Azure DevOps or any editor','copyDoc')+btn('expand','Expand','expand')+btn('done','Done')+
+      '<span class="rd-linkbox" hidden><input type="url" placeholder="Paste a link" aria-label="Link address"><button type="button" class="btn" data-link-ok>Add</button></span>';
+    cur.linkBox=cur.bar.querySelector('.rd-linkbox');
+    const li=cur.linkBox.querySelector('input');
+    li.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); applyLink(li.value); } else if(e.key==='Escape'){ e.preventDefault(); hideLink(); } });
+    cur.linkBox.querySelector('[data-link-ok]').addEventListener('click',()=>applyLink(li.value));
+    renderFields();
     try{ document.execCommand('defaultParagraphSeparator',false,'p'); }catch(_){}
     cur.bar.addEventListener('mousedown',e=>{ if(e.target.closest('button')) e.preventDefault(); });
     cur.bar.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b||!cur) return; docAct(b.dataset.act); });
@@ -189,7 +201,9 @@ const Rich=(()=>{
     cur.body.addEventListener('input',()=>{ live(); place(); markDoc(); });
     cur.body.addEventListener('keydown',docKey);
     cur.body.addEventListener('keyup',markDoc); cur.body.addEventListener('mouseup',markDoc);
+    cur.body.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href]'); if(a&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); openLink(a.getAttribute('href')); } });
     cur.body.addEventListener('paste',e=>{ const t=(e.clipboardData||window.clipboardData).getData('text/plain'); if(!t) return; e.preventDefault();
+      const u=safeUrl(t.trim()); if(u&&!/\s/.test(t.trim())){ const sel=getSelection(); if(sel.rangeCount&&!sel.isCollapsed) document.execCommand('createLink',false,u); else document.execCommand('insertHTML',false,'<a href="'+escH(u)+'">'+escH(u)+'</a>&nbsp;'); live(); return; }
       if(/^\s*(#{1,3}\s|[-*]\s|\d+\.\s)/m.test(t)&&t.includes('\n')){ document.execCommand('insertHTML',false,docHtml(mdToDoc(t))); } else document.execCommand('insertText',false,t); });
     const empty=!(n.doc&&n.doc.blocks.some(b=>b.r.length));
     setTimeout(()=>{ if(!cur) return; if(!n.label&&empty) cur.title.focus(); else caretEnd(cur.body,false); markDoc(); },0);
@@ -233,6 +247,8 @@ const Rich=(()=>{
     for(const k of ['b','i']){ const el=cur.bar.querySelector('[data-act="'+k+'"]'); let on=false; try{ on=document.queryCommandState(k==='b'?'bold':'italic'); }catch(_){} if(el) el.setAttribute('aria-pressed',String(on)); } }
   function docAct(a){
     if(a==='done'){ close(true); return; }
+    if(a==='link'){ showLink(); return; }
+    if(a==='copy'){ const n=node(); if(n) copyDocs([n]); return; }
     if(a==='expand'){ cur.expanded=!cur.expanded; cur.box.classList.toggle('expanded',cur.expanded); const b=cur.bar.querySelector('[data-act="expand"]'); if(b){ b.innerHTML=ico(cur.expanded?'collapse':'expand'); b.title=b.ariaLabel=cur.expanded?'Back to the board':'Expand'; } place(); cur.body.focus(); return; }
     cur.body.focus();
     if(a==='b'||a==='i') document.execCommand(a==='b'?'bold':'italic');
@@ -242,7 +258,7 @@ const Rich=(()=>{
   // Markdown shortcuts at the start of a line: "# ", "## ", "### ", "- ", "* ", "1. ".
   function docKey(e){
     if(e.key==='Escape'){ e.preventDefault(); if(cur.expanded) docAct('expand'); else close(true); return; }
-    if((e.ctrlKey||e.metaKey)&&!e.altKey){ const k=e.key.toLowerCase(); if(k==='b'||k==='i'){ e.preventDefault(); docAct(k); return; } if(k==='enter'){ e.preventDefault(); close(true); return; } }
+    if((e.ctrlKey||e.metaKey)&&!e.altKey){ const k=e.key.toLowerCase(); if(k==='k'){ e.preventDefault(); showLink(); return; } if(k==='b'||k==='i'){ e.preventDefault(); docAct(k); return; } if(k==='enter'){ e.preventDefault(); close(true); return; } }
     if(e.key===' '){
       const s=getSelection(); if(!s.rangeCount||!s.isCollapsed) return; const b=curBlock(); const nd=s.anchorNode;
       const pre=b?textBefore(b,nd,s.anchorOffset):(nd&&nd.nodeType===3?nd.nodeValue.slice(0,s.anchorOffset):'');
@@ -256,7 +272,55 @@ const Rich=(()=>{
     }
     if(e.key==='Backspace'){ const b=curBlock(); const s=getSelection(); if(b&&s.isCollapsed&&/^H[1-3]$/.test(b.tagName)&&textBefore(b,s.anchorNode,s.anchorOffset)===''){ e.preventDefault(); setBlock('p'); live(); markDoc(); } }
   }
+  /* ---------- tickets and links ---------- */
+  function renderFields(){
+    const t=TICKET_TYPES[cur.tkind]; const chip=cur.box.querySelector('.rd-chip');
+    chip.style.background=t?t.color:''; chip.hidden=!t; cur.box.classList.toggle('ticket',!!t); cur.box.style.setProperty('--tk',t?t.color:'transparent');
+    if(!t){ cur.fieldsEl.innerHTML=''; cur.fieldsEl.hidden=true; return; }
+    cur.fieldsEl.hidden=false;
+    cur.fieldsEl.innerHTML=t.fields.map(k=>{ const d=TICKET_FIELDS[k], v=cur.fields[k]!=null?String(cur.fields[k]):'';
+      const ctl=d.opts?'<select data-f="'+k+'"><option value="">–</option>'+d.opts.map(o=>'<option'+(o===v?' selected':'')+'>'+escH(o)+'</option>').join('')+'</select>'
+        :'<input data-f="'+k+'" '+(d.num?'type="number" min="0" step="0.5" style="width:56px"':'placeholder="web; login" style="width:120px"')+' value="'+escH(v)+'">';
+      return '<label><span>'+escH(d.name)+'</span>'+ctl+'</label>'; }).join('');
+  }
+  // Switching type swaps the starting template when the body is still empty or untouched.
+  function setKind(k){
+    const prev=cur.tkind; cur.tkind=TICKET_TYPES[k]?k:null;
+    const t=TICKET_TYPES[cur.tkind]; if(t) cur.fields=cleanFields(cur.tkind,cur.fields);
+    const body=JSON.stringify(cleanDoc(readDocFrom(cur.body)).blocks), empty=!cleanDoc(readDocFrom(cur.body)).blocks.some(b=>b.r.some(r=>r.x.trim()));
+    const wasTpl=prev&&body===JSON.stringify(cleanDoc({blocks:ticketTemplate(prev)}).blocks);
+    if(t&&(empty||wasTpl)) cur.body.innerHTML=docHtml({blocks:ticketTemplate(cur.tkind)});
+    else if(!t&&wasTpl) cur.body.innerHTML='<p><br></p>';
+    cur.title.placeholder=t?t.name+' title':'Untitled document';
+    renderFields(); live(); place();
+  }
+  function showLink(){
+    const s=getSelection(); cur.linkRange=s.rangeCount&&cur.body.contains(s.anchorNode)?s.getRangeAt(0).cloneRange():null;
+    const a=s.anchorNode&&(s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentNode).closest('a[href]');
+    cur.linkA=a&&cur.body.contains(a)?a:null;
+    cur.linkBox.hidden=false; const li=cur.linkBox.querySelector('input'); li.value=cur.linkA?cur.linkA.getAttribute('href'):''; li.placeholder=cur.linkA?'Empty removes the link':'Paste a link'; li.focus(); li.select(); place();
+  }
+  function hideLink(){ cur.linkBox.hidden=true; place(); cur.body.focus(); if(cur.linkRange){ const s=getSelection(); s.removeAllRanges(); s.addRange(cur.linkRange); } }
+  function applyLink(v){
+    const raw=String(v||'').trim(); const u=raw?safeUrl(/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(raw)&&!/^\w+:/.test(raw)?'https://'+raw:raw):null;
+    if(raw&&!u){ toast('Use a web address, such as https://…'); return; }
+    hideLink();
+    if(cur.linkA){ if(u) cur.linkA.setAttribute('href',u); else cur.linkA.replaceWith(...cur.linkA.childNodes); }
+    else if(u){ const s=getSelection(); if(s.rangeCount&&!s.isCollapsed) document.execCommand('createLink',false,u); else document.execCommand('insertHTML',false,'<a href="'+escH(u)+'">'+escH(u)+'</a>&nbsp;'); }
+    live(); place();
+  }
   function textBefore(block,nd,off){ const r=document.createRange(); r.setStart(block,0); try{ r.setEnd(nd,off); }catch(_){ return null; } return r.toString(); }
 
   return {open,close,place,active:()=>cur};
 })();
+// Copy documents and tickets as rich text (pastes formatted into Azure DevOps, Word, Teams, mail)
+// with Markdown as the plain-text version.
+function copyDocs(nodes){
+  const docs=nodes.filter(n=>n&&n.shape==='doc'&&n.doc); if(!docs.length) return;
+  const html=docs.map(ticketHtml).join('<hr>'), md=docs.map(ticketMd).join('\n---\n\n');
+  const msg=docs.length>1?docs.length+' documents copied':(isTicket(docs[0])?'Ticket copied':'Document copied');
+  try{
+    if(navigator.clipboard&&window.ClipboardItem){ navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([md],{type:'text/plain'})})]).then(()=>toast(msg),()=>copyText(md,msg)); return; }
+  }catch(_){}
+  copyText(md,msg);
+}

@@ -18,6 +18,8 @@ function onDown(e){
   const ae=document.activeElement; if(ae&&ae!==document.body&&ae.blur) ae.blur();
   closePop(); closeMenus();
   const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
+  // Links in documents: Ctrl or Cmd+click opens them.
+  const lk=e.target.closest&&e.target.closest('.doc-link'); if(lk&&(e.ctrlKey||e.metaKey)&&e.button===0){ e.preventDefault(); openLink(lk.dataset.href); return; }
   if(e.button===1||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;
   if(kind==='phandle'){ const im=state.model.images.find(x=>x.id===tgt.dataset.id); if(im){ state.drag={mode:'presize',id:im.id,corner:tgt.dataset.corner,start:p,orig:{...im},moved:false}; } return; }
@@ -346,8 +348,8 @@ function onUp(e){
   }
   if(d.mode==='place'&&d.kind==='ui'){
     const pk=state.uiPick||{dev:'mobile'}; let sel=null, edit=null;
-    if(pk.dev){ const D=DEVICES[pk.dev]; mutate(mm=>{ const r=addScreen(mm,{dev:pk.dev,preset:state.uiPreset,x:d.start.x-D.w/2,y:d.start.y-80,parent:groupAt(d.start)||null}); sel='g:'+r.gid; edit=r.gid; }); }
-    else { const k=UI_KINDS[pk.piece]||UI_KINDS.uiButton; const nid=createNode({shape:pk.piece,label:k.def,idBase:k.name,rect:{x:SNAP(d.start.x-k.w/2),y:SNAP(d.start.y-k.h/2),w:k.w,h:k.h},group:groupAt(d.start)||null}); sel=nid&&'n:'+nid; }
+    if(pk.dev){ const D=DEVICES[pk.dev]; mutate(mm=>{ const r=addScreen(mm,{dev:pk.dev,preset:state.uiPreset,x:d.start.x-D.w*MOCK/2,y:d.start.y-40,parent:groupAt(d.start)||null}); sel='g:'+r.gid; edit=r.gid; }); }
+    else { const k=UI_KINDS[pk.piece]||UI_KINDS.uiButton; const gin=groupAt(d.start); const sc=gin?devScale(state.model,gin):MOCK; const w=k.w*sc,h=k.h*sc; const nid=createNode({shape:pk.piece,label:k.def,idBase:k.name,rect:{x:SNAP(d.start.x-w/2),y:SNAP(d.start.y-h/2),w,h},group:groupAt(d.start)||null}); sel=nid&&'n:'+nid; }
     setTool('select'); if(sel){ state.sel=new Set([sel]); selChanged(); } if(edit) openEditor('group',edit); return;
   }
   if(d.mode==='place'){
@@ -429,6 +431,7 @@ function onUp(e){
     setTool('select'); if(nid){ state.sel=new Set(['n:'+nid]); selChanged(); queueEdit(nid,false); }
   }
 }
+function openLink(u){ const s=safeUrl(u); if(!s) return; try{ const w=window.open(s,'_blank','noopener'); if(!w) copyText(s,'Link copied: the browser blocked opening it'); }catch(_){ copyText(s,'Link copied'); } }
 function queueEdit(id,caretEnd,kind){ state.pendingEdit={id,caretEnd,kind:kind||'node'}; clearTimeout(state.pendingEditT); state.pendingEditT=setTimeout(runPendingEdit,120); }
 function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model) return; if(pe.kind==='edge'){ if(!state.model.edges[pe.id]) return; openEditor('edge',pe.id); } else { if(!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); } if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
 board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });

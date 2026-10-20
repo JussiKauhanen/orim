@@ -2,12 +2,12 @@
  * Left toolbar, tool fly-outs, tool switching.
  */
 'use strict';
-const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons']];
+const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons'],['ai','aiSpark','Ask Claude to build or change the board','AI']];
 state.inkColor=LS.get('mab.inkColor',{pen:0,hl:0}); state.stickyColor=LS.get('mab.stickyColor',0); state.lastShape='rect'; state.lastInk='pen'; state.fly=null;
 const INK_TOOLS=['pen','hl','eraser'];
 state.arrowKind=LS.get('mab.arrowKind','curved'); state.arrowW=LS.get('mab.arrowW',2); state.arrowColor=LS.get('mab.arrowColor',0);
 function renderTools(){
-  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+ico(t[1])+'</span></button>').join('');
+  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn'+(t[0]==='ai'?' ai-tool':'')+'" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+(t[0]==='ai'?aiSpark():ico(t[1]))+'</span></button>').join('');
   updTools();
 }
 function updTools(){
@@ -79,7 +79,14 @@ $('#flyout').addEventListener('click',e=>{
 });
 state.uiPreset=LS.get('orim.uiPreset','blank'); state.uiPick={dev:'mobile'};
 function toolFamily(t){ return SHAPE_TOOLS.includes(t)?'shapes':INK_TOOLS.includes(t)?'ink':t==='sticky'?'sticky':t==='connector'?'connector':t==='ui'?'ui':null; }
+// The AI button: a colourful sparkle like Miro's, which opens the AI tab beside the board.
+// Each copy gets its own gradient id: a gradient inside a hidden part of the page does not paint elsewhere.
+let aiSparkN=0;
+function aiSpark(){ const id='aiSparkG'+(++aiSparkN); return ('<svg class="i" viewBox="0 0 24 24" style="stroke:none"><defs><linearGradient id="aiSparkG" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff7ac6"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>'+
+  '<path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="url(#aiSparkG)"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="#ff7ac6"/><path d="M18 16.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#3b82f6"/></svg>').replace(/aiSparkG/g,id); }
+function openAITab(){ setMode('split'); setEmode('ai'); setTimeout(()=>{ const i=$('#aiIn'); if(i&&!i.disabled) i.focus(); },60); }
 function setTool(t,fromBar){
+  if(t==='ai'){ openAITab(); return; }
   if(t==='library'){ setLib(!state.libOpen); return; }
   if(t==='image'){ $('#imgIn').click(); return; }
   const fam0=toolFamily(state.tool);

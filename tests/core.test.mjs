@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ console });
-for (const f of ['js/core/mockups.js', 'js/core/mermaid.js', 'js/core/geometry.js', 'js/core/templates.js']) {
+for (const f of ['js/core/mockups.js', 'js/core/tickets.js', 'js/core/mermaid.js', 'js/core/geometry.js', 'js/core/templates.js']) {
   vm.runInContext(readFileSync(join(root, f), 'utf8'), ctx, { filename: f });
 }
 const run = (code) => vm.runInContext(code, ctx);
@@ -170,7 +170,7 @@ test('mockup screens: device frames and wireframe pieces', () => {
   const m = r.model, login = m.groups.get('login'), main = m.groups.get('mainPage');
   assert.equal(login.dev, 'mobile'); assert.equal(main.dev, 'desktop');
   const btn = [...m.nodes.values()].find(n => n.group === 'login' && n.shape === 'uiButton');
-  assert.ok(btn && btn.label === 'Sign in' && btn.w > 200);
+  assert.ok(btn && btn.label === 'Sign in' && btn.w > 100 && btn.w < 140, 'button at half size');
   assert.ok([...m.nodes.values()].some(n => n.group === 'mainPage' && n.shape === 'uiSidebar'));
   assert.match(r.s1, /%% @device login mobile/); assert.match(r.s1, /classDef uiButton /);
   // Auto layout moves screens as a whole and keeps their pieces in place.
@@ -178,7 +178,39 @@ test('mockup screens: device frames and wireframe pieces', () => {
   const kept = run(`(() => { const a = parseMermaid(__src).model; resolveGeometry(a, new Map()); const b = a.nodes.get('${btn.id}'); const p = a.pos.get('login'); const before = [b.x - p.x, b.y - p.y];
     autoLayout(a); const q = a.pos.get('login'); const bx = groupBoxes(a).get('login'); return JSON.stringify([before, [b.x - q.x, b.y - q.y], bx.w, bx.h]); })()`);
   const [before, after, w, h] = JSON.parse(kept);
-  assert.deepEqual(after, before); assert.equal(w, 300); assert.equal(h, 620);
+  assert.deepEqual(after, before); assert.equal(w, 150); assert.equal(h, 310);
+});
+
+test('tickets: type, fields, links and the Azure DevOps CSV', () => {
+  const r = roundTrip(`flowchart LR
+  epic["Online store"]:::doc
+  story["Sign in with Entra ID"]:::doc
+  task["Add MSAL to the web app"]:::doc
+  epic --> story
+  story --> task
+%% @doc epic {"kind":"epic","fields":{"priority":"1"},"blocks":[{"t":"p","r":[{"x":"Sell online"}]}]}
+%% @doc story {"kind":"story","fields":{"points":3,"priority":2,"tags":"auth; web","bogus":1},"blocks":[{"t":"h2","r":[{"x":"Description"}]},{"t":"p","r":[{"x":"As a shopper, see "},{"x":"the spec","u":"https://example.com/spec"}]},{"t":"h2","r":[{"x":"Acceptance criteria"}]},{"t":"ul","r":[{"x":"Work account sign-in"}]}]}
+%% @doc task {"kind":"task","fields":{"remaining":4,"activity":"Development"},"blocks":[{"t":"p","r":[{"x":"Wire up MSAL"}]}]}`);
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  const st = r.model.nodes.get('story').doc;
+  assert.equal(st.kind, 'story'); assert.equal(st.fields.points, 3); assert.equal(st.fields.priority, '2'); assert.equal(st.fields.bogus, undefined);
+  assert.equal(st.blocks[1].r[1].u, 'https://example.com/spec');
+  ctx.__md = 'See [docs](https://learn.microsoft.com) and https://example.com/a.';
+  assert.equal(run('JSON.stringify(mdToDoc(__md).blocks[0].r.map(x=>x.u||null))'), '[null,"https://learn.microsoft.com",null,"https://example.com/a",null]');
+  assert.equal(run('docToMd(mdToDoc(__md))'), __mdEq());
+  function __mdEq() { return 'See [docs](https://learn.microsoft.com) and https://example.com/a.'; }
+  ctx.__src = r.s1;
+  const csv = run('(() => { const m = parseMermaid(__src).model; return ticketsCsv(m); })()');
+  const lines = csv.trim().split('\r\n');
+  assert.match(lines[0], /^ID,Work Item Type,Title 1,Title 2,Title 3,Description,Acceptance Criteria/);
+  assert.match(lines[1], /^,Epic,Online store,,,/);
+  assert.match(lines[2], /^,User Story,,Sign in with Entra ID,,/);
+  assert.match(lines[2], /<a href=""https:\/\/example.com\/spec"">the spec<\/a>/);
+  assert.match(lines[2], /<li>Work account sign-in<\/li>/);
+  assert.match(lines[3], /^,Task,,,Add MSAL to the web app,/);
+  assert.match(lines[3], /,4,Development,/);
+  assert.equal(run('ticketLine(parseMermaid(__src).model.nodes.get("story"))'), '3 pts · P2 · auth, web');
 });
 
 test('reports errors with line numbers', () => {

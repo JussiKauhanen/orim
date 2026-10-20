@@ -6,9 +6,11 @@ const narrow=matchMedia('(max-width:760px)');
 // Split shows the code beside the board (stacked on phones); Canvas shows the board alone.
 function setMode(mode){
   if(mode!=='split'&&mode!=='canvas') mode='split';
+  const grow=state.mode==='split'&&mode==='canvas';
   state.mode=mode; LS.set('mab.mode',mode); app.dataset.mode=mode;
   for(const b of document.querySelectorAll('#viewSeg button')) b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
-  requestAnimationFrame(()=>{ applyView(); render(); });
+  // Going to the full canvas fits the board to the bigger view.
+  requestAnimationFrame(()=>{ applyView(); render(); if(grow&&state.model&&!app.hidden) fit(true); });
 }
 $('#viewSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-mode]'); if(b) setMode(b.dataset.mode); });
 narrow.addEventListener('change',()=>setMode(state.mode));

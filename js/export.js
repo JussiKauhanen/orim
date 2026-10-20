@@ -46,11 +46,12 @@ $('#exportMenu').addEventListener('click',async e=>{
     else if(fmt==='md'){ data=(state.model.title?'# '+state.model.title+'\n\n':'')+'```mermaid\n'+state.code.replace(/\s+$/,'')+'\n```\n'; filename=name+'.md'; }
     else if(fmt==='txt'){ data=state.code; filename=name+'.txt'; }
     else if(fmt==='drawio'){ if(window.claude){ data=buildDrawioSvg(); if(!data){ toast('The board is empty'); return; } filename=name+'.drawio.svg'; } else { data=buildDrawio(); filename=name+'.drawio'; } }
+    else if(fmt==='tickets'){ const sel=new Set([...state.sel].filter(k=>k[0]==='n').map(k=>k.slice(2))); data=ticketsCsv(state.model,sel.size&&[...sel].some(id=>isTicket(state.model.nodes.get(id)))?sel:null); if(!data){ toast('No tickets yet. Make a document and set its type, or ask the AI tab for tickets'); return; } filename=name+'-tickets.csv'; }
     else if(fmt==='json'){ data=JSON.stringify({format:'orim-board',version:2,title:state.model.title||'',code:state.code,images:usedImages()},null,2); filename=name+'.json'; }
   }catch(err){ console.error(err); toast(fmt==='png'?'PNG export failed in this browser. Try SVG.':'Export failed'); return; }
   if(fmt==='png'&&!(data&&data.size)){ toast('The board is empty'); return; }
   if(!window.claude){
-    try{ const blob=data instanceof Blob?data:new Blob([data],{type:fmt==='svg'?'image/svg+xml':fmt==='json'?'application/json':fmt==='drawio'?'application/xml':'text/plain'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); toast('Saved '+filename); return; }catch(err){}
+    try{ const blob=data instanceof Blob?data:new Blob([data],{type:fmt==='svg'?'image/svg+xml':fmt==='json'?'application/json':fmt==='drawio'?'application/xml':fmt==='tickets'?'text/csv':'text/plain'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); toast('Saved '+filename); return; }catch(err){}
   }
   const dl=await getDownloads();
   if(dl){

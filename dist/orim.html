@@ -375,7 +375,8 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .shot-code{margin:0;padding:16px 18px 18px;font:12.5px/1.7 var(--font-code);font-variant-ligatures:none;color:var(--fg);border-right:1px solid var(--line);overflow:hidden;white-space:pre;background:var(--panel)}
 .shot-board{background-color:var(--board);background-image:linear-gradient(to right,var(--grid) 1px,transparent 1px),linear-gradient(to bottom,var(--grid) 1px,transparent 1px);background-size:22px 22px;padding:16px;display:grid;min-width:0}
 .shot-board svg{width:100%;height:100%;display:block}
-.features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:64px}
+.features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:64px}
+@media (max-width:1100px){ .features{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .feat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-width:0}
 .feat b{font-size:15px;font-weight:600}
 .feat p{margin:6px 0 0;color:var(--muted);font-size:13.5px;line-height:1.55}
@@ -607,6 +608,77 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .fly-seg{display:flex;gap:2px;margin:6px 4px 2px;background:var(--panel-2);border-radius:7px;padding:2px}
 .fly-seg button{flex:1;border:0;background:none;border-radius:5px;padding:5px 6px;font:12px var(--font-ui);color:var(--muted);cursor:pointer;white-space:nowrap}
 .fly-seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+/* document type and ticket fields */
+.rd-head .rd-chip{width:10px;height:10px;border-radius:2px;flex:none}
+.rd-head .rd-chip[hidden]{display:none}
+.rd-type{flex:none;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:6px;font:500 11.5px var(--font-ui);padding:2px 4px;height:22px}
+.rich-box.rd.ticket{border-left:5px solid var(--tk)}
+.rich-box.rd.ticket .rich-title{font-weight:700;color:var(--fg)}
+.rd-fields{display:flex;flex-wrap:wrap;gap:6px 12px;padding:6px 16px 8px;border-bottom:1px solid color-mix(in srgb,var(--muted) 20%,transparent)}
+.rd-fields[hidden]{display:none}
+.rd-fields label{display:flex;align-items:center;gap:5px;font:11.5px var(--font-ui);color:var(--muted)}
+.rd-fields input,.rd-fields select{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:5px;font:12px var(--font-ui);padding:2px 5px;height:22px}
+.rd-body a{color:var(--accent);text-decoration:underline}
+.rd-linkbox{display:flex;align-items:center;gap:4px;margin-left:4px}
+.rd-linkbox[hidden]{display:none}
+.rd-linkbox input{width:220px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font:12.5px var(--font-ui);background:var(--panel);color:var(--fg)}
+.doc-link{cursor:pointer}
+#exportMenu [data-export="tickets"] svg.i{color:#009ccc}
+.ui-dots{display:flex;gap:4px;padding:0 4px}
+.ui-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line-strong);background:var(--c);cursor:pointer;padding:0}
+.ui-dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.tools .ai-tool{position:relative}
+.tools .ai-tool:hover{background:color-mix(in srgb,#8b5cf6 12%,transparent)}
+.ai-empty .ai-hi{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,#8b5cf6 10%,var(--panel));margin-bottom:10px}
+.ai-empty .ai-hi svg.i{width:22px;height:22px}
+.ai-try button b{display:inline;font-size:13px;margin:0;color:var(--fg);font-weight:600}
+.ai-try button{color:var(--muted)}
+/* AI at work: a blurred sketch drifting at the side of the canvas */
+.ai-ghost{position:absolute;right:0;top:0;bottom:0;width:min(46%,520px);pointer-events:none;z-index:5;opacity:0;transition:opacity .4s ease;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 38%);mask-image:linear-gradient(to right,transparent,#000 38%)}
+.ai-ghost.on{opacity:1}
+.ai-ghost svg{position:absolute;inset:6% 4% 14% 0;width:100%;height:80%}
+.ai-ghost .gh-card{fill:var(--panel);stroke:var(--line-strong);stroke-width:1.2}
+.ai-ghost .gh-line{fill:var(--line-strong);opacity:.7}
+.ai-ghost .gh-ink{opacity:.55}
+.ai-ghost .gh{animation:ghDrift 4.6s ease-in-out infinite alternate}
+.ai-ghost .gh-wire{fill:none;stroke:#8b5cf6;stroke-opacity:.45;stroke-width:2;stroke-dasharray:6 7;animation:ghWire 3.2s linear infinite}
+.ai-ghost .gh-cursor{animation:ghCursor 7s ease-in-out infinite}
+.gh-pill{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);z-index:6;opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px;padding:7px 12px 7px 9px;border-radius:999px;background:var(--panel);box-shadow:var(--shadow);font:500 12.5px var(--font-ui);color:var(--fg);white-space:nowrap}
+.gh-pill.on{opacity:1}
+.gh-pill .gh-spark{display:grid;place-items:center;animation:ghSpin 6s linear infinite}
+.gh-pill .gh-spark svg.i{width:16px;height:16px}
+@keyframes ghDrift{from{transform:translate(0,0)}to{transform:translate(var(--dx),var(--dy))}}
+@keyframes ghWire{to{stroke-dashoffset:-26}}
+@keyframes ghCursor{0%{transform:translate(170px,110px)}25%{transform:translate(310px,214px)}50%{transform:translate(270px,360px)}75%{transform:translate(96px,270px)}100%{transform:translate(170px,110px)}}
+@keyframes ghSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ai-ghost .gh,.ai-ghost .gh-wire,.ai-ghost .gh-cursor,.gh-pill .gh-spark{animation:none}}
+/* AI on the home page */
+.ai-grad{background:linear-gradient(90deg,#ff5fb7,#8b5cf6 45%,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn svg.spark{width:16px;height:16px}
+.btn.primary svg.spark{color:#fff}
+.btn.ai-btn svg.spark{color:#8b5cf6}
+.btn.ai-btn{border-color:color-mix(in srgb,#8b5cf6 35%,var(--line))}
+.btn.ai-btn:hover{background:color-mix(in srgb,#8b5cf6 8%,var(--panel))}
+.rl-act{display:flex;justify-content:center}
+.rl-act .ibtn{width:28px;height:28px}
+.rl-act .ibtn:hover{color:var(--danger)}
+#removeAllBtn:hover{color:var(--danger)}
+.shot-chat{display:flex;flex-direction:column;gap:10px;padding:16px;border-right:1px solid var(--line);background:var(--panel);font-size:12.5px;line-height:1.45;min-width:0}
+.sc-msg{max-width:92%;border-radius:12px;padding:8px 11px}
+.sc-msg.me{align-self:flex-end;background:var(--accent-soft);color:var(--fg)}
+.sc-msg.bot{align-self:flex-start;color:var(--fg);padding-left:2px}
+.sc-msg.typing{color:var(--muted);display:flex;align-items:center;gap:8px}
+.sc-chips{display:flex;gap:6px;margin-top:6px}
+.sc-chips i{font-style:normal;font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.sc-dots{display:inline-flex;gap:3px}
+.sc-dots b{width:5px;height:5px;border-radius:50%;background:#8b5cf6;opacity:.35;animation:scDot 1.2s infinite}
+.sc-dots b:nth-child(2){animation-delay:.2s}.sc-dots b:nth-child(3){animation-delay:.4s}
+@keyframes scDot{50%{opacity:1}}
+.sc-input{margin-top:auto;border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--faint);background:var(--panel-2)}
+@media (max-width:760px){ .shot-chat{display:none} }
+.tpl[data-tpl-id="ai"] .th{background:linear-gradient(135deg,color-mix(in srgb,#ff7ac6 14%,var(--panel)),color-mix(in srgb,#8b5cf6 12%,var(--panel)) 50%,color-mix(in srgb,#3b82f6 14%,var(--panel)));border-style:solid;border-color:color-mix(in srgb,#8b5cf6 30%,var(--line))}
+.th-ai svg.i{width:38px;height:38px}
 
 </style>
 </head>
@@ -624,9 +696,10 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
       <section class="welcome" aria-labelledby="welcomeTitle">
         <div class="welcome-text">
           <h1 id="welcomeTitle">Welcome back</h1>
-          <p>Pick up where you left off, start fresh, or paste some text and get a board.</p>
+          <p>Pick up where you left off, or tell the AI what you need and watch it draw: diagrams, screens, docs and tickets.</p>
           <div class="welcome-cta">
             <button type="button" class="btn primary" data-welcome="new"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
+            <button type="button" class="btn ai-btn" data-welcome="ai"><svg class="i spark" viewBox="0 0 24 24" style="stroke:none"><path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="currentColor"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="currentColor"/></svg>Start with AI</button>
             <button type="button" class="btn" data-welcome="text"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M4 12h16M4 17h7"/></svg>From text</button>
             <button type="button" class="btn" data-welcome="import"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>Import</button>
           </div>
@@ -634,25 +707,34 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
         <div class="welcome-art" id="welcomeArt" aria-hidden="true"></div>
       </section>
       <section class="hero">
-        <h1>Draw it. Or just write it.</h1>
-        <p class="tag">Mermaid and a whiteboard, side by side, with Azure and Power Platform icons built in. Everything stays in your browser.</p>
+        <h1>Describe it. <span class="ai-grad">Watch it draw.</span></h1>
+        <p class="tag">Architecture diagrams with real Azure and Power Platform icons, UI mockups, docs and tickets, on one board. Ask the AI, write Mermaid or plain text, or drag things around. Everything stays in your browser.</p>
         <div class="hero-cta">
-          <button type="button" class="btn primary lg" id="heroStart">Start a blank board</button>
+          <button type="button" class="btn primary lg" id="heroAI"><svg class="i spark" viewBox="0 0 24 24" style="stroke:none"><path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="currentColor"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="currentColor"/></svg>Start with AI</button>
           <button type="button" class="btn lg" id="heroTry">Open an example</button>
-          <button type="button" class="btn lg ghost" id="heroText">Turn text into a board</button>
+          <button type="button" class="btn lg ghost" id="heroStart">Start a blank board</button>
+          <button type="button" class="btn lg ghost" id="heroText" hidden>Turn text into a board</button>
         </div>
         <div class="shot" aria-hidden="true">
           <div class="shot-bar"><i></i><i></i><i></i><span>Power Platform solution</span></div>
           <div class="shot-body">
-            <pre class="shot-code" id="heroCode"></pre>
+            <div class="shot-chat">
+              <div class="sc-msg me">Map a Power Platform app for employees, with Dataverse, a flow to the on-prem ERP and reports</div>
+              <div class="sc-msg bot">Added 9 services and 9 connections in a Power Platform frame, with Entra ID for sign-in.<div class="sc-chips"><i>9 added</i><i>9 connected</i></div></div>
+              <div class="sc-msg me">Now plan it out with tickets</div>
+              <div class="sc-msg bot typing"><span class="sc-dots"><b></b><b></b><b></b></span>Writing an epic, four stories and a bug</div>
+              <div class="sc-input">Tell Claude what to change…</div>
+            </div>
+            <pre class="shot-code" id="heroCode" hidden></pre>
             <div class="shot-board" id="heroBoard"></div>
           </div>
         </div>
       </section>
       <section class="features" aria-label="What orim does">
-        <div class="feat"><b>Write or draw</b><p>Type Mermaid or plain lines like <code>App -&gt; Dataverse</code>, or drag things around on the board. Both sides stay in sync.</p></div>
+        <div class="feat"><b>Ask the AI</b><p>Inside Claude, type what you want and it builds on the board as it answers, one undo step per request. Anywhere else, copy a ready prompt for any AI chat.</p></div>
+        <div class="feat"><b>Write or draw</b><p>Type Mermaid or plain lines like <code>App -&gt; Dataverse</code>, or drag things around. Both stay in sync, and export to PNG, SVG, draw.io or Markdown.</p></div>
+        <div class="feat"><b>Screens, docs and tickets</b><p>Phone, iPad and desktop mockups, comparison tables, documents, and tickets that copy into Azure DevOps or export as its import CSV.</p></div>
         <div class="feat"><b>Real cloud icons</b><p>679 Azure, Power Platform and Dynamics 365 icons, picked for you from service names.</p><div class="feat-icons" id="heroIcons"></div></div>
-        <div class="feat"><b>Take it anywhere</b><p>Export PNG, SVG, draw.io or Markdown that renders on GitHub and Azure DevOps.</p></div>
       </section>
       <section aria-labelledby="hTpl">
         <div class="sec-head"><h2 id="hTpl">Start something new</h2><div class="tpl-nav" id="tplNav"><button type="button" class="ibtn" data-tpl-dir="-1" aria-label="Previous templates" title="Previous"><svg class="i" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></svg></button><button type="button" class="ibtn" data-tpl-dir="1" aria-label="More templates" title="More"><svg class="i" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></svg></button></div></div>
@@ -660,6 +742,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
       </section>
       <section aria-labelledby="hRec" id="recentsSec">
         <div class="sec-head"><h2 id="hRec">Jump back in</h2>
+          <span class="grow"></span><button type="button" class="ibtn" id="removeAllBtn" title="Delete all boards" aria-label="Delete all boards" hidden><svg class="i" viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M6.5 7l1 12.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5L17.5 7M9.5 7V4.5h5V7"/></svg></button>
           <div class="seg" id="homeView" aria-label="Layout"><button type="button" data-view="grid" title="Grid" aria-label="Grid"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button><button type="button" data-view="list" title="List" aria-label="List"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button></div>
         </div>
         <div class="recents" id="homeRecents"></div>
@@ -706,6 +789,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
           <button type="button" data-export="txt"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="6" rx="3"/><path d="M12 9v3.5"/><path d="M12 12.5l5 4.25-5 4.25-5-4.25z"/></svg><b>Mermaid source (.txt)</b><small>Plain code, rename to .mmd if needed</small></button>
           <button type="button" data-export="drawio"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/><path d="M11 7h5v7"/><circle cx="16" cy="7" r=".9"/></svg><b>draw.io diagram</b><small>Editable in draw.io and diagrams.net</small></button>
           <button type="button" data-export="json"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"/><path d="M14 3.5v5h5"/><path d="M10.5 12c-1 0-1.5.5-1.5 1.25s-.5 1.25-1 1.25c.5 0 1 .5 1 1.25S9.5 17 10.5 17M13.5 12c1 0 1.5.5 1.5 1.25s.5 1.25 1 1.25c-.5 0-1 .5-1 1.25s-.5 1.25-1.5 1.25"/></svg><b>Board file (.json)</b><small>Reopen here with Import</small></button>
+          <button type="button" data-export="tickets"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 4v16"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/></svg><b>Tickets for Azure DevOps (.csv)</b><small>Import under Boards, Work items, Import</small></button>
           <hr>
           <button type="button" data-export="ai"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4.5 3.5V17H6a2 2 0 0 1-2-2z"/><path d="M8 9l2.5 1.75L8 12.5M13 12.5h3"/></svg><b>Ask an AI</b><small>Prompt with the orim format; paste the answer back</small></button>
           <button type="button" data-export="qr"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path d="M14.5 14.5h2.5v2.5h-2.5zM18.5 18.5h2v2h-2zM14.5 19.5h1M20.5 14.5v1.5"/></svg><b>QR code</b><small>Open this board on another device</small></button>
@@ -6992,15 +7076,27 @@ const UI_KINDS={
   uiImage:{name:'Image',w:240,h:140,def:''},
   uiTopbar:{name:'Top bar',w:300,h:48,def:'Title'},
   uiTabbar:{name:'Bottom menu',w:300,h:56,def:'Home\nSearch\nProfile'},
-  uiSidebar:{name:'Side menu',w:180,h:360,def:'Home\nProjects\nSettings'}
+  uiSidebar:{name:'Side menu',w:180,h:360,def:'Home\nProjects\nSettings'},
+  uiTable:{name:'Table',w:260,h:150,def:'Name\nStatus\nDate'}
 };
+// Accent colours for pieces, like Miro's wireframe kit. Empty is the grey default.
+const UI_COLORS=[['','Grey'],['#4262ff','Blue'],['#0ca789','Green'],['#fac710','Yellow'],['#f24726','Red'],['#9510ac','Purple'],['#1a1a1a','Black']];
+// New screens and pieces are drawn at half the sizes above, so they sit well next to other shapes.
+// Older boards keep their sizes: a screen's scale is its saved width over the base width.
+const MOCK=0.5;
+function devScale(m,gid){ const g=m.groups.get(gid); if(!g||!g.dev) return MOCK; const p=m.pos.get(gid); return p&&p.w?p.w/DEVICES[g.dev].w:MOCK; }
+// The drawing scale of a piece: its screen's scale, or its size against the base size when loose.
+function uiScale(m,n){ const g=n.group&&m.groups.get(n.group); if(g&&g.dev) return devScale(m,g.id); const k=UI_KINDS[n.shape]; if(!k) return 1;
+  const r=['uiText','uiImage','uiSidebar','uiTable'].includes(n.shape)?n.w/k.w:n.h/k.h; return Math.max(0.3,Math.min(2,r||MOCK)); }
 const SCREEN_PRESETS=[['blank','Blank'],['login','Login'],['main','Main page']];
 const isUi=n=>!!(n&&UI_KINDS[n.shape]);
 const uiItems=label=>String(label||'').split(/\n|\|/).map(s=>s.trim()).filter(Boolean);
 // The pieces of a preset screen, with positions relative to the device's top left corner.
-function screenPieces(dev,preset){
+function screenPieces(dev,preset,s){
+  if(s==null) s=MOCK;
   const D=DEVICES[dev]||DEVICES.mobile, W=D.w, H=D.h, T=D.top, B=D.bottom, out=[];
-  const add=(kind,label,x,y,w,h)=>out.push({kind,label,x,y,w:w||UI_KINDS[kind].w,h:h||UI_KINDS[kind].h});
+  const R=v=>Math.round(v*s*2)/2;
+  const add=(kind,label,x,y,w,h)=>out.push({kind,label,x:R(x),y:R(y),w:R(w||UI_KINDS[kind].w),h:R(h||UI_KINDS[kind].h)});
   const wide=dev==='desktop';
   if(preset==='login'){
     const cw=wide?340:Math.min(W-48,400), x=(W-cw)/2; let y=wide?T+90:T+(dev==='tablet'?150:70);
@@ -7044,15 +7140,115 @@ function addScreen(m,o){
   const label=String(o.label||({login:'Login',main:'Main page'}[o.preset]||D.name)).replace(/\n/g,' ');
   const gid=o.id&&!taken(o.id)?o.id:idFrom(o.idBase||label,taken);
   m.groups.set(gid,{id:gid,label,parent:o.parent&&m.groups.has(o.parent)?o.parent:null,dir:null,dev}); m.groupOrder.push(gid);
-  const x=Math.round(o.x/8)*8, y=Math.round(o.y/8)*8;
-  m.pos.set(gid,{x,y,w:D.w,h:D.h});
+  const x=Math.round(o.x/8)*8, y=Math.round(o.y/8)*8, s=o.scale||MOCK;
+  m.pos.set(gid,{x,y,w:D.w*s,h:D.h*s});
   const ids=[];
-  for(const p of screenPieces(dev,o.preset)){
+  for(const p of screenPieces(dev,o.preset,s)){
     const id=idFrom(gid+' '+(p.label.split('\n')[0]||UI_KINDS[p.kind].name),taken);
     const n={id,label:p.label,shape:p.kind,icon:null,group:gid,cls:null,x:x+p.x,y:y+p.y,w:p.w,h:p.h,sized:true};
     m.nodes.set(id,n); m.nodeOrder.push(id); ids.push(id);
   }
   return {gid,ids};
+}
+
+</script>
+  <script>
+/* orim · core/tickets.js
+ * Tickets are document cards with a work item type (Azure DevOps style): Epic, Feature,
+ * User Story, Task or Bug. The type adds a coloured strip, a few fields and a starting
+ * template; the body is an ordinary document. Tickets copy as rich text and Markdown and
+ * export to the CSV that Azure DevOps imports. No DOM here.
+ */
+'use strict';
+const TICKET_TYPES={
+  epic:{name:'Epic',ado:'Epic',color:'#e06c00',rank:0,fields:['priority','tags'],tpl:'## Description\n\n## Business value\n'},
+  feature:{name:'Feature',ado:'Feature',color:'#773b93',rank:1,fields:['priority','tags'],tpl:'## Description\n\n## Acceptance criteria\n- '},
+  story:{name:'User Story',ado:'User Story',color:'#009ccc',rank:2,fields:['points','priority','tags'],tpl:'## Description\nAs a user, I want …, so that …\n## Acceptance criteria\n- '},
+  bug:{name:'Bug',ado:'Bug',color:'#cc293d',rank:2,fields:['severity','priority','tags'],tpl:'## Repro steps\n1. \n## Expected result\n\n## Actual result\n'},
+  task:{name:'Task',ado:'Task',color:'#d9a800',rank:3,fields:['remaining','activity','tags'],tpl:'## Description\n'}
+};
+const TICKET_FIELDS={
+  priority:{name:'Priority',csv:'Priority',opts:['1','2','3','4'],show:v=>'P'+v},
+  points:{name:'Story points',csv:'Story Points',num:true,show:v=>v+' pts'},
+  severity:{name:'Severity',csv:'Severity',opts:['1 - Critical','2 - High','3 - Medium','4 - Low'],show:v=>'Sev '+String(v).split(' ')[0]},
+  remaining:{name:'Remaining (h)',csv:'Remaining Work',num:true,show:v=>v+' h'},
+  activity:{name:'Activity',csv:'Activity',opts:['Development','Design','Testing','Documentation','Deployment','Requirements'],show:v=>v},
+  tags:{name:'Tags',csv:'Tags',show:v=>String(v).split(/[;,]/).map(s=>s.trim()).filter(Boolean).join(', ')}
+};
+const isTicket=n=>!!(n&&n.shape==='doc'&&n.doc&&TICKET_TYPES[n.doc.kind]);
+// Keep only known fields with sensible values.
+function cleanFields(kind,f){
+  const out={}; const t=TICKET_TYPES[kind]; if(!t||!f||typeof f!=='object') return out;
+  for(const k of t.fields){ let v=f[k]; if(v==null||v==='') continue; const d=TICKET_FIELDS[k];
+    if(d.num){ v=+v; if(!isFinite(v)||v<0) continue; out[k]=Math.round(v*10)/10; continue; }
+    v=String(v).trim().slice(0,200); if(!v) continue;
+    if(d.opts){ const hit=d.opts.find(o=>o===v||o.split(' ')[0]===v.split(' ')[0]); if(!hit) continue; v=hit; }
+    out[k]=v; }
+  return out;
+}
+const ticketLine=n=>{ const d=n.doc, t=TICKET_TYPES[d.kind]; if(!t) return ''; return t.fields.filter(k=>d.fields&&d.fields[k]!=null).map(k=>TICKET_FIELDS[k].show(d.fields[k])).join(' · '); };
+const safeUrl=u=>{ const s=String(u||'').trim(); return /^(https?:\/\/|mailto:)[^\s<>"]+$/i.test(s)?s.slice(0,2000):null; };
+function ticketTemplate(kind){ const t=TICKET_TYPES[kind]; return t?mdToDoc(t.tpl).blocks:[{t:'p',r:[]}]; }
+// Blocks to HTML and Markdown, for copying and export.
+function blocksHtml(blocks){
+  const he=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+  const runs=rs=>rs.map(r=>{ let s=he(r.x); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; if(r.u) s='<a href="'+he(r.u)+'">'+s+'</a>'; return s; }).join('');
+  let h='', list=null;
+  for(const b of blocks){
+    if(b.t==='ul'||b.t==='ol'){ if(list!==b.t){ if(list) h+='</'+list+'>'; h+='<'+b.t+'>'; list=b.t; } h+='<li>'+runs(b.r)+'</li>'; continue; }
+    if(list){ h+='</'+list+'>'; list=null; }
+    if(!b.r.length) continue;
+    h+='<'+(b.t==='p'?'p':b.t)+'>'+runs(b.r)+'</'+(b.t==='p'?'p':b.t)+'>';
+  }
+  if(list) h+='</'+list+'>';
+  return h;
+}
+// The parts of a ticket body: the section under an "Acceptance criteria" heading, and the rest.
+function ticketParts(doc){
+  const desc=[], acc=[]; let into=desc, skipHead=false;
+  for(const b of doc.blocks){
+    if(/^h[1-3]$/.test(b.t)){ const txt=b.r.map(r=>r.x).join('').trim().toLowerCase();
+      if(/^acceptance/.test(txt)){ into=acc; continue; } into=desc; if(txt==='description') continue; }
+    into.push(b);
+  }
+  // Empty template lines are not content.
+  const real=bs=>bs.filter(b=>b.r.some(r=>r.x.trim()&&!/^(-|…|1\.)$/.test(r.x.trim())));
+  return {desc:real(desc).length?desc:[],acc:real(acc).length?acc:[]};
+}
+function ticketHtml(n){
+  const d=n.doc, t=TICKET_TYPES[d.kind]; const he=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let h='<h2>'+(t?he(t.name)+': ':'')+he(n.label||'Untitled')+'</h2>'; const line=t?ticketLine(n):''; if(line) h+='<p><i>'+he(line)+'</i></p>';
+  return h+blocksHtml(d.blocks);
+}
+function ticketMd(n){ const d=n.doc, t=TICKET_TYPES[d.kind]; const line=t?ticketLine(n):''; return '## '+(t?t.name+': ':'')+(n.label||'Untitled')+'\n'+(line?'_'+line+'_\n':'')+'\n'+docToMd(d).replace(/\n{3,}/g,'\n\n')+'\n'; }
+// Parent of a ticket: a connected ticket of a higher level (Epic > Feature > Story/Bug > Task).
+function ticketParent(m,n){
+  const r=TICKET_TYPES[n.doc.kind].rank; let best=null;
+  for(const e of m.edges){ const o=e.from===n.id?e.to:e.to===n.id?e.from:null; if(!o) continue; const p=m.nodes.get(o); if(!isTicket(p)) continue;
+    const pr=TICKET_TYPES[p.doc.kind].rank; if(pr<r&&(!best||pr>TICKET_TYPES[best.doc.kind].rank)) best=p; }
+  return best;
+}
+// CSV for Azure DevOps: Boards > Work items > Import from CSV. Title 1, Title 2 … give the hierarchy.
+function ticketsCsv(m,ids){
+  const all=[...m.nodeOrder].map(id=>m.nodes.get(id)).filter(isTicket).filter(n=>!ids||ids.has(n.id));
+  if(!all.length) return null;
+  const inSet=new Set(all.map(n=>n.id)); const par=new Map(all.map(n=>{ const p=ticketParent(m,n); return [n.id,p&&inSet.has(p.id)?p.id:null]; }));
+  const kids=new Map(); for(const n of all){ const p=par.get(n.id)||''; if(!kids.has(p)) kids.set(p,[]); kids.get(p).push(n); }
+  const rows=[]; let depth=1;
+  const walk=(pid,d,seen)=>{ for(const n of kids.get(pid)||[]){ if(seen.has(n.id)) continue; seen.add(n.id); depth=Math.max(depth,d); rows.push({n,d}); walk(n.id,d+1,seen); } };
+  walk('',1,new Set());
+  const cols=['ID','Work Item Type']; for(let k=1;k<=depth;k++) cols.push('Title '+k);
+  const extra=['Description','Acceptance Criteria','Repro Steps','Priority','Story Points','Severity','Remaining Work','Activity','Tags']; cols.push(...extra);
+  const q=v=>{ const s=String(v==null?'':v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const out=[cols.map(q).join(',')];
+  for(const {n,d} of rows){
+    const doc=n.doc, t=TICKET_TYPES[doc.kind], f=doc.fields||{}; const parts=ticketParts(doc);
+    const row=['',t.ado]; for(let k=1;k<=depth;k++) row.push(k===d?(n.label||'Untitled'):'');
+    const bug=doc.kind==='bug';
+    row.push(bug?'':blocksHtml(parts.desc), bug?'':blocksHtml(parts.acc), bug?blocksHtml(doc.blocks):'', f.priority||'', f.points!=null?f.points:'', f.severity||'', f.remaining!=null?f.remaining:'', f.activity||'', f.tags?TICKET_FIELDS.tags.show(f.tags).replace(/, /g,'; '):'');
+    out.push(row.map(q).join(','));
+  }
+  return out.join('\r\n')+'\r\n';
 }
 
 </script>
@@ -7228,23 +7424,29 @@ function cleanTable(d){
 // Documents: {blocks:[{t:'h1'|'h2'|'h3'|'p'|'ul'|'ol', r:[{x:text, b?:1, i?:1}]}]}.
 function cleanDoc(d){
   const T=new Set(['h1','h2','h3','p','ul','ol']);
-  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>({t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; return o; })})):[];
+  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>({t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; const u=safeUrl(x.u); if(u) o.u=u; return o; })})):[];
   if(!blocks.length) blocks=[{t:'p',r:[]}];
-  return {blocks:blocks.slice(0,400)};
+  const out={blocks:blocks.slice(0,400)};
+  // A ticket: a work item type and its fields.
+  if(d&&TICKET_TYPES[d.kind]){ out.kind=d.kind; const f=cleanFields(d.kind,d.fields); if(Object.keys(f).length) out.fields=f; }
+  return out;
 }
-// Markdown (what the AI writes) to document blocks: # ## ### headings, - and 1. lists, **bold**, *italic*.
+// Markdown (what the AI writes) to document blocks: # ## ### headings, - and 1. lists, **bold**, *italic*, [links](https://…).
 function mdToDoc(md){
-  const blocks=[]; const runs=s=>{ const out=[]; const re=/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g; let last=0,m;
-    while((m=re.exec(s))){ if(m.index>last) out.push({x:s.slice(last,m.index)}); const t=m[0]; if(t.startsWith('**')) out.push({x:t.slice(2,-2),b:1}); else out.push({x:t.slice(1,-1),i:1}); last=m.index+t.length; }
+  const blocks=[]; const runs=s=>{ const out=[]; const re=/(\[[^\]]+\]\((?:https?:\/\/|mailto:)[^)\s]+\)|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|https?:\/\/[^\s<>()]+[^\s<>().,;:!?'"])/g; let last=0,m;
+    while((m=re.exec(s))){ if(m.index>last) out.push({x:s.slice(last,m.index)}); const t=m[0];
+      if(t[0]==='['){ const k=t.indexOf(']('); out.push({x:t.slice(1,k),u:t.slice(k+2,-1)}); }
+      else if(/^https?:/.test(t)) out.push({x:t,u:t});
+      else if(t.startsWith('**')) out.push({x:t.slice(2,-2),b:1}); else out.push({x:t.slice(1,-1),i:1}); last=m.index+t.length; }
     if(last<s.length) out.push({x:s.slice(last)}); return out.filter(r=>r.x); };
-  for(const raw of String(md||'').replace(/\r/g,'').split('\n')){ const l=raw.trimEnd(); if(!l.trim()) continue; let m;
+  for(const raw of String(md||'').replace(/\r/g,'').split('\n')){ const l=raw.trimEnd(); if(!l.trim()){ continue; } let m;
     if((m=/^(#{1,3})\s+(.*)$/.exec(l))) blocks.push({t:'h'+m[1].length,r:runs(m[2])});
-    else if((m=/^\s*[-*•]\s+(.*)$/.exec(l))) blocks.push({t:'ul',r:runs(m[1])});
-    else if((m=/^\s*\d+[.)]\s+(.*)$/.exec(l))) blocks.push({t:'ol',r:runs(m[1])});
+    else if((m=/^\s*[-*•]\s*(.*)$/.exec(l))&&/^\s*[-*•](\s|$)/.test(l)) blocks.push({t:'ul',r:runs(m[1])});
+    else if((m=/^\s*\d+[.)]\s*(.*)$/.exec(l))&&/^\s*\d+[.)](\s|$)/.test(l)) blocks.push({t:'ol',r:runs(m[1])});
     else blocks.push({t:'p',r:runs(l.trim())}); }
   return cleanDoc({blocks});
 }
-function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ const s=b.r.map(r=>r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x).join(''); if(b.t==='ol') k++; else k=0; return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:s; }).join('\n'); }
+function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ const s=b.r.map(r=>{ let x=r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x; if(r.u) x=r.x===r.u?r.u:'['+x+']('+r.u+')'; return x; }).join(''); if(b.t==='ol') k++; else k=0; return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:s; }).join('\n'); }
 function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[],cstyles:new Map()};}
 const r10=v=>Math.round(v*10)/10;
 function encodeInk(k){
@@ -7534,16 +7736,17 @@ function rowRect(n,row){ const L=n._tl||tableLayout(n); const r=Math.max(0,Math.
 function rowAt(n,y){ const L=n._tl||tableLayout(n); let yy=n.y+L.top; for(let i=0;i<L.rows.length;i++){ if(y<yy+L.rows[i]) return i; yy+=L.rows[i]; } return L.rows.length-1; }
 const DOCF={h1:[19,700,10],h2:[16,700,8],h3:[14,700,6],p:[13,400,4],ul:[13,400,2],ol:[13,400,2]};
 function docLayout(n){
-  const W=n.w||380, PADX=22, PADT=n.label&&n.label.trim()?44:20; const out=[]; let y=PADT, k=0;
+  const tk=n.doc&&TICKET_TYPES[n.doc.kind];
+  const W=n.w||380, PADX=22, PADT=tk?(ticketLine(n)?84:68):n.label&&n.label.trim()?44:20; const out=[]; let y=PADT, k=0;
   for(const b of (n.doc&&n.doc.blocks)||[]){
     const [fs,wt,gap]=DOCF[b.t]||DOCF.p; const lh=Math.round(fs*1.45); const ind=b.t==='ul'||b.t==='ol'?18:0;
     if(b.t==='ol') k++; else k=0;
     y+=out.length?gap:0;
     // words with their style, wrapped greedily
-    const words=[]; for(const r of b.r) for(const part of r.x.split(/(\s+|\n)/)){ if(!part) continue; if(part==='\n'){ words.push({nl:1}); continue; } if(/^\s+$/.test(part)){ words.push({sp:1,b:r.b,i:r.i}); continue; } words.push({x:part,b:r.b,i:r.i}); }
+    const words=[]; for(const r of b.r) for(const part of r.x.split(/(\s+|\n)/)){ if(!part) continue; if(part==='\n'){ words.push({nl:1}); continue; } if(/^\s+$/.test(part)){ words.push({sp:1,b:r.b,i:r.i,u:r.u}); continue; } words.push({x:part,b:r.b,i:r.i,u:r.u}); }
     const maxW=W-PADX*2-ind; const lines=[[]]; let lw=0;
     const width=w=>Core.measure(w.x,fs)*((w.b||wt>=700)?1.08:1);
-    for(const w of words){ if(w.nl){ lines.push([]); lw=0; continue; } if(w.sp){ if(lines[lines.length-1].length){ lines[lines.length-1].push({x:' ',b:w.b,i:w.i}); lw+=fs*0.3; } continue; }
+    for(const w of words){ if(w.nl){ lines.push([]); lw=0; continue; } if(w.sp){ if(lines[lines.length-1].length){ lines[lines.length-1].push({x:' ',b:w.b,i:w.i,u:w.u}); lw+=fs*0.3; } continue; }
       const ww=width(w); if(lw+ww>maxW&&lines[lines.length-1].length){ const L=lines[lines.length-1]; while(L.length&&L[L.length-1].x===' ') L.pop(); lines.push([]); lw=0; } lines[lines.length-1].push(w); lw+=ww; }
     if(!lines[lines.length-1].length&&lines.length>1) lines.pop();
     out.push({t:b.t,fs,wt,lh,ind,num:k,y,lines}); y+=lines.length*lh;
@@ -7551,7 +7754,7 @@ function docLayout(n){
   return {blocks:out,h:Math.max(PADT+40,y+22),padx:PADX};
 }
 function sizeNode(n){
-  if(isUi(n)){ const k=UI_KINDS[n.shape]; if(!n.sized||!n.w){ n.w=k.w; n.h=k.h; } n.lines=[]; return; }
+  if(isUi(n)){ const k=UI_KINDS[n.shape]; if(!n.sized||!n.w){ n.w=k.w*MOCK; n.h=k.h*MOCK; } n.lines=[]; return; }
   if(n.shape==='table'){ if(!n.table) n.table={rows:[['','Option A','Option B'],['','',''],['','','']],colors:{}}; const L=tableLayout(n); n.w=Math.round(L.w); n.h=Math.ceil(L.h); n._tl=L; n.lines=[]; return; }
   if(n.shape==='doc'){ if(!n.doc) n.doc={blocks:[{t:'p',r:[]}]}; if(!n.sized||!n.w) n.w=380; const L=docLayout(n); n.h=Math.min(1600,Math.ceil(L.h)); n._dl=L; n.lines=[]; return; }
   if(n.shape==='sticky'){
@@ -7627,14 +7830,14 @@ function layoutBlocks(m){
   const childIn=(id,block)=>{ if(!m.nodes.has(id)&&!used.has(id)) return null; let cur=id,k=0; while(k++<60){ const p=parentOf(cur); if(p===block) return cur; if(p===null) return null; cur=p; } return null; };
   const blocks=new Map();
   const devBox=block=>{ const g=block&&m.groups.get(block); if(!g||!g.dev) return null; const D=DEVICES[g.dev]; const p=m.pos.get(block); if(p&&p.w) return {x:p.x,y:p.y,w:p.w,h:p.h};
-    let x0=Infinity,y0=Infinity; for(const n of m.nodes.values()) if(n.group===block&&n.x!=null){ x0=Math.min(x0,n.x); y0=Math.min(y0,n.y); } return {x:isFinite(x0)?x0:0,y:isFinite(y0)?y0-D.top:0,w:D.w,h:D.h}; };
+    let x0=Infinity,y0=Infinity; for(const n of m.nodes.values()) if(n.group===block&&n.x!=null){ x0=Math.min(x0,n.x); y0=Math.min(y0,n.y); } return {x:isFinite(x0)?x0:0,y:isFinite(y0)?y0-D.top*MOCK:0,w:D.w*MOCK,h:D.h*MOCK}; };
   function layout(block){
     if(blocks.has(block)) return blocks.get(block);
     const kids=[]; for(const id of m.nodeOrder) if(m.nodes.has(id)&&parentOf(id)===block) kids.push(id);
     for(const gid of m.groupOrder) if(used.has(gid)&&parentOf(gid)===block) kids.push(gid);
     // A screen is a drawing: its pieces keep their places inside the device.
     const db=devBox(block);
-    if(db){ const pos=new Map(); for(const k of kids){ const n=m.nodes.get(k); if(n&&n.x!=null) pos.set(k,{x:n.x-db.x,y:n.y-db.y}); else if(n) pos.set(k,{x:16,y:DEVICES[m.groups.get(block).dev].top+16}); }
+    if(db){ const pos=new Map(); for(const k of kids){ const n=m.nodes.get(k); if(n&&n.x!=null) pos.set(k,{x:n.x-db.x,y:n.y-db.y}); else if(n) pos.set(k,{x:8,y:DEVICES[m.groups.get(block).dev].top*devScale(m,block)+8}); }
       const r={w:db.w,h:db.h,pos,dev:true}; blocks.set(block,r); return r; }
     const sz=new Map(kids.map(k=>{ const n=m.nodes.get(k); if(n) return [k,{w:n.w,h:n.h}]; const b=layout(k); return [k,{w:b.w,h:b.h}]; }));
     const raw=(block&&m.groups.get(block).dir)||m.dir; const dir=raw==='TD'?'TB':(raw||'LR');
@@ -7719,7 +7922,7 @@ function groupBoxes(m,exclude){
     const p=m.pos.get(gid); const fixed=p&&p.w?{x:p.x,y:p.y,w:p.w,h:p.h}:null;
     // A device frame keeps its size; what is dragged past its edge is cut off from view, not added.
     const dv=m.groups.get(gid).dev&&DEVICES[m.groups.get(gid).dev];
-    if(dv){ boxes.set(gid,fixed||(cb?{x:cb.x+PAD,y:cb.y+PAD_TOP,w:dv.w,h:dv.h}:{x:p?p.x:0,y:p?p.y:0,w:dv.w,h:dv.h})); continue; }
+    if(dv){ boxes.set(gid,fixed||(cb?{x:cb.x+PAD,y:cb.y+PAD_TOP,w:dv.w*MOCK,h:dv.h*MOCK}:{x:p?p.x:0,y:p?p.y:0,w:dv.w*MOCK,h:dv.h*MOCK})); continue; }
     if(cb&&fixed) boxes.set(gid,unionRect(cb,fixed));
     else if(cb) boxes.set(gid,cb);
     else if(fixed) boxes.set(gid,fixed);
@@ -7960,6 +8163,31 @@ function resolveArrow(m,a){
   return {...a,x1:p0.x,y1:p0.y,x2:p1.x,y2:p1.y};
 }
 function arrowBox(a){ const pad=a.kind==='block'?a.w*4.4+9:a.w*3+8; const x0=Math.min(a.x1,a.x2),y0=Math.min(a.y1,a.y2); return {x:x0-pad,y:y0-pad,w:Math.abs(a.x2-a.x1)+pad*2,h:Math.abs(a.y2-a.y1)+pad*2}; }
+// Push top-level things apart so none overlap: shapes outside frames, and whole frames (with
+// everything in them, and the title above them). Only the blocks in `movable` move; null moves any.
+// Returns how many blocks moved.
+function separateBlocks(m,movable,gap){
+  const G=gap||40, TITLE=30; const boxes=groupBoxes(m); const blocks=[];
+  for(const n of m.nodes.values()) if(n.x!=null&&!(n.group&&m.groups.has(n.group))) blocks.push({id:n.id,n,x:n.x,y:n.y,w:n.w,h:n.h});
+  for(const g of m.groups.values()){ if(g.parent&&m.groups.has(g.parent)) continue; const b=boxes.get(g.id); if(b) blocks.push({id:g.id,g,x:b.x,y:b.y-TITLE,w:b.w,h:b.h+TITLE}); }
+  const can=b=>!movable||movable.has(b.id);
+  const moved=new Map();
+  for(let pass=0;pass<40;pass++){ let any=false;
+    for(const a of blocks) for(const b of blocks){ if(a===b||!can(b)) continue;
+      const ox=Math.min(a.x+a.w,b.x+b.w)+G-Math.max(a.x,b.x), oy=Math.min(a.y+a.h,b.y+b.h)+G-Math.max(a.y,b.y);
+      if(ox<=0||oy<=0) continue;
+      if(can(a)&&!movable&&(a.y>b.y||(a.y===b.y&&a.x>b.x))) continue; // of two movable blocks, move the later one
+      // Move along the axis that needs the shorter push, away from the other block.
+      let dx=0,dy=0; if(ox<=oy) dx=(b.x+b.w/2>=a.x+a.w/2?1:-1)*ox; else dy=(b.y+b.h/2>=a.y+a.h/2?1:-1)*oy;
+      b.x+=dx; b.y+=dy; const mv=moved.get(b.id)||{dx:0,dy:0}; mv.dx+=dx; mv.dy+=dy; moved.set(b.id,mv); any=true; }
+    if(!any) break; }
+  for(const b of blocks){ const mv=moved.get(b.id); if(!mv) continue; const dx=Math.round(mv.dx), dy=Math.round(mv.dy);
+    if(b.n){ b.n.x+=dx; b.n.y+=dy; continue; }
+    const inside=new Set([b.id]); let grew=true; while(grew){ grew=false; for(const g of m.groups.values()) if(!inside.has(g.id)&&g.parent&&inside.has(g.parent)){ inside.add(g.id); grew=true; } }
+    for(const n of m.nodes.values()) if(n.group&&inside.has(n.group)&&n.x!=null){ n.x+=dx; n.y+=dy; }
+    for(const gid of inside){ const p=m.pos.get(gid); if(p) m.pos.set(gid,{...p,x:p.x+dx,y:p.y+dy}); } }
+  return moved.size;
+}
 
 </script>
   <script>
@@ -8292,6 +8520,9 @@ const I={
   hl:'<path d="M14.5 4.5l5 5-7.5 7.5h-5v-5z"/><path d="M7 12l-3 3v3h3"/><path d="M4 21h9"/>',
   eraser:'<path d="M9 20h11"/><path d="M4.6 14.6l9.2-9.2a2 2 0 0 1 2.8 0l2.9 2.9a2 2 0 0 1 0 2.8L12 18.6a2 2 0 0 1-1.4.6H8.4a2 2 0 0 1-1.4-.6l-2.4-2.4a2 2 0 0 1 0-2.8z"/><path d="M9.5 9.7l5.6 5.6"/>',
   sticky:'<path d="M5 4.5h14v9.5L13.5 19.5H5z"/><path d="M13.5 19.5v-5.5H19"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  copyDoc:'<rect x="5.5" y="5" width="13" height="16" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M9 11h6M9 14.5h6M9 18h3"/>',
+  ticket:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 4v16"/><path d="M8.5 9h7M8.5 13h7M8.5 17h4"/>',
   phone:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 5h3"/>',
   tablet:'<rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M11 18h2"/>',
   desktop:'<rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M2.5 7.5h19M9 20.5h6M12 17v3.5"/>',
@@ -8302,6 +8533,7 @@ const I={
   uiImage:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 16l5-5 4 4 2.5-2.5 5.5 5"/><circle cx="15.5" cy="9" r="1.3"/>',
   uiTopbar:'<rect x="3.5" y="4" width="17" height="16" rx="1.5"/><path d="M3.5 9h17M6 6.5h3"/>',
   uiTabbar:'<rect x="3.5" y="4" width="17" height="16" rx="1.5"/><path d="M3.5 15h17M7.5 17.5h1M11.5 17.5h1M15.5 17.5h1"/>',
+  uiTable:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 9.5h17M3.5 14h17M9.5 5v14M15 5v14"/>',
   uiSidebar:'<rect x="3.5" y="4" width="17" height="16" rx="1.5"/><path d="M9 4v16M5.5 7.5h1.5M5.5 10.5h1.5"/>',
   table:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/>',
   doc:'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/>',
@@ -8824,7 +9056,16 @@ function tableInner(n,m,P,live){
 function docInner(n,m,P,live){
   const L=n._dl||docLayout(n), w=n.w, h=n.h, st=styleOf(m,n.id)||{}; const font=P.font;
   let s='<rect class="shape" width="'+w+'" height="'+h+'" rx="10" style="fill:'+(st.fill||P.nodeFill)+';stroke:'+(st.stroke||P.labelText)+';stroke-opacity:.35;stroke-width:1.2"/>';
-  if(n.label&&n.label.trim()){ s+='<g transform="translate(18 15)" style="fill:none;stroke:'+P.labelText+';stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M2 1h7l4 4v10H2z"/><path d="M5 8h5M5 11h5"/></g>';
+  const tk=TICKET_TYPES[n.doc.kind];
+  if(tk){ // Ticket: coloured strip on the left like an Azure Boards card, type, title and fields.
+    const cid='tk-'+String(n.id).replace(/[^\w-]/g,'')+(live?'':'-x');
+    s+='<clipPath id="'+cid+'"><rect width="'+w+'" height="'+h+'" rx="10"/></clipPath><rect width="5" height="'+h+'" clip-path="url(#'+cid+')" style="fill:'+tk.color+'"/>';
+    s+='<rect x="22" y="14" width="9" height="9" rx="2" style="fill:'+tk.color+'"/><text x="37" y="22.5" style="fill:'+P.labelText+';font:600 11px '+font+';letter-spacing:.02em">'+esc(tk.name.toUpperCase())+'</text>';
+    const tl=wrapText(n.label&&n.label.trim()?n.label:'Untitled',w-44,14.5)[0]||'';
+    s+='<text class="lbl" x="22" y="46" style="fill:'+(n.label&&n.label.trim()?P.nodeText:P.muted)+';font:700 14.5px '+font+'">'+esc(tl)+'</text>';
+    const line=ticketLine(n); if(line) s+='<text x="22" y="66" style="fill:'+P.labelText+';font:400 11.5px '+font+'">'+esc(line)+'</text>';
+    const dy=line?76:58; s+='<path d="M22 '+dy+'H'+(w-18)+'" style="stroke:'+P.labelText+';stroke-opacity:.2"/>'; }
+  else if(n.label&&n.label.trim()){ s+='<g transform="translate(18 15)" style="fill:none;stroke:'+P.labelText+';stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M2 1h7l4 4v10H2z"/><path d="M5 8h5M5 11h5"/></g>';
     s+='<text class="lbl" x="40" y="27" style="fill:'+P.labelText+';font:600 13px '+font+'">'+esc(n.label)+'</text><path d="M18 40H'+(w-18)+'" style="stroke:'+P.labelText+';stroke-opacity:.2"/>'; }
   const clip=h<L.h;
   for(const b of L.blocks){
@@ -8833,7 +9074,7 @@ function docInner(n,m,P,live){
       const by=b.y+k*b.lh+b.fs; if(by>h-6) return;
       if(k===0&&(b.t==='ul'||b.t==='ol')) s+='<text x="'+(L.padx+2)+'" y="'+by+'" style="fill:'+P.nodeText+';font:400 '+b.fs+'px '+font+'">'+(b.t==='ul'?'•':b.num+'.')+'</text>';
       s+='<text class="lbl" x="'+(L.padx+b.ind)+'" y="'+by+'" style="fill:'+P.nodeText+';font:'+b.wt+' '+b.fs+'px '+font+'">';
-      for(const r of line) s+='<tspan'+(r.b&&b.wt<700?' font-weight="700"':'')+(r.i?' font-style="italic"':'')+'>'+esc(r.x)+'</tspan>';
+      for(const r of line) s+='<tspan'+(r.b&&b.wt<700?' font-weight="700"':'')+(r.i?' font-style="italic"':'')+(r.u?' class="doc-link" data-href="'+esc(r.u)+'" text-decoration="underline" style="fill:'+P.accent+'"':'')+'>'+esc(r.x)+(r.u&&live?'<title>'+esc(r.u)+' (Ctrl or Cmd+click to open)</title>':'')+'</tspan>';
       s+='</text>';
     });
   }
@@ -8841,37 +9082,53 @@ function docInner(n,m,P,live){
   if(clip) s+='<rect x="1" y="'+(h-34)+'" width="'+(w-2)+'" height="33" rx="9" style="fill:'+(st.fill||P.nodeFill)+';opacity:.92"/><text x="'+(w/2)+'" y="'+(h-13)+'" text-anchor="middle" style="fill:'+P.labelText+';font:500 12px '+font+'">Open to read more</text>';
   return s;
 }
-// Grey wireframe pieces for mockups.
+// Grey wireframe pieces for mockups. k is the drawing scale (half size for new screens).
 function uiInner(n,m,P,live){
-  const w=n.w,h=n.h,font=P.font,L=n.label||''; let s=live?'<rect class="hit" width="'+w+'" height="'+h+'" style="fill:transparent"/>':'';
-  const txt=(x,y,t,sz,wt,col,anchor)=>'<text class="lbl" x="'+x+'" y="'+y+'" style="fill:'+col+';font:'+wt+' '+sz+'px '+font+(anchor?';text-anchor:'+anchor:'')+'">'+esc(t)+'</text>';
-  const bars=(x,y,ww,n0)=>{ let o=''; for(let k=0;k<n0;k++) o+='<rect x="'+x+'" y="'+(y+k*14)+'" width="'+(ww*(k===n0-1&&n0>1?0.6:k%2?0.92:1)).toFixed(1)+'" height="7" rx="3.5" style="fill:'+P.wfLine+'"/>'; return o; };
+  const w=n.w,h=n.h,font=P.font,L=n.label||'',k=uiScale(m,n); let s=live?'<rect class="hit" width="'+w+'" height="'+h+'" style="fill:transparent"/>':'';
+  const f=v=>+(v*k).toFixed(2);
+  const txt=(x,y,t,sz,wt,col,anchor)=>'<text class="lbl" x="'+x+'" y="'+y+'" style="fill:'+col+';font:'+wt+' '+f(sz)+'px '+font+(anchor?';text-anchor:'+anchor:'')+'">'+esc(t)+'</text>';
+  const first=L.split('\n')[0];
+  // An accent colour from the piece's fill; grey when it has none.
+  const st=styleOf(m,n.id), A=st&&st.fill&&/^#[0-9a-f]{3,8}$/i.test(st.fill)?st.fill:null, onA=A?inkFor(A):P.devFill;
+  const tint=(op)=>A?'fill:'+A+';fill-opacity:'+op:'fill:'+P.wfFill;
   switch(n.shape){
-    case 'uiHeading': s+=L?txt(0,h/2+7,L.split('\n')[0],19,700,P.nodeText):'<rect y="'+(h/2-6)+'" width="'+(w*0.7)+'" height="12" rx="6" style="fill:'+P.wfInk+'"/>'; break;
-    case 'uiText': if(L){ const ls=wrapText(L,w,12.5).slice(0,Math.max(1,Math.floor((h+2)/17))); s+='<text class="lbl" style="fill:'+P.wfText+';font:400 12.5px '+font+'">'+ls.map((l,k)=>'<tspan x="0" y="'+(13+k*17)+'">'+esc(l)+'</tspan>').join('')+'</text>'; }
-      else s+=bars(0,Math.max(0,(h-((Math.max(1,Math.floor((h+7)/14)))*14-7))/2),w,Math.max(1,Math.min(6,Math.floor((h+7)/14)))); break;
-    case 'uiButton': s+='<rect width="'+w+'" height="'+h+'" rx="8" style="fill:'+P.wfInk+'"/>'+txt(w/2,h/2+4.5,L.split('\n')[0],13,600,P.devFill,'middle'); break;
-    case 'uiInput': s+='<rect x=".75" y=".75" width="'+(w-1.5)+'" height="'+(h-1.5)+'" rx="8" style="fill:'+P.devFill+';stroke:'+P.wfLine+';stroke-width:1.5"/>'+txt(12,h/2+4.5,L.split('\n')[0],13,400,P.wfText); break;
-    case 'uiImage': s+='<rect x=".75" y=".75" width="'+(w-1.5)+'" height="'+(h-1.5)+'" rx="6" style="fill:'+P.wfFill+';stroke:'+P.wfLine+';stroke-width:1.5"/><path d="M6 6L'+(w-6)+' '+(h-6)+'M'+(w-6)+' 6L6 '+(h-6)+'" style="stroke:'+P.wfLine+';stroke-width:1.5"/>'+(L?txt(w/2,h/2+4.5,L.split('\n')[0],12,500,P.wfText,'middle'):''); break;
-    case 'uiTopbar': { s+='<rect width="'+w+'" height="'+h+'" style="fill:'+P.wfFill+'"/><path d="M16 '+(h/2-6)+'h16M16 '+(h/2)+'h16M16 '+(h/2+6)+'h16" style="stroke:'+P.wfInk+';stroke-width:2;stroke-linecap:round"/>'+
-      '<circle cx="'+(w-26)+'" cy="'+(h/2)+'" r="'+Math.min(12,h/2-6)+'" style="fill:'+P.wfLine+'"/>'+txt(w/2,h/2+5,L.split('\n')[0],14,600,P.nodeText,'middle'); break; }
+    case 'uiHeading': s+=L?txt(0,h/2+f(7),first,19,700,A||P.nodeText):'<rect y="'+(h/2-f(6))+'" width="'+(w*0.7)+'" height="'+f(12)+'" rx="'+f(6)+'" style="fill:'+(A||P.wfInk)+'"/>'; break;
+    case 'uiText': { const lh=f(17);
+      if(L){ const ls=wrapText(L,w/k,12.5).slice(0,Math.max(1,Math.floor((h+2)/lh))); s+='<text class="lbl" style="fill:'+(A||P.wfText)+';font:400 '+f(12.5)+'px '+font+'">'+ls.map((l,q)=>'<tspan x="0" y="'+(f(13)+q*lh)+'">'+esc(l)+'</tspan>').join('')+'</text>'; }
+      else { const step=f(14), cnt=Math.max(1,Math.min(6,Math.floor((h+f(7))/step))), y0=Math.max(0,(h-(cnt*step-f(7)))/2);
+        for(let q=0;q<cnt;q++) s+='<rect y="'+(y0+q*step).toFixed(1)+'" width="'+(w*(q===cnt-1&&cnt>1?0.6:q%2?0.92:1)).toFixed(1)+'" height="'+f(7)+'" rx="'+f(3.5)+'" style="'+(A?'fill:'+A+';fill-opacity:.45':'fill:'+P.wfLine)+'"/>'; }
+      break; }
+    case 'uiButton': s+='<rect width="'+w+'" height="'+h+'" rx="'+f(8)+'" style="fill:'+(A||P.wfInk)+'"/>'+txt(w/2,h/2+f(4.5),first,13,600,onA,'middle'); break;
+    case 'uiInput': s+='<rect x=".5" y=".5" width="'+(w-1)+'" height="'+(h-1)+'" rx="'+f(8)+'" style="fill:'+P.devFill+';stroke:'+(A||P.wfLine)+';stroke-width:'+f(1.5)+'"/>'+txt(f(12),h/2+f(4.5),first,13,400,P.wfText); break;
+    case 'uiImage': s+='<rect x=".5" y=".5" width="'+(w-1)+'" height="'+(h-1)+'" rx="'+f(6)+'" style="'+tint(.16)+';stroke:'+(A||P.wfLine)+';stroke-width:'+f(1.5)+'"/><path d="M'+f(6)+' '+f(6)+'L'+(w-f(6))+' '+(h-f(6))+'M'+(w-f(6))+' '+f(6)+'L'+f(6)+' '+(h-f(6))+'" style="stroke:'+(A||P.wfLine)+';stroke-opacity:'+(A?.5:1)+';stroke-width:'+f(1.5)+'"/>'+(L?txt(w/2,h/2+f(4.5),first,12,500,P.wfText,'middle'):''); break;
+    case 'uiTopbar': s+='<rect width="'+w+'" height="'+h+'" style="fill:'+(A||P.wfFill)+'"/><path d="M'+f(16)+' '+(h/2-f(6))+'h'+f(16)+'M'+f(16)+' '+(h/2)+'h'+f(16)+'M'+f(16)+' '+(h/2+f(6))+'h'+f(16)+'" style="stroke:'+(A?onA:P.wfInk)+';stroke-width:'+f(2)+';stroke-linecap:round"/>'+
+      '<circle cx="'+(w-f(26))+'" cy="'+(h/2)+'" r="'+Math.max(1,Math.min(f(12),h/2-f(6)))+'" style="fill:'+(A?onA:P.wfLine)+';fill-opacity:'+(A?.45:1)+'"/>'+txt(w/2,h/2+f(5),first,14,600,A?onA:P.nodeText,'middle'); break;
     case 'uiTabbar': { const it=uiItems(L); const cw=w/Math.max(1,it.length);
-      s+='<rect width="'+w+'" height="'+h+'" style="fill:'+P.devFill+'"/><path d="M0 .75H'+w+'" style="stroke:'+P.wfLine+';stroke-width:1.5"/>';
-      it.forEach((t,k)=>{ const cx=cw*k+cw/2; s+='<circle cx="'+cx+'" cy="'+(h/2-7)+'" r="8" style="fill:'+(k?P.wfLine:P.wfInk)+'"/>'+txt(cx,h/2+16,t,10.5,k?400:600,k?P.wfText:P.nodeText,'middle'); }); break; }
+      s+='<rect width="'+w+'" height="'+h+'" style="fill:'+P.devFill+'"/><path d="M0 '+f(.75)+'H'+w+'" style="stroke:'+P.wfLine+';stroke-width:'+f(1.5)+'"/>';
+      it.forEach((t,q)=>{ const cx=cw*q+cw/2; s+='<circle cx="'+cx+'" cy="'+(h/2-f(7))+'" r="'+f(8)+'" style="fill:'+(q?P.wfLine:(A||P.wfInk))+'"/>'+txt(cx,h/2+f(16),t,10.5,q?400:600,q?P.wfText:(A||P.nodeText),'middle'); }); break; }
     case 'uiSidebar': { const it=uiItems(L); s+='<rect width="'+w+'" height="'+h+'" style="fill:'+P.wfFill+'"/>';
-      it.forEach((t,k)=>{ const y=16+k*40; if(y+32>h) return; if(!k) s+='<rect x="10" y="'+y+'" width="'+(w-20)+'" height="32" rx="7" style="fill:'+P.wfLine+'"/>'; s+='<rect x="22" y="'+(y+9)+'" width="14" height="14" rx="3" style="fill:'+(k?P.wfLine:P.wfInk)+'"/>'+txt(46,y+21,t,13,k?400:600,k?P.wfText:P.nodeText); }); break; }
+      it.forEach((t,q)=>{ const y=f(16+q*40); if(y+f(32)>h) return; if(!q) s+='<rect x="'+f(10)+'" y="'+y+'" width="'+(w-f(20))+'" height="'+f(32)+'" rx="'+f(7)+'" style="'+(A?'fill:'+A+';fill-opacity:.2':'fill:'+P.wfLine)+'"/>'; s+='<rect x="'+f(22)+'" y="'+(y+f(9))+'" width="'+f(14)+'" height="'+f(14)+'" rx="'+f(3)+'" style="fill:'+(q?P.wfLine:(A||P.wfInk))+'"/>'+txt(f(46),y+f(21),t,13,q?400:600,q?P.wfText:P.nodeText); }); break; }
+    case 'uiTable': { // header row with the column names, then rows of grey placeholder text
+      const cols=uiItems(L).length?uiItems(L):['Name','Status','Date']; const cw=w/cols.length, hh=f(28), rh=f(26); const rows=Math.max(1,Math.floor((h-hh)/rh));
+      s+='<rect x=".5" y=".5" width="'+(w-1)+'" height="'+(h-1)+'" rx="'+f(6)+'" style="fill:'+P.devFill+';stroke:'+P.wfLine+';stroke-width:'+f(1.2)+'"/>';
+      s+='<path d="M'+f(6)+' .5H'+(w-f(6))+'a'+f(6)+' '+f(6)+' 0 0 1 '+f(6)+' '+f(6)+'V'+hh+'H.5V'+f(6.5)+'a'+f(6)+' '+f(6)+' 0 0 1 '+f(6)+' -'+f(6)+'z" style="'+tint(A?.22:1)+'"/>';
+      cols.forEach((c,q)=>{ s+=txt(q*cw+f(10),hh/2+f(4),c,11,600,A||P.nodeText); });
+      for(let r=0;r<rows;r++){ const y=hh+r*rh; if(y+rh>h+1) break; if(r) s+='<path d="M0 '+y+'H'+w+'" style="stroke:'+P.wfLine+';stroke-width:'+f(1)+'"/>';
+        cols.forEach((c,q)=>{ const bw=(cw-f(20))*[0.8,0.55,0.7,0.45][(r+q)%4]; s+='<rect x="'+(q*cw+f(10))+'" y="'+(y+rh/2-f(3))+'" width="'+bw.toFixed(1)+'" height="'+f(6)+'" rx="'+f(3)+'" style="fill:'+P.wfLine+'"/>'; }); }
+      s+='<path d="M0 '+hh+'H'+w+'" style="stroke:'+P.wfLine+';stroke-width:'+f(1.2)+'"/>';
+      break; }
   }
   return s;
 }
 // Device frames: a phone, an iPad or a browser window around a screen.
 function deviceFrame(g,b,P,live,stroke,sw){
-  const x=b.x,y=b.y,w=b.w,h=b.h,dv=g.dev; let s='';
-  const rx=dv==='mobile'?34:dv==='tablet'?24:10;
+  const x=b.x,y=b.y,w=b.w,h=b.h,dv=g.dev,k=w/(DEVICES[dv]||DEVICES.mobile).w,f=v=>+(v*k).toFixed(2); let s='';
+  const rx=f(dv==='mobile'?34:dv==='tablet'?24:10);
   s+='<rect'+(live?' class="frame-body" data-kind="group" data-part="body" data-id="'+esc(g.id)+'"':'')+' x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+rx+'" style="fill:'+P.devFill+';stroke:'+stroke+';stroke-width:'+sw+'"/>';
-  if(dv==='mobile') s+='<rect x="'+(x+w/2-38)+'" y="'+(y+11)+'" width="76" height="20" rx="10" style="fill:'+P.devStroke+';pointer-events:none"/><rect x="'+(x+w/2-50)+'" y="'+(y+h-11)+'" width="100" height="4" rx="2" style="fill:'+P.devStroke+';opacity:.7;pointer-events:none"/>';
-  else if(dv==='tablet') s+='<circle cx="'+(x+w/2)+'" cy="'+(y+15)+'" r="3.5" style="fill:'+P.devStroke+';pointer-events:none"/><rect x="'+(x+w/2-60)+'" y="'+(y+h-10)+'" width="120" height="4" rx="2" style="fill:'+P.devStroke+';opacity:.7;pointer-events:none"/>';
-  else s+='<g style="pointer-events:none"><path d="M'+x+' '+(y+34)+'H'+(x+w)+'" style="stroke:'+P.wfLine+';stroke-width:1.5"/>'+[0,1,2].map(k=>'<circle cx="'+(x+18+k*15)+'" cy="'+(y+17)+'" r="4.5" style="fill:'+P.wfLine+'"/>').join('')+
-    '<rect x="'+(x+76)+'" y="'+(y+8)+'" width="'+Math.max(80,w*0.5)+'" height="18" rx="9" style="fill:'+P.wfFill+'"/></g>';
+  if(dv==='mobile') s+='<rect x="'+(x+w/2-f(38))+'" y="'+(y+f(11))+'" width="'+f(76)+'" height="'+f(20)+'" rx="'+f(10)+'" style="fill:'+P.devStroke+';pointer-events:none"/><rect x="'+(x+w/2-f(50))+'" y="'+(y+h-f(11))+'" width="'+f(100)+'" height="'+f(4)+'" rx="'+f(2)+'" style="fill:'+P.devStroke+';opacity:.7;pointer-events:none"/>';
+  else if(dv==='tablet') s+='<circle cx="'+(x+w/2)+'" cy="'+(y+f(15))+'" r="'+f(3.5)+'" style="fill:'+P.devStroke+';pointer-events:none"/><rect x="'+(x+w/2-f(60))+'" y="'+(y+h-f(10))+'" width="'+f(120)+'" height="'+f(4)+'" rx="'+f(2)+'" style="fill:'+P.devStroke+';opacity:.7;pointer-events:none"/>';
+  else s+='<g style="pointer-events:none"><path d="M'+x+' '+(y+f(34))+'H'+(x+w)+'" style="stroke:'+P.wfLine+';stroke-width:'+f(1.5)+'"/>'+[0,1,2].map(q=>'<circle cx="'+(x+f(18+q*15))+'" cy="'+(y+f(17))+'" r="'+f(4.5)+'" style="fill:'+P.wfLine+'"/>').join('')+
+    '<rect x="'+(x+f(76))+'" y="'+(y+f(8))+'" width="'+Math.max(f(80),w*0.5)+'" height="'+f(18)+'" rx="'+f(9)+'" style="fill:'+P.wfFill+'"/></g>';
   return s;
 }
 function nodeInner(n,m,P,live){
@@ -9049,7 +9306,7 @@ function groupsMarkup(m,boxes,P,live){
     const stroke=sel||drop?P.accent:((st&&st.stroke)||P.frameStroke);
     const fo=P.frameOut, rx=fo?2:12;
     out+='<g class="frame">';
-    if(g.dev){ out+=deviceFrame(g,b,P,live,sel||drop?P.accent:P.devStroke,sel||drop?2.5:2);
+    if(g.dev){ out+=deviceFrame(g,b,P,live,sel||drop?P.accent:P.devStroke,sel||drop?2:1.5);
       if(!(live&&state.editing&&state.editing.kind==='group'&&state.editing.id===gid)) out+='<text x="'+(b.x+2)+'" y="'+(b.y-10)+'" style="fill:'+(sel?P.accent:P.frameText)+';font:500 14px '+P.font+'">'+esc(g.label)+'</text>';
       if(live){ const lw=Core.measure(g.label,14)+28; out+='<rect class="frame-hit" data-kind="group" data-id="'+esc(gid)+'" x="'+b.x+'" y="'+(b.y-30)+'" width="'+Math.max(60,lw)+'" height="28" style="fill:transparent"/><rect class="frame-hit" data-kind="group" data-id="'+esc(gid)+'" x="'+b.x+'" y="'+b.y+'" width="'+b.w+'" height="'+b.h+'" rx="12" style="fill:none;stroke:transparent;stroke-width:10;pointer-events:stroke"/>'; }
       out+='</g>'; continue; }
@@ -9086,7 +9343,7 @@ function render(){
     let el=R.nodeEls.get(id);
     if(!el){ el=document.createElementNS(SVGNS,'g'); el.setAttribute('class','node'); el.dataset.kind='node'; el.dataset.id=id; lNodes.appendChild(el); R.nodeEls.set(id,el); }
     const st=styleOf(m,id);
-    const sig=[n.shape,n.label,n.icon,n.w,n.h,n.table?JSON.stringify(n.table):'',n.doc?JSON.stringify(n.doc):'',n.fs,n.fsSet,st?[st.bold,st.italic,st.bg].join(','):'',(n.lines||[]).join('\n'),st?(st.fill+'|'+st.stroke+'|'+st.color):'',Icons.ready,Icons.failed].join('\u0001');
+    const sig=[n.shape,n.label,n.icon,n.w,n.h,isUi(n)?uiScale(m,n)+(st&&st.fill||''):'',n.table?JSON.stringify(n.table):'',n.doc?JSON.stringify(n.doc):'',n.fs,n.fsSet,st?[st.bold,st.italic,st.bg].join(','):'',(n.lines||[]).join('\n'),st?(st.fill+'|'+st.stroke+'|'+st.color):'',Icons.ready,Icons.failed].join('\u0001');
     if(R.sig.get(id)!==sig){ el.innerHTML=nodeInner(n,m,PAL_LIVE,true); R.sig.set(id,sig); }
     el.setAttribute('transform','translate('+n.x+','+n.y+')');
     el.classList.toggle('editing',!!(state.editing&&state.editing.kind==='node'&&state.editing.id===id));
@@ -9306,10 +9563,13 @@ function lineUp(){
   const ids=picked.length>=2?picked:[...m.nodeOrder];
   const before=new Map(ids.map(id=>{ const n=m.nodes.get(id); return [id,n?n.x+','+n.y:'']; }));
   mutate(mm=>{
-    const nodes=ids.map(id=>mm.nodes.get(id)).filter(n=>n&&n.x!=null);
+    // Pieces of a mockup screen stay where they were drawn; the screen moves as one block.
+    const inDev=n=>{ let g=n.group&&mm.groups.get(n.group),k=0; while(g&&k++<60){ if(g.dev) return true; g=g.parent&&mm.groups.get(g.parent); } return false; };
+    const nodes=ids.map(id=>mm.nodes.get(id)).filter(n=>n&&n.x!=null&&!inDev(n));
     const by=new Map(); for(const n of nodes){ const k=n.group||''; if(!by.has(k)) by.set(k,[]); by.get(k).push(n); }
     for(const list of by.values()){ alignAxis(list,'y'); alignAxis(list,'x'); separate(list); }
-    for(const n of nodes) state.cache.set(n.id,{x:n.x,y:n.y});
+    if(!(picked.length>=2)) separateBlocks(mm,null);
+    for(const n of mm.nodes.values()) state.cache.set(n.id,{x:n.x,y:n.y});
   },{structural:false});
   const changed=ids.filter(id=>{ const n=state.model.nodes.get(id); return n&&before.get(id)!==n.x+','+n.y; }).length;
   toast(changed?'Lined up '+changed+(changed===1?' shape':' shapes')+'. Undo with Ctrl+Z':'Already lined up');
@@ -9410,6 +9670,8 @@ function onDown(e){
   const ae=document.activeElement; if(ae&&ae!==document.body&&ae.blur) ae.blur();
   closePop(); closeMenus();
   const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
+  // Links in documents: Ctrl or Cmd+click opens them.
+  const lk=e.target.closest&&e.target.closest('.doc-link'); if(lk&&(e.ctrlKey||e.metaKey)&&e.button===0){ e.preventDefault(); openLink(lk.dataset.href); return; }
   if(e.button===1||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;
   if(kind==='phandle'){ const im=state.model.images.find(x=>x.id===tgt.dataset.id); if(im){ state.drag={mode:'presize',id:im.id,corner:tgt.dataset.corner,start:p,orig:{...im},moved:false}; } return; }
@@ -9738,8 +10000,8 @@ function onUp(e){
   }
   if(d.mode==='place'&&d.kind==='ui'){
     const pk=state.uiPick||{dev:'mobile'}; let sel=null, edit=null;
-    if(pk.dev){ const D=DEVICES[pk.dev]; mutate(mm=>{ const r=addScreen(mm,{dev:pk.dev,preset:state.uiPreset,x:d.start.x-D.w/2,y:d.start.y-80,parent:groupAt(d.start)||null}); sel='g:'+r.gid; edit=r.gid; }); }
-    else { const k=UI_KINDS[pk.piece]||UI_KINDS.uiButton; const nid=createNode({shape:pk.piece,label:k.def,idBase:k.name,rect:{x:SNAP(d.start.x-k.w/2),y:SNAP(d.start.y-k.h/2),w:k.w,h:k.h},group:groupAt(d.start)||null}); sel=nid&&'n:'+nid; }
+    if(pk.dev){ const D=DEVICES[pk.dev]; mutate(mm=>{ const r=addScreen(mm,{dev:pk.dev,preset:state.uiPreset,x:d.start.x-D.w*MOCK/2,y:d.start.y-40,parent:groupAt(d.start)||null}); sel='g:'+r.gid; edit=r.gid; }); }
+    else { const k=UI_KINDS[pk.piece]||UI_KINDS.uiButton; const gin=groupAt(d.start); const sc=gin?devScale(state.model,gin):MOCK; const w=k.w*sc,h=k.h*sc; const nid=createNode({shape:pk.piece,label:k.def,idBase:k.name,rect:{x:SNAP(d.start.x-w/2),y:SNAP(d.start.y-h/2),w,h},group:groupAt(d.start)||null}); sel=nid&&'n:'+nid; }
     setTool('select'); if(sel){ state.sel=new Set([sel]); selChanged(); } if(edit) openEditor('group',edit); return;
   }
   if(d.mode==='place'){
@@ -9821,6 +10083,7 @@ function onUp(e){
     setTool('select'); if(nid){ state.sel=new Set(['n:'+nid]); selChanged(); queueEdit(nid,false); }
   }
 }
+function openLink(u){ const s=safeUrl(u); if(!s) return; try{ const w=window.open(s,'_blank','noopener'); if(!w) copyText(s,'Link copied: the browser blocked opening it'); }catch(_){ copyText(s,'Link copied'); } }
 function queueEdit(id,caretEnd,kind){ state.pendingEdit={id,caretEnd,kind:kind||'node'}; clearTimeout(state.pendingEditT); state.pendingEditT=setTimeout(runPendingEdit,120); }
 function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model) return; if(pe.kind==='edge'){ if(!state.model.edges[pe.id]) return; openEditor('edge',pe.id); } else { if(!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); } if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
 board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
@@ -10068,7 +10331,7 @@ const Rich=(()=>{
     document.removeEventListener('pointerdown',outside,true);
     const n=state.model&&state.model.nodes.get(c.id);
     let next=null;
-    if(n){ next=c.kind==='table'?{label:c.title.value.trim(),table:cleanTable({rows:c.rows,colors:c.colors})}:{label:c.title.value.trim(),doc:cleanDoc(readDocFrom(c.body))};
+    if(n){ next=c.kind==='table'?{label:c.title.value.trim(),table:cleanTable({rows:c.rows,colors:c.colors})}:{label:c.title.value.trim(),doc:cleanDoc({...readDocFrom(c.body),kind:c.tkind,fields:c.fields})};
       Object.assign(n,{label:c.orig.label,table:c.orig.table,doc:c.orig.doc,w:c.orig.w,h:c.orig.h,sized:c.orig.sized}); sizeNode(n); }
     c.box.remove(); c.bar.remove();
     const changed=n&&commit&&(next.label!==c.orig.label||JSON.stringify(c.kind==='table'?next.table:next.doc)!==JSON.stringify(c.kind==='table'?c.orig.table:c.orig.doc));
@@ -10163,7 +10426,7 @@ const Rich=(()=>{
   const BLK={h1:'h1',h2:'h2',h3:'h3',p:'p'};
   function docHtml(doc){
     let h='', list=null;
-    const runs=rs=>rs.map(r=>{ let s=escH(r.x).replace(/\n/g,'<br>'); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; return s; }).join('')||'<br>';
+    const runs=rs=>rs.map(r=>{ let s=escH(r.x).replace(/\n/g,'<br>'); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; if(r.u) s='<a href="'+escH(r.u)+'">'+s+'</a>'; return s; }).join('')||'<br>';
     for(const b of doc.blocks){
       if(b.t==='ul'||b.t==='ol'){ if(list!==b.t){ if(list) h+='</'+list+'>'; h+='<'+b.t+'>'; list=b.t; } h+='<li>'+runs(b.r)+'</li>'; continue; }
       if(list){ h+='</'+list+'>'; list=null; } h+='<'+BLK[b.t]+'>'+runs(b.r)+'</'+BLK[b.t]+'>';
@@ -10173,19 +10436,20 @@ const Rich=(()=>{
   }
   function readDocFrom(body){
     const blocks=[];
-    const runsOf=el=>{ const out=[]; const walk=(nd,b,i)=>{ if(nd.nodeType===3){ const x=nd.nodeValue.replace(/ /g,' '); if(x) out.push({x,b,i}); return; } if(nd.nodeType!==1) return; const t=nd.tagName;
-        if(t==='BR'){ out.push({x:'\n',b,i}); return; } if(t==='UL'||t==='OL') return;
+    const runsOf=el=>{ const out=[]; const walk=(nd,b,i,u)=>{ if(nd.nodeType===3){ const x=nd.nodeValue.replace(/ /g,' '); if(x) out.push({x,b,i,u}); return; } if(nd.nodeType!==1) return; const t=nd.tagName;
+        if(t==='BR'){ out.push({x:'\n',b,i,u}); return; } if(t==='UL'||t==='OL') return;
         const fw=nd.style&&nd.style.fontWeight, fs=nd.style&&nd.style.fontStyle;
-        const nb=b||t==='B'||t==='STRONG'||fw==='bold'||+fw>=600, ni=i||t==='I'||t==='EM'||fs==='italic';
-        for(const ch of nd.childNodes) walk(ch,nb,ni); };
-      for(const ch of el.childNodes) walk(ch,false,false);
-      while(out.length&&out[out.length-1].x==='\n') out.pop();
-      const m=[]; for(const r of out){ const p=m[m.length-1]; if(p&&!!p.b===!!r.b&&!!p.i===!!r.i) p.x+=r.x; else m.push({x:r.x,b:r.b?1:0,i:r.i?1:0}); }
-      return m.map(r=>{ const o={x:r.x}; if(r.b) o.b=1; if(r.i) o.i=1; return o; }); };
+        const nb=b||t==='B'||t==='STRONG'||fw==='bold'||+fw>=600, ni=i||t==='I'||t==='EM'||fs==='italic', nu=t==='A'?(safeUrl(nd.getAttribute('href'))||u):u;
+        for(const ch of nd.childNodes) walk(ch,nb,ni,nu); };
+      for(const ch of el.childNodes) walk(ch,false,false,null);
+      while(out.length&&!out[out.length-1].x.trim()) out.pop();
+      if(out.length) out[out.length-1]={...out[out.length-1],x:out[out.length-1].x.replace(/\s+$/,'')};
+      const m=[]; for(const r of out){ const p=m[m.length-1]; if(p&&!!p.b===!!r.b&&!!p.i===!!r.i&&(p.u||null)===(r.u||null)) p.x+=r.x; else m.push({x:r.x,b:r.b?1:0,i:r.i?1:0,u:r.u||null}); }
+      return m.map(r=>{ const o={x:r.x}; if(r.b) o.b=1; if(r.i) o.i=1; if(r.u) o.u=r.u; return o; }); };
     const add=(t,el)=>{ const r=runsOf(el); blocks.push({t,r}); };
     let loose=null;
     for(const nd of body.childNodes){
-      if(nd.nodeType===3||(nd.nodeType===1&&/^(B|I|STRONG|EM|SPAN|BR)$/.test(nd.tagName))){ if(!loose){ loose=document.createElement('p'); } loose.appendChild(nd.cloneNode(true)); continue; }
+      if(nd.nodeType===3||(nd.nodeType===1&&/^(B|I|STRONG|EM|SPAN|BR|A)$/.test(nd.tagName))){ if(!loose){ loose=document.createElement('p'); } loose.appendChild(nd.cloneNode(true)); continue; }
       if(loose){ add('p',loose); loose=null; }
       if(nd.nodeType!==1) continue; const t=nd.tagName;
       if(t==='H1'||t==='H2'||t==='H3') add(t.toLowerCase(),nd);
@@ -10198,15 +10462,26 @@ const Rich=(()=>{
     while(blocks.length>1&&!blocks[blocks.length-1].r.length&&blocks[blocks.length-1].t==='p') blocks.pop();
     return {blocks};
   }
-  function readDoc(){ return cleanDoc(readDocFrom(cur.body)); }
+  function readDoc(){ return cleanDoc({...readDocFrom(cur.body),kind:cur.tkind,fields:cur.fields}); }
   function docOpen(n){
-    cur.box.innerHTML='<div class="rd-head"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M9 11h6M9 15h6"/></svg><input class="rich-title" placeholder="Untitled document" aria-label="Document title"></div><div class="rd-body" contenteditable="true" spellcheck="true"></div>';
+    cur.tkind=n.doc&&TICKET_TYPES[n.doc.kind]?n.doc.kind:null; cur.fields={...((n.doc&&n.doc.fields)||{})};
+    cur.box.innerHTML='<div class="rd-head"><span class="rd-chip"></span><select class="rd-type" aria-label="Type"><option value="">Note</option>'+Object.entries(TICKET_TYPES).map(([k,t])=>'<option value="'+k+'">'+t.name+'</option>').join('')+'</select><input class="rich-title" placeholder="Untitled document" aria-label="Title"></div><div class="rd-fields"></div><div class="rd-body" contenteditable="true" spellcheck="true"></div>';
+    cur.typeEl=cur.box.querySelector('.rd-type'); cur.fieldsEl=cur.box.querySelector('.rd-fields'); cur.typeEl.value=cur.tkind||'';
+    cur.typeEl.addEventListener('change',()=>setKind(cur.typeEl.value||null));
+    cur.fieldsEl.addEventListener('input',e=>{ const k=e.target.dataset.f; if(!k) return; const v=e.target.value; if(v==='') delete cur.fields[k]; else cur.fields[k]=v; live(); place(); });
+    cur.fieldsEl.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); close(true); } });
     cur.title=cur.box.querySelector('.rich-title'); cur.title.value=n.label||'';
     cur.body=cur.box.querySelector('.rd-body'); cur.body.innerHTML=docHtml(n.doc||{blocks:[]});
     cur.box.style.width=(n.w||380)+'px';
     cur.bar.innerHTML=btn('h1','Heading 1','h1')+btn('h2','Heading 2','h2')+btn('h3','Heading 3','h3')+btn('p','Text','para')+'<span class="vsep"></span>'+
       btn('b','Bold (Ctrl+B)','bold')+btn('i','Italic (Ctrl+I)','italic')+'<span class="vsep"></span>'+btn('ul','Bulleted list','list')+btn('ol','Numbered list','olist')+'<span class="vsep"></span>'+
-      btn('expand','Expand','expand')+btn('done','Done');
+      btn('link','Link (Ctrl+K)','link')+'<span class="vsep"></span>'+btn('copy','Copy as text, for Azure DevOps or any editor','copyDoc')+btn('expand','Expand','expand')+btn('done','Done')+
+      '<span class="rd-linkbox" hidden><input type="url" placeholder="Paste a link" aria-label="Link address"><button type="button" class="btn" data-link-ok>Add</button></span>';
+    cur.linkBox=cur.bar.querySelector('.rd-linkbox');
+    const li=cur.linkBox.querySelector('input');
+    li.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); applyLink(li.value); } else if(e.key==='Escape'){ e.preventDefault(); hideLink(); } });
+    cur.linkBox.querySelector('[data-link-ok]').addEventListener('click',()=>applyLink(li.value));
+    renderFields();
     try{ document.execCommand('defaultParagraphSeparator',false,'p'); }catch(_){}
     cur.bar.addEventListener('mousedown',e=>{ if(e.target.closest('button')) e.preventDefault(); });
     cur.bar.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b||!cur) return; docAct(b.dataset.act); });
@@ -10215,7 +10490,9 @@ const Rich=(()=>{
     cur.body.addEventListener('input',()=>{ live(); place(); markDoc(); });
     cur.body.addEventListener('keydown',docKey);
     cur.body.addEventListener('keyup',markDoc); cur.body.addEventListener('mouseup',markDoc);
+    cur.body.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href]'); if(a&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); openLink(a.getAttribute('href')); } });
     cur.body.addEventListener('paste',e=>{ const t=(e.clipboardData||window.clipboardData).getData('text/plain'); if(!t) return; e.preventDefault();
+      const u=safeUrl(t.trim()); if(u&&!/\s/.test(t.trim())){ const sel=getSelection(); if(sel.rangeCount&&!sel.isCollapsed) document.execCommand('createLink',false,u); else document.execCommand('insertHTML',false,'<a href="'+escH(u)+'">'+escH(u)+'</a>&nbsp;'); live(); return; }
       if(/^\s*(#{1,3}\s|[-*]\s|\d+\.\s)/m.test(t)&&t.includes('\n')){ document.execCommand('insertHTML',false,docHtml(mdToDoc(t))); } else document.execCommand('insertText',false,t); });
     const empty=!(n.doc&&n.doc.blocks.some(b=>b.r.length));
     setTimeout(()=>{ if(!cur) return; if(!n.label&&empty) cur.title.focus(); else caretEnd(cur.body,false); markDoc(); },0);
@@ -10259,6 +10536,8 @@ const Rich=(()=>{
     for(const k of ['b','i']){ const el=cur.bar.querySelector('[data-act="'+k+'"]'); let on=false; try{ on=document.queryCommandState(k==='b'?'bold':'italic'); }catch(_){} if(el) el.setAttribute('aria-pressed',String(on)); } }
   function docAct(a){
     if(a==='done'){ close(true); return; }
+    if(a==='link'){ showLink(); return; }
+    if(a==='copy'){ const n=node(); if(n) copyDocs([n]); return; }
     if(a==='expand'){ cur.expanded=!cur.expanded; cur.box.classList.toggle('expanded',cur.expanded); const b=cur.bar.querySelector('[data-act="expand"]'); if(b){ b.innerHTML=ico(cur.expanded?'collapse':'expand'); b.title=b.ariaLabel=cur.expanded?'Back to the board':'Expand'; } place(); cur.body.focus(); return; }
     cur.body.focus();
     if(a==='b'||a==='i') document.execCommand(a==='b'?'bold':'italic');
@@ -10268,7 +10547,7 @@ const Rich=(()=>{
   // Markdown shortcuts at the start of a line: "# ", "## ", "### ", "- ", "* ", "1. ".
   function docKey(e){
     if(e.key==='Escape'){ e.preventDefault(); if(cur.expanded) docAct('expand'); else close(true); return; }
-    if((e.ctrlKey||e.metaKey)&&!e.altKey){ const k=e.key.toLowerCase(); if(k==='b'||k==='i'){ e.preventDefault(); docAct(k); return; } if(k==='enter'){ e.preventDefault(); close(true); return; } }
+    if((e.ctrlKey||e.metaKey)&&!e.altKey){ const k=e.key.toLowerCase(); if(k==='k'){ e.preventDefault(); showLink(); return; } if(k==='b'||k==='i'){ e.preventDefault(); docAct(k); return; } if(k==='enter'){ e.preventDefault(); close(true); return; } }
     if(e.key===' '){
       const s=getSelection(); if(!s.rangeCount||!s.isCollapsed) return; const b=curBlock(); const nd=s.anchorNode;
       const pre=b?textBefore(b,nd,s.anchorOffset):(nd&&nd.nodeType===3?nd.nodeValue.slice(0,s.anchorOffset):'');
@@ -10282,10 +10561,58 @@ const Rich=(()=>{
     }
     if(e.key==='Backspace'){ const b=curBlock(); const s=getSelection(); if(b&&s.isCollapsed&&/^H[1-3]$/.test(b.tagName)&&textBefore(b,s.anchorNode,s.anchorOffset)===''){ e.preventDefault(); setBlock('p'); live(); markDoc(); } }
   }
+  /* ---------- tickets and links ---------- */
+  function renderFields(){
+    const t=TICKET_TYPES[cur.tkind]; const chip=cur.box.querySelector('.rd-chip');
+    chip.style.background=t?t.color:''; chip.hidden=!t; cur.box.classList.toggle('ticket',!!t); cur.box.style.setProperty('--tk',t?t.color:'transparent');
+    if(!t){ cur.fieldsEl.innerHTML=''; cur.fieldsEl.hidden=true; return; }
+    cur.fieldsEl.hidden=false;
+    cur.fieldsEl.innerHTML=t.fields.map(k=>{ const d=TICKET_FIELDS[k], v=cur.fields[k]!=null?String(cur.fields[k]):'';
+      const ctl=d.opts?'<select data-f="'+k+'"><option value="">–</option>'+d.opts.map(o=>'<option'+(o===v?' selected':'')+'>'+escH(o)+'</option>').join('')+'</select>'
+        :'<input data-f="'+k+'" '+(d.num?'type="number" min="0" step="0.5" style="width:56px"':'placeholder="web; login" style="width:120px"')+' value="'+escH(v)+'">';
+      return '<label><span>'+escH(d.name)+'</span>'+ctl+'</label>'; }).join('');
+  }
+  // Switching type swaps the starting template when the body is still empty or untouched.
+  function setKind(k){
+    const prev=cur.tkind; cur.tkind=TICKET_TYPES[k]?k:null;
+    const t=TICKET_TYPES[cur.tkind]; if(t) cur.fields=cleanFields(cur.tkind,cur.fields);
+    const body=JSON.stringify(cleanDoc(readDocFrom(cur.body)).blocks), empty=!cleanDoc(readDocFrom(cur.body)).blocks.some(b=>b.r.some(r=>r.x.trim()));
+    const wasTpl=prev&&body===JSON.stringify(cleanDoc({blocks:ticketTemplate(prev)}).blocks);
+    if(t&&(empty||wasTpl)) cur.body.innerHTML=docHtml({blocks:ticketTemplate(cur.tkind)});
+    else if(!t&&wasTpl) cur.body.innerHTML='<p><br></p>';
+    cur.title.placeholder=t?t.name+' title':'Untitled document';
+    renderFields(); live(); place();
+  }
+  function showLink(){
+    const s=getSelection(); cur.linkRange=s.rangeCount&&cur.body.contains(s.anchorNode)?s.getRangeAt(0).cloneRange():null;
+    const a=s.anchorNode&&(s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentNode).closest('a[href]');
+    cur.linkA=a&&cur.body.contains(a)?a:null;
+    cur.linkBox.hidden=false; const li=cur.linkBox.querySelector('input'); li.value=cur.linkA?cur.linkA.getAttribute('href'):''; li.placeholder=cur.linkA?'Empty removes the link':'Paste a link'; li.focus(); li.select(); place();
+  }
+  function hideLink(){ cur.linkBox.hidden=true; place(); cur.body.focus(); if(cur.linkRange){ const s=getSelection(); s.removeAllRanges(); s.addRange(cur.linkRange); } }
+  function applyLink(v){
+    const raw=String(v||'').trim(); const u=raw?safeUrl(/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(raw)&&!/^\w+:/.test(raw)?'https://'+raw:raw):null;
+    if(raw&&!u){ toast('Use a web address, such as https://…'); return; }
+    hideLink();
+    if(cur.linkA){ if(u) cur.linkA.setAttribute('href',u); else cur.linkA.replaceWith(...cur.linkA.childNodes); }
+    else if(u){ const s=getSelection(); if(s.rangeCount&&!s.isCollapsed) document.execCommand('createLink',false,u); else document.execCommand('insertHTML',false,'<a href="'+escH(u)+'">'+escH(u)+'</a>&nbsp;'); }
+    live(); place();
+  }
   function textBefore(block,nd,off){ const r=document.createRange(); r.setStart(block,0); try{ r.setEnd(nd,off); }catch(_){ return null; } return r.toString(); }
 
   return {open,close,place,active:()=>cur};
 })();
+// Copy documents and tickets as rich text (pastes formatted into Azure DevOps, Word, Teams, mail)
+// with Markdown as the plain-text version.
+function copyDocs(nodes){
+  const docs=nodes.filter(n=>n&&n.shape==='doc'&&n.doc); if(!docs.length) return;
+  const html=docs.map(ticketHtml).join('<hr>'), md=docs.map(ticketMd).join('\n---\n\n');
+  const msg=docs.length>1?docs.length+' documents copied':(isTicket(docs[0])?'Ticket copied':'Document copied');
+  try{
+    if(navigator.clipboard&&window.ClipboardItem){ navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([md],{type:'text/plain'})})]).then(()=>toast(msg),()=>copyText(md,msg)); return; }
+  }catch(_){}
+  copyText(md,msg);
+}
 
 </script>
   <script>
@@ -10432,10 +10759,18 @@ function updCtx(){
     html+='<div class="seg2">'+ARROW_KINDS.map(([id,ic,tt])=>b('akind-'+id,ic,tt,'aria-pressed="'+(a0.kind===id)+'"')).join('')+'</div>'+sep+thick(a0.w)+sep+lineColorBtn(a0.color)+sep+b('del','trash','Delete (Del)');
   } else if(k.k&&!k.n&&!k.e&&!k.g&&!k.p){
     html+='<span class="ctx-count">'+k.k+(k.k===1?' drawing':' drawings')+'</span>'+sep+b('del','trash','Delete (Del)');
+  } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p&&selNodes().every(isUi)){
+    // Mockup pieces: an accent colour, the text, and the usual actions.
+    const ns=selNodes(); const cur=(m.styles.get(ns[0].id)||{}).fill||'';
+    if(ns.length>1) html+='<span class="ctx-count">'+ns.length+' selected</span>';
+    html+='<div class="ui-dots">'+UI_COLORS.map(([c,nm])=>'<button type="button" class="ui-dot" data-uicolor="'+c+'" title="'+nm+'" aria-label="'+nm+'" aria-pressed="'+(c===cur)+'" style="--c:'+(c||'var(--wf-ink)')+'"></button>').join('')+'</div>'+sep;
+    if(ns.length===1) html+=b('editLabel','edit','Edit text (Enter)');
+    html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p&&selNodes().every(n=>n.shape==='table'||n.shape==='doc')){
     // Tables and documents: edit them in their own editor; the rest is the frame and copy actions.
     const ns=selNodes(); if(ns.length>1) html+='<span class="ctx-count">'+ns.length+' selected</span>';
-    if(ns.length===1) html+='<button type="button" class="btn" data-act="editLabel" title="Edit (Enter)">'+(ns[0].shape==='table'?'Edit table':'Edit document')+'</button>'+sep;
+    if(ns.length===1) html+='<button type="button" class="btn" data-act="editLabel" title="Edit (Enter)">'+(ns[0].shape==='table'?'Edit table':isTicket(ns[0])?'Edit '+TICKET_TYPES[ns[0].doc.kind].name.toLowerCase():'Edit document')+'</button>'+sep;
+    if(ns.some(n=>n.shape==='doc')) html+=b('copyDocs','copyDoc','Copy as text, for Azure DevOps or any editor');
     html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p){
     const ns=selNodes(); const first=ns[0]; const st=m.styles.get(first.id);
@@ -10505,12 +10840,15 @@ ctxEl.addEventListener('change',e=>{
   mutate(()=>{ t.edges.forEach(x=>x.width=v===2?null:v); t.arrows.forEach(x=>x.w=v); },{structural});
 });
 ctxEl.addEventListener('click',e=>{
+  const ud=e.target.closest('[data-uicolor]');
+  if(ud){ const c=ud.dataset.uicolor||null; mutate(m=>{ for(const n of selNodes()){ const cur=m.styles.get(n.id)||blankStyle(); cur.fill=c; if(!c&&!cur.stroke&&!cur.color&&!cur.fontSize&&!cur.bold&&!cur.italic&&!cur.bg&&!(cur.extra||[]).length) m.styles.delete(n.id); else m.styles.set(n.id,cur); } }); return; }
   const dot=e.target.closest('[data-acolor]');
   if(dot){ const c=dot.dataset.acolor||null; const t=thickTargets(); mutate(()=>{ t.edges.forEach(x=>x.color=c); t.arrows.forEach(x=>x.color=c||'#1a1a1a'); },{structural:t.edges.length>0}); return; }
   const btn=e.target.closest('[data-act]'); if(!btn) return; const act=btn.dataset.act; const m=state.model;
   const edgesSel=()=>[...state.sel].filter(k=>k[0]==='e').map(k=>+k.slice(2));
   switch(act){
     case 'del': deleteSel(); break;
+    case 'copyDocs': copyDocs(selNodes()); break;
     case 'dup': if(copySel()){ state.pasteN=0; pasteClip(); } break;
     case 'group': groupSel(); break;
     case 'ungroup': ungroupSel(); break;
@@ -10665,12 +11003,12 @@ $('#libPickCancel').addEventListener('click',endPick);
  * Left toolbar, tool fly-outs, tool switching.
  */
 'use strict';
-const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons']];
+const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons'],['ai','aiSpark','Ask Claude to build or change the board','AI']];
 state.inkColor=LS.get('mab.inkColor',{pen:0,hl:0}); state.stickyColor=LS.get('mab.stickyColor',0); state.lastShape='rect'; state.lastInk='pen'; state.fly=null;
 const INK_TOOLS=['pen','hl','eraser'];
 state.arrowKind=LS.get('mab.arrowKind','curved'); state.arrowW=LS.get('mab.arrowW',2); state.arrowColor=LS.get('mab.arrowColor',0);
 function renderTools(){
-  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+ico(t[1])+'</span></button>').join('');
+  $('#tools').innerHTML=TOOLS.map(t=>t==='|'?'<span class="vsep"></span>':'<button type="button" class="ibtn'+(t[0]==='ai'?' ai-tool':'')+'" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'"><span class="ti">'+(t[0]==='ai'?aiSpark():ico(t[1]))+'</span></button>').join('');
   updTools();
 }
 function updTools(){
@@ -10742,7 +11080,14 @@ $('#flyout').addEventListener('click',e=>{
 });
 state.uiPreset=LS.get('orim.uiPreset','blank'); state.uiPick={dev:'mobile'};
 function toolFamily(t){ return SHAPE_TOOLS.includes(t)?'shapes':INK_TOOLS.includes(t)?'ink':t==='sticky'?'sticky':t==='connector'?'connector':t==='ui'?'ui':null; }
+// The AI button: a colourful sparkle like Miro's, which opens the AI tab beside the board.
+// Each copy gets its own gradient id: a gradient inside a hidden part of the page does not paint elsewhere.
+let aiSparkN=0;
+function aiSpark(){ const id='aiSparkG'+(++aiSparkN); return ('<svg class="i" viewBox="0 0 24 24" style="stroke:none"><defs><linearGradient id="aiSparkG" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff7ac6"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>'+
+  '<path d="M10.5 3.5l1.7 4.6a3 3 0 0 0 1.7 1.7l4.6 1.7-4.6 1.7a3 3 0 0 0-1.7 1.7l-1.7 4.6-1.7-4.6a3 3 0 0 0-1.7-1.7L2.6 11.5l4.6-1.7a3 3 0 0 0 1.7-1.7z" fill="url(#aiSparkG)"/><path d="M18.5 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="#ff7ac6"/><path d="M18 16.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#3b82f6"/></svg>').replace(/aiSparkG/g,id); }
+function openAITab(){ setMode('split'); setEmode('ai'); setTimeout(()=>{ const i=$('#aiIn'); if(i&&!i.disabled) i.focus(); },60); }
 function setTool(t,fromBar){
+  if(t==='ai'){ openAITab(); return; }
   if(t==='library'){ setLib(!state.libOpen); return; }
   if(t==='image'){ $('#imgIn').click(); return; }
   const fam0=toolFamily(state.tool);
@@ -10841,9 +11186,11 @@ const narrow=matchMedia('(max-width:760px)');
 // Split shows the code beside the board (stacked on phones); Canvas shows the board alone.
 function setMode(mode){
   if(mode!=='split'&&mode!=='canvas') mode='split';
+  const grow=state.mode==='split'&&mode==='canvas';
   state.mode=mode; LS.set('mab.mode',mode); app.dataset.mode=mode;
   for(const b of document.querySelectorAll('#viewSeg button')) b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
-  requestAnimationFrame(()=>{ applyView(); render(); });
+  // Going to the full canvas fits the board to the bigger view.
+  requestAnimationFrame(()=>{ applyView(); render(); if(grow&&state.model&&!app.hidden) fit(true); });
 }
 $('#viewSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-mode]'); if(b) setMode(b.dataset.mode); });
 narrow.addEventListener('change',()=>setMode(state.mode));
@@ -11215,10 +11562,11 @@ function buildDrawio(sel){
     else if(n.shape==='text') style='text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;strokeColor=none;fillColor='+(st.fill||'none')+txt;
     else if(n.shape==='sticky') style='rounded=0;whiteSpace=wrap;html=1;strokeColor=none;shadow=1;fillColor='+(st.fill||'#fff9b1')+txt;
     else if(isUi(n)){ const U={uiButton:'rounded=1;fillColor=#5f6470;strokeColor=none;fontColor=#ffffff;fontStyle=1;',uiInput:'rounded=1;fillColor=#ffffff;strokeColor=#c4c8d0;align=left;spacingLeft=10;fontColor=#4b5160;',uiImage:'rounded=0;fillColor=#eceef2;strokeColor=#c4c8d0;fontColor=#4b5160;',
-        uiHeading:'text;align=left;fontStyle=1;fontSize=19;fontColor=#1a1a1a;strokeColor=none;fillColor=none;',uiText:'text;align=left;verticalAlign=top;fontColor=#4b5160;strokeColor=none;fillColor=none;',uiTopbar:'rounded=0;fillColor=#eceef2;strokeColor=none;fontStyle=1;fontColor=#1a1a1a;',
-        uiTabbar:'rounded=0;fillColor=#ffffff;strokeColor=#c4c8d0;fontColor=#4b5160;',uiSidebar:'rounded=0;fillColor=#eceef2;strokeColor=none;align=left;verticalAlign=top;spacingLeft=16;spacingTop=12;fontColor=#4b5160;'};
-      const val=n.shape==='uiTabbar'?uiItems(n.label).join('&nbsp;&nbsp;&nbsp;&nbsp;'):n.shape==='uiSidebar'?uiItems(n.label).join('<br><br>'):n.shape==='uiText'&&!n.label?'Text':n.label;
-      cells.push('<mxCell id="'+cid('n:'+id)+'" value="'+xa(n.shape==='uiTabbar'||n.shape==='uiSidebar'?val:String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'))+'" style="'+xa('html=1;whiteSpace=wrap;fontSize=13;'+U[n.shape])+'" vertex="1" parent="'+(par?cid('g:'+par):'1')+'">'+geo(x,y,w,h,par)+'</mxCell>'); continue; }
+        uiHeading:'text;align=left;fontStyle=1;fontColor=#1a1a1a;strokeColor=none;fillColor=none;',uiText:'text;align=left;verticalAlign=top;fontColor=#4b5160;strokeColor=none;fillColor=none;',uiTopbar:'rounded=0;fillColor=#eceef2;strokeColor=none;fontStyle=1;fontColor=#1a1a1a;',
+        uiTabbar:'rounded=0;fillColor=#ffffff;strokeColor=#c4c8d0;fontColor=#4b5160;',uiSidebar:'rounded=0;fillColor=#eceef2;strokeColor=none;align=left;verticalAlign=top;spacingLeft=16;spacingTop=12;fontColor=#4b5160;',uiTable:'shape=table;startSize=0;rounded=0;fillColor=#ffffff;strokeColor=#c4c8d0;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontStyle=1;fontColor=#1a1a1a;'};
+      { const a=(styleOf(m0,id)||{}).fill; if(a&&/^#[0-9a-f]{3,8}$/i.test(a)&&n.shape==='uiButton') U.uiButton=U.uiButton.replace('fillColor=#5f6470','fillColor='+a); }
+      const val=n.shape==='uiTabbar'||n.shape==='uiTable'?uiItems(n.label).join('&nbsp;&nbsp;&nbsp;&nbsp;'):n.shape==='uiSidebar'?uiItems(n.label).join('<br><br>'):n.shape==='uiText'&&!n.label?'Text':n.label;
+      cells.push('<mxCell id="'+cid('n:'+id)+'" value="'+xa(n.shape==='uiTabbar'||n.shape==='uiSidebar'||n.shape==='uiTable'?val:String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'))+'" style="'+xa('html=1;whiteSpace=wrap;fontSize='+Math.max(5,Math.round((n.shape==='uiHeading'?19:13)*uiScale(m0,n)))+';'+U[n.shape])+'" vertex="1" parent="'+(par?cid('g:'+par):'1')+'">'+geo(x,y,w,h,par)+'</mxCell>'); continue; }
     else if(n.shape==='table'||n.shape==='doc'){ style='html=1;whiteSpace=wrap;overflow=fill;verticalAlign=top;align=left;spacing=0;rounded=1;arcSize=3;absoluteArcSize=1;fillColor='+(st.fill||'#ffffff')+';strokeColor='+(st.stroke||'#c9ccd1')+';fontColor=#1a1a1a;fontSize=12;';
       cells.push('<mxCell id="'+cid('n:'+id)+'" value="'+xa(n.shape==='table'?dioTable(n):dioDoc(n))+'" style="'+xa(style)+'" vertex="1" parent="'+(par?cid('g:'+par):'1')+'">'+geo(x,y,w,h,par)+'</mxCell>'); continue; }
     else style+=(SH[n.shape]||SH.rect)+'fillColor='+(st.fill||'#ffffff')+';strokeColor='+(st.stroke||'#1a1a1a')+';strokeWidth=2'+txt;
@@ -11310,11 +11658,12 @@ $('#exportMenu').addEventListener('click',async e=>{
     else if(fmt==='md'){ data=(state.model.title?'# '+state.model.title+'\n\n':'')+'```mermaid\n'+state.code.replace(/\s+$/,'')+'\n```\n'; filename=name+'.md'; }
     else if(fmt==='txt'){ data=state.code; filename=name+'.txt'; }
     else if(fmt==='drawio'){ if(window.claude){ data=buildDrawioSvg(); if(!data){ toast('The board is empty'); return; } filename=name+'.drawio.svg'; } else { data=buildDrawio(); filename=name+'.drawio'; } }
+    else if(fmt==='tickets'){ const sel=new Set([...state.sel].filter(k=>k[0]==='n').map(k=>k.slice(2))); data=ticketsCsv(state.model,sel.size&&[...sel].some(id=>isTicket(state.model.nodes.get(id)))?sel:null); if(!data){ toast('No tickets yet. Make a document and set its type, or ask the AI tab for tickets'); return; } filename=name+'-tickets.csv'; }
     else if(fmt==='json'){ data=JSON.stringify({format:'orim-board',version:2,title:state.model.title||'',code:state.code,images:usedImages()},null,2); filename=name+'.json'; }
   }catch(err){ console.error(err); toast(fmt==='png'?'PNG export failed in this browser. Try SVG.':'Export failed'); return; }
   if(fmt==='png'&&!(data&&data.size)){ toast('The board is empty'); return; }
   if(!window.claude){
-    try{ const blob=data instanceof Blob?data:new Blob([data],{type:fmt==='svg'?'image/svg+xml':fmt==='json'?'application/json':fmt==='drawio'?'application/xml':'text/plain'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); toast('Saved '+filename); return; }catch(err){}
+    try{ const blob=data instanceof Blob?data:new Blob([data],{type:fmt==='svg'?'image/svg+xml':fmt==='json'?'application/json':fmt==='drawio'?'application/xml':fmt==='tickets'?'text/csv':'text/plain'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); toast('Saved '+filename); return; }catch(err){}
   }
   const dl=await getDownloads();
   if(dl){
@@ -11500,8 +11849,9 @@ flowchart LR
 - linkStyle numbers edges from 0 in order; renumber if you add or remove edges above it.
 - Sticky colors: ${STICKY_COLORS.slice(0,10).join(' ')}. Keep any \`classDef sticky\`, \`classDef table\` and \`classDef doc\` line.
 - Table (for comparisons): \`cmp["Crystallize vs Optimizely"]:::table\` plus \`%% @table cmp {"rows":[["","Crystallize","Optimizely"],["Pricing","Usage based","Per seat"]],"colors":{"1,1":"g"}}\`. Row 0 is the header, column 0 the row names; colors "row,col" are g (good), a (partly), r (weak).
-- UI mockup screen: a frame with \`%% @device <id> mobile|tablet|desktop\` and \`%% @pos <id> x y w h\` (phone 300x620, iPad 560x760, desktop 960x600), holding grey wireframe pieces such as \`loginBtn["Sign in"]:::uiButton\`, each with \`%% @pos id x y w h\` in board coordinates. Pieces: uiHeading, uiText, uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar and uiSidebar (menu items separated by \`<br>\`). Keep pieces inside their device.
-- Document card: \`notes["Summary"]:::doc\` plus \`%% @doc notes {"blocks":[{"t":"h2","r":[{"x":"Heading"}]},{"t":"ul","r":[{"x":"Point "},{"x":"bold","b":1}]}]}\`. Block types h1 h2 h3 p ul ol; runs have x (text), b (bold), i (italic).
+- UI mockup screen: a frame with \`%% @device <id> mobile|tablet|desktop\` and \`%% @pos <id> x y w h\` (phone 300x620, iPad 560x760, desktop 960x600), holding grey wireframe pieces such as \`loginBtn["Sign in"]:::uiButton\`, each with \`%% @pos id x y w h\` in board coordinates. Pieces: uiHeading, uiText, uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar, uiSidebar and uiTable (menu items or table columns separated by \`<br>\`). A \`style id fill:#hex\` line gives a piece an accent colour. Keep pieces inside their device.
+- Document card: \`notes["Summary"]:::doc\` plus \`%% @doc notes {"blocks":[{"t":"h2","r":[{"x":"Heading"}]},{"t":"ul","r":[{"x":"Point "},{"x":"bold","b":1}]}]}\`. Block types h1 h2 h3 p ul ol; runs have x (text), b (bold), i (italic), u (a link URL).
+- Ticket (work item): a document with \`"kind"\` epic, feature, story, bug or task and \`"fields"\` such as \`{"points":3,"priority":"2","tags":"web; auth"}\` (bug: severity "2 - High"; task: remaining, activity). Stories have a Description ("As a …, I want …, so that …") and an Acceptance criteria list; bugs have Repro steps, Expected result and Actual result. Connect parents to children (epic, feature, story or bug, task).
 
 ## %% lines (canvas data, after the code)
 
@@ -11573,6 +11923,30 @@ function openAskAI(){
  * while Claude is still writing. The whole request is one undo step.
  */
 'use strict';
+/* While Claude works: a soft, blurred sketch of a board being drawn at the side of the canvas, with a
+ * cursor drifting between the pieces, so the board does not sit still while the answer is coming. */
+const Ghost=(()=>{
+  let el=null, pill=null, hideT=0;
+  function build(){
+    el=document.createElement('div'); el.className='ai-ghost'; el.setAttribute('aria-hidden','true');
+    const card=(x,y,w,h,d,c)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" class="gh-card"/>'+
+      '<rect x="'+(x+14)+'" y="'+(y+14)+'" width="'+(w*0.45)+'" height="8" rx="4" class="gh-ink" style="fill:'+c+'"/><rect x="'+(x+14)+'" y="'+(y+30)+'" width="'+(w-28)+'" height="6" rx="3" class="gh-line"/><rect x="'+(x+14)+'" y="'+(y+42)+'" width="'+(w*0.6)+'" height="6" rx="3" class="gh-line"/></g>';
+    const dot=(x,y,r,c,d)=>'<g class="gh" style="--dx:'+d[0]+'px;--dy:'+d[1]+'px;animation-delay:'+d[2]+'s"><circle cx="'+x+'" cy="'+y+'" r="'+r+'" style="fill:'+c+';opacity:.55"/><rect x="'+(x-22)+'" y="'+(y+r+8)+'" width="44" height="6" rx="3" class="gh-line"/></g>';
+    el.innerHTML='<svg viewBox="0 0 420 520" preserveAspectRatio="xMidYMid meet"><defs><filter id="ghBlur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter></defs><g filter="url(#ghBlur)" opacity=".8">'+
+      '<path class="gh-wire" d="M150 104 C 220 104, 230 190, 300 196"/><path class="gh-wire" d="M120 150 C 120 250, 140 300, 196 330" style="animation-delay:-1.2s"/><path class="gh-wire" d="M300 236 C 300 320, 290 360, 250 380" style="animation-delay:-2.1s"/>'+
+      card(30,62,150,64,[3,-2,0],'#8b5cf6')+card(230,180,150,60,[-3,2,-1.6],'#3b82f6')+card(176,318,170,70,[2,3,-3.1],'#ff7ac6')+
+      dot(80,250,16,'#3b82f6',[2,-3,-0.8])+dot(330,420,14,'#8b5cf6',[-2,2,-2.4])+dot(110,440,13,'#0ca789',[3,1,-4])+'</g>'+
+      '<g class="gh-cursor"><path d="M0 0l12 4.5-5 1.6-1.8 5.2z" style="fill:#8b5cf6;stroke:#fff;stroke-width:1.2;stroke-linejoin:round"/><rect x="10" y="10" width="44" height="17" rx="8.5" style="fill:#8b5cf6"/><text x="32" y="22" text-anchor="middle" style="fill:#fff;font:600 10px var(--font-ui)">Claude</text></g>'+
+      '</svg>';
+    pill=document.createElement('div'); pill.className='gh-pill'; pill.setAttribute('role','status'); pill.innerHTML='<span class="gh-spark">'+aiSpark()+'</span><span class="gh-text">Claude is thinking</span>';
+    boardPane.appendChild(el); boardPane.appendChild(pill);
+  }
+  return {
+    start(){ if(!el) build(); clearTimeout(hideT); pill.querySelector('.gh-text').textContent='Claude is thinking'; el.hidden=pill.hidden=false; requestAnimationFrame(()=>{ el.classList.add('on'); pill.classList.add('on'); }); },
+    phase(p){ if(pill&&p) pill.querySelector('.gh-text').textContent='Claude is changing the board'; },
+    stop(){ if(!el) return; el.classList.remove('on'); pill.classList.remove('on'); hideT=setTimeout(()=>{ if(el){ el.hidden=true; pill.hidden=true; } },450); }
+  };
+})();
 const AI=(()=>{
   const log=$('#aiLog'), inp=$('#aiIn'), sendBtn=$('#aiSend'), stopBtn=$('#aiStop'), deep=$('#aiDeep'), selEl=$('#aiSel');
   const chats=new Map();            // board id -> [{role:'user'|'assistant', content, view}]
@@ -11596,24 +11970,30 @@ Commands:
 {"op":"connect","from":"api","to":"cache","label":"reads","line":"solid|dotted|thick","ends":"one|both|none","fromRow":2,"toRow":"Pricing"}   from/to can be shapes, frames or tables; fromRow/toRow attach the line to one table row (number, 0 is the header, or the row's first cell text)
 {"op":"screen","id":"login","device":"mobile|tablet|desktop","preset":"blank|login|main","label":"Login","near":"id"}   a UI mockup screen: a device frame filled with grey wireframe pieces (blank has only a top bar)
 {"op":"add","id":"loginCta","shape":"uiButton","label":"Sign up","in":"login","at":[24,500],"size":[252,44]}   a piece on a screen; at is x,y from the screen's top left, size is w,h; both optional
-  pieces: uiHeading, uiText (label = the text; empty shows grey lines), uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar (bottom menu) and uiSidebar (side menu): one item per line in the label, e.g. "Home\\nSearch\\nProfile"
-  {"op":"update","id":"loginCta","at":[24,560],"size":[252,44]} moves or resizes a piece
+  pieces: uiHeading, uiText (label = the text; empty shows grey lines), uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar (bottom menu), uiSidebar (side menu) and uiTable (a data table; label = column names): one item per line in the label, e.g. "Home\\nSearch\\nProfile"
+  {"op":"update","id":"loginCta","at":[24,560],"size":[252,44],"fill":"#4262ff"} moves, resizes or colours a piece; colours: ${UI_COLORS.slice(1).map(c=>c[0]+' '+c[1].toLowerCase()).join(', ')}; grey when none
 {"op":"table","id":"cmp","title":"Crystallize vs Optimizely","rows":[["","Crystallize","Optimizely"],["Pricing","Usage based","Per seat"]],"colors":{"1,1":"g","1,2":"a"},"near":"id","in":"frameId"}   create or replace a table; row 0 is the header row, column 0 the row names; colors "row,col": g good, a partly, r weak
 {"op":"cell","id":"cmp","row":1,"col":2,"text":"…","color":"g|a|r|none"}   change one cell; row may be a row name; a row or column one past the end is added
 {"op":"doc","id":"notes","title":"Summary","markdown":"# Heading\\n- point with **bold**","near":"cmp","in":"frameId"}   create or replace a document card: # ## ### headings, - and 1. lists, **bold**, *italic*
+{"op":"doc","id":"loginStory","type":"story","title":"Sign in with Entra ID","fields":{"points":3,"priority":2,"tags":"auth; web"},"markdown":"## Description\\nAs a shopper, I want to sign in with my work account, so that …\\n## Acceptance criteria\\n- …","near":"login"}   a ticket: a doc with a work item type
+  type: epic, feature, story (user story), bug or task; leave it out for a plain document. fields by type: epic and feature: priority (1-4), tags; story: points, priority, tags; bug: severity ("1 - Critical" … "4 - Low"), priority, tags; task: remaining (hours), activity (Development, Design, Testing, Documentation, Deployment, Requirements), tags. Tags are separated by ;
+  markdown links: [text](https://…). Updating a doc: send only what changes; fields are merged.
 {"op":"disconnect","from":"api","to":"cache"}
 {"op":"frame","id":"sec","label":"Security","items":["kv","mi"],"in":"parentFrame"}   create or rename a frame and move items into it
 {"op":"unframe","id":"sec"}   remove a frame but keep what is in it
 {"op":"layout"}   rearrange the whole board; only when asked, or after a big restructure
+{"op":"direction","dir":"TB"}   flow direction: TB (top to bottom, vertical), LR (left to right, horizontal), BT or RL; rearranges the board to match. Add "in":"frameId" to change one frame only
 {"op":"say","text":"…"}   a short message to the person
 
 Rules:
 - Reuse existing ids exactly. New ids: camelCase letters and digits, not used yet.
 - Do only what was asked. Keep labels short; use \\n for a line break.
 - Use an icon for a cloud or Microsoft service when one fits (ids listed below); otherwise a plain shape.
-- Mockups: keep them simple and grey, a few pieces per screen. Phone 300x620 (content from y 40), iPad 560x760 (from y 30), desktop 960x600 (from y 34). Start from a preset, then add, update or delete pieces. Connect screens to each other for a flow, or pieces to the screen they open.
+- Mockups: keep them simple and grey, a few pieces per screen. New screens: phone ${DEVICES.mobile.w*MOCK}x${DEVICES.mobile.h*MOCK} (content from y ${DEVICES.mobile.top*MOCK}), iPad ${DEVICES.tablet.w*MOCK}x${DEVICES.tablet.h*MOCK} (from y ${DEVICES.tablet.top*MOCK}), desktop ${DEVICES.desktop.w*MOCK}x${DEVICES.desktop.h*MOCK} (from y ${DEVICES.desktop.top*MOCK}); the board lists each screen's real size. Start from a preset, then add, update or delete pieces. Connect screens to each other for a flow, or pieces to the screen they open.
+- Database tables: a table titled with the table name, header row Column | Type | Key | Notes and one row per column; link foreign keys row to row with fromRow and toRow.
 - Comparisons: one table, with a row per criterion and a column per option; colour cells to show which option is stronger. To link a diagram to a comparison, connect shapes to the table rows they relate to.
 - Longer explanations, notes or summaries: a doc, not a sticky note.
+- Tickets (work items to paste into Azure DevOps, Jira or similar): one doc per item with a type. Stories: Description as "As a …, I want …, so that …" and an Acceptance criteria list; bugs: Repro steps, Expected result, Actual result; tasks: a short Description. Titles short and specific. Connect each parent to its children (epic to feature to story or bug to task) and each ticket to the shapes or screens it changes. Put a set of tickets in a frame (for example the epic or sprint name); they are placed clear of the rest of the board.
 - Sticky note colours: ${STICKY_COLORS.slice(0,8).join(' ')}.
 - A question about the board: answer with say lines only, no changes.
 - Something unclear or impossible: one say line asking or explaining, no changes.
@@ -11626,10 +12006,10 @@ Rules:
       for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.shape==='table'||n.shape==='doc'||(n.group&&m.groups.get(n.group)&&m.groups.get(n.group).dev)) continue; L.push('- '+id+' | '+String(n.label).replace(/\n/g,' ').slice(0,80)+' | '+(n.shape==='icon'?n.icon:n.shape)+(n.group?' | '+n.group:'')); } }
     const tabs=[...m.nodes.values()].filter(n=>n.shape==='table'); if(tabs.length){ L.push('Tables (id | title | frame), then rows as row number: cells, with [g]/[a]/[r] colours:');
       for(const n of tabs){ L.push('- '+n.id+' | '+(n.label||'')+(n.group?' | '+n.group:'')); n.table.rows.forEach((r,ri)=>L.push('  '+ri+': '+r.map((c,ci)=>String(c).replace(/\n/g,' ').slice(0,60)+(n.table.colors[ri+','+ci]?' ['+n.table.colors[ri+','+ci]+']':'')).join(' | '))); } }
-    const scr=[...m.groups.values()].filter(g=>g.dev); if(scr.length){ L.push('Screens (id | label | device), then their pieces as id | kind | label | x,y,w,h from the screen corner:');
-      for(const g of scr){ const b=state.boxes&&state.boxes.get(g.id); L.push('- '+g.id+' | '+g.label+' | '+g.dev); for(const n of m.nodes.values()) if(n.group===g.id&&b) L.push('  '+n.id+' | '+n.shape+' | '+String(n.label).replace(/\n/g,'\\n').slice(0,60)+' | '+[n.x-b.x,n.y-b.y,n.w,n.h].map(Math.round).join(',')); } }
-    const docs=[...m.nodes.values()].filter(n=>n.shape==='doc'); if(docs.length){ L.push('Documents (id | title | frame), then their text as markdown:');
-      for(const n of docs){ L.push('- '+n.id+' | '+(n.label||'')+(n.group?' | '+n.group:'')); L.push(docToMd(n.doc).split('\n').map(l=>'  '+l).join('\n').slice(0,1500)); } }
+    const scr=[...m.groups.values()].filter(g=>g.dev); if(scr.length){ L.push('Screens (id | label | device | size), then their pieces as id | kind | label | x,y,w,h from the screen corner:');
+      for(const g of scr){ const b=state.boxes&&state.boxes.get(g.id); L.push('- '+g.id+' | '+g.label+' | '+g.dev+(b?' | '+Math.round(b.w)+'x'+Math.round(b.h):'')); for(const n of m.nodes.values()) if(n.group===g.id&&b) L.push('  '+n.id+' | '+n.shape+' | '+String(n.label).replace(/\n/g,'\\n').slice(0,60)+' | '+[n.x-b.x,n.y-b.y,n.w,n.h].map(Math.round).join(',')); } }
+    const docs=[...m.nodes.values()].filter(n=>n.shape==='doc'); if(docs.length){ L.push('Documents and tickets (id | type | title | fields | frame), then their text as markdown:');
+      for(const n of docs){ L.push('- '+n.id+' | '+(TICKET_TYPES[n.doc.kind]?n.doc.kind:'note')+' | '+(n.label||'')+(n.doc.fields?' | '+JSON.stringify(n.doc.fields):'')+(n.group?' | '+n.group:'')); L.push(docToMd(n.doc).split('\n').map(l=>'  '+l).join('\n').slice(0,1500)); } }
     if(m.edges.length){ L.push('Connections:'); for(const e of m.edges) L.push('- '+e.from+(e.ra!=null?' (row '+e.ra+')':'')+(e.line==='dotted'?' -.-> ':e.line==='thick'?' ==> ':e.head==='none'?' --- ':' --> ')+e.to+(e.rb!=null?' (row '+e.rb+')':'')+(e.label?' | '+e.label.replace(/\n/g,' '):'')); }
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').map(k=>k.slice(2)); if(sel.length) L.push('Selected now: '+sel.join(', ')+' ("these", "this" and "selected" mean these).');
     const cm=(m.threads||[]).filter(c=>!c.done&&c.msgs.length); if(cm.length){ L.push('Open comments:'); for(const c of cm) L.push('- on '+(c.on||'the board')+': '+c.msgs.map(q=>(q.a?q.a+': ':'')+q.t.replace(/\n/g,' ')).join(' / ').slice(0,300)); }
@@ -11674,15 +12054,20 @@ Rules:
   // A piece on a screen: at and size are relative to the screen; without them it goes below the last piece.
   function placePiece(m,n,op,keep){
     const g=n.group&&m.groups.get(n.group); const p=g&&m.pos.get(g.id); if(!g||!g.dev||!p){ if(!keep) place(m,n,null); return; }
-    const D=DEVICES[g.dev]; const num=v=>typeof v==='number'&&isFinite(v)?v:null;
-    if(Array.isArray(op.size)&&num(op.size[0])&&num(op.size[1])){ n.w=Math.max(16,Math.min(p.w,op.size[0])); n.h=Math.max(12,Math.min(p.h,op.size[1])); n.sized=true; }
-    else if(!keep){ n.w=Math.min(n.w,p.w-40); n.sized=true; }
+    const D=DEVICES[g.dev], sc=devScale(m,g.id), k=UI_KINDS[n.shape]; const num=v=>typeof v==='number'&&isFinite(v)?v:null;
+    if(Array.isArray(op.size)&&num(op.size[0])&&num(op.size[1])){ n.w=Math.max(8,Math.min(p.w,op.size[0])); n.h=Math.max(6,Math.min(p.h,op.size[1])); n.sized=true; }
+    else if(!keep){ if(k){ n.w=k.w*sc; n.h=k.h*sc; } n.w=Math.min(n.w,p.w-40*sc); n.sized=true; }
     if(Array.isArray(op.at)&&num(op.at[0])!=null&&num(op.at[1])!=null){ n.x=p.x+Math.max(0,Math.min(p.w-n.w,op.at[0])); n.y=p.y+Math.max(0,Math.min(p.h-n.h,op.at[1])); return; }
     if(keep) return;
-    let bottom=p.y+D.top+8, last=null; for(const o of m.nodes.values()) if(o!==n&&o.group===g.id&&o.x!=null&&o.shape!=='uiTabbar'&&o.shape!=='uiSidebar'&&o.shape!=='uiTopbar'&&o.y+o.h>=bottom){ bottom=o.y+o.h; last=o; }
+    let bottom=p.y+D.top*sc+8*sc, last=null, left=p.x+20*sc;
+    for(const o of m.nodes.values()){ if(o===n||o.group!==g.id||o.x==null) continue;
+      if(o.shape==='uiTopbar') bottom=Math.max(bottom,o.y+o.h+8*sc);
+      if(o.shape==='uiSidebar') left=Math.max(left,o.x+o.w+20*sc); }
+    for(const o of m.nodes.values()) if(o!==n&&o.group===g.id&&o.x!=null&&o.shape!=='uiTabbar'&&o.shape!=='uiSidebar'&&o.shape!=='uiTopbar'&&o.y+o.h>=bottom){ bottom=o.y+o.h; last=o; }
     // Below the lowest piece, lined up with it.
     if(last&&!(Array.isArray(op.size))){ n.w=Math.min(p.w,Math.max(n.w,last.w)); }
-    n.x=n.w>=p.w-1?p.x:last?last.x:p.x+20; n.y=Math.min(p.y+p.h-n.h-D.bottom,bottom+16);
+    n.w=Math.min(n.w,p.x+p.w-left-20*sc>8?Math.max(n.w>=p.w-1?p.w:0,p.x+p.w-left-20*sc):n.w);
+    n.x=n.w>=p.w-1?p.x:last?last.x:left; n.y=Math.min(p.y+p.h-n.h-D.bottom*sc,bottom+16*sc);
   }
   // A free spot for something w x h: beside the shape it relates to, or right of the board.
   function freeSpot(m,w,h,nearId){
@@ -11727,7 +12112,7 @@ Rules:
       sizeNode(n); done.changed++; done.fresh.push(n.id); return;
     }
     if(k==='screen'){
-      const D=DEVICES[op.device]||DEVICES.mobile; const r=freeSpot(m,D.w,D.h,op.near);
+      const D=DEVICES[op.device]||DEVICES.mobile; const r=freeSpot(m,D.w*MOCK,D.h*MOCK,op.near);
       const res=addScreen(m,{dev:DEVICES[op.device]?op.device:'mobile',preset:['blank','login','main'].includes(op.preset)?op.preset:'blank',label:op.label?label(op.label):'',id:op.id?cleanId(op.id,op.label):null,x:r.x,y:r.y,parent:op.in&&m.groups.has(op.in)?op.in:null});
       done.added++; done.fresh.push(...res.ids); return;
     }
@@ -11755,7 +12140,15 @@ Rules:
       if(!n){ let id=cleanId(op.id,lb||k); if(taken(id)) id=idFrom(lb||k,taken); n={id,label:lb,shape:k,icon:null,group:op.in&&m.groups.has(op.in)?op.in:null,cls:null}; m.nodes.set(id,n); m.nodeOrder.push(id); }
       else { if(op.title!=null||op.label!=null) n.label=lb; if('in' in op) n.group=op.in&&m.groups.has(op.in)?op.in:null; }
       if(k==='table'){ if(Array.isArray(op.rows)||!n.table) n.table=cleanTable({rows:op.rows,colors:op.colors||(n.table&&!Array.isArray(op.rows)?n.table.colors:{})}); else if(op.colors) n.table=cleanTable({rows:n.table.rows,colors:op.colors}); }
-      else if(op.markdown!=null||op.text!=null||!n.doc) n.doc=mdToDoc(String(op.markdown!=null?op.markdown:op.text||'').replace(/\\n/g,'\n'));
+      else {
+        const ty=op.type===undefined?undefined:(String(op.type||'').toLowerCase().replace(/^user\s*/,'').replace(/^product backlog item$/,'story').replace(/^pbi$/,'story'));
+        const kind=ty===undefined?(n.doc&&n.doc.kind):(TICKET_TYPES[ty]?ty:null);
+        let blocks=n.doc&&n.doc.blocks;
+        if(op.markdown!=null||op.text!=null) blocks=mdToDoc(String(op.markdown!=null?op.markdown:op.text||'').replace(/\\n/g,'\n')).blocks;
+        else if(!blocks||fresh) blocks=kind?ticketTemplate(kind):[{t:'p',r:[]}];
+        const fields={...((n.doc&&n.doc.fields)||{}),...(op.fields&&typeof op.fields==='object'?op.fields:{})};
+        n.doc=cleanDoc({blocks,kind,fields});
+      }
       const cx=n.x; sizeNode(n); if(fresh||cx==null) place(m,n,op.near);
       if(hex(op.fill)) setStyle(m,n.id,{fill:hex(op.fill)});
       if(fresh) done.added++; else done.changed++; done.fresh.push(n.id); return;
@@ -11771,13 +12164,22 @@ Rules:
     if(k==='disconnect'){ const before=m.edges.length; m.edges=m.edges.filter(e=>!((e.from===op.from&&e.to===op.to)||(e.from===op.to&&e.to===op.from))); if(m.edges.length<before) done.removed++; return; }
     if(k==='frame'){
       let id=op.id&&m.groups.has(op.id)?op.id:null;
-      if(!id){ const lb=label(op.label||'Frame'); id=cleanId(op.id,lb); if(taken(id)) id=idFrom(lb,taken); m.groups.set(id,{id,label:lb.replace(/\n/g,' '),parent:op.in&&m.groups.has(op.in)?op.in:null,dir:null}); m.groupOrder.push(id); done.added++; }
+      if(!id){ const lb=label(op.label||'Frame'); id=cleanId(op.id,lb); if(taken(id)) id=idFrom(lb,taken); m.groups.set(id,{id,label:lb.replace(/\n/g,' '),parent:op.in&&m.groups.has(op.in)?op.in:null,dir:null}); m.groupOrder.push(id); done.added++; done.fresh.push(id); }
       else if(op.label) m.groups.get(id).label=label(op.label).replace(/\n/g,' ');
       for(const it of Array.isArray(op.items)?op.items:[]){ const n=m.nodes.get(it), g=m.groups.get(it); if(n) n.group=id; else if(g&&g.id!==id&&!isDesc(m,id,g.id)) g.parent=id; }
       done.changed++; return;
     }
     if(k==='unframe'){ const g=m.groups.get(op.id); if(!g) return; for(const n of m.nodes.values()) if(n.group===g.id) n.group=g.parent||null; for(const o of m.groups.values()) if(o.parent===g.id) o.parent=g.parent||null;
       m.groups.delete(g.id); m.groupOrder=m.groupOrder.filter(x=>x!==g.id); m.pos.delete(g.id); m.edges=m.edges.filter(e=>e.from!==g.id&&e.to!==g.id); done.changed++; return; }
+    if(k==='direction'){
+      const raw=String(op.dir||op.direction||'').toUpperCase(); const dir={VERTICAL:'TB',DOWN:'TB',TD:'TB',TB:'TB',UP:'BT',BT:'BT',HORIZONTAL:'LR',RIGHT:'LR',LR:'LR',LEFT:'RL',RL:'RL'}[raw];
+      if(!dir) return;
+      if(op.in&&m.groups.has(op.in)) m.groups.get(op.in).dir=dir;
+      else { const was=m.dir||'TB', vert=d=>d==='TB'||d==='TD'||d==='BT';
+        // Pinned connection points turn with the board, so lines still leave the side they flow out of.
+        if(vert(was)!==vert(dir)){ const T=vert(dir)?{r:'b',l:'t',t:'l',b:'r'}:{b:'r',t:'l',r:'b',l:'t'}; for(const e of m.edges){ if(e.sa&&e.ra==null) e.sa=T[e.sa]; if(e.sb&&e.rb==null) e.sb=T[e.sb]; } }
+        m.dir=dir; for(const g of m.groups.values()) if(!g.dev) g.dir=null; }
+      for(const gid of m.groupOrder) if(groupHasMembers(m,gid)&&!m.groups.get(gid).dev) m.pos.delete(gid); autoLayout(m); done.layout=true; done.changed++; return; }
     if(k==='layout'){ for(const gid of m.groupOrder) if(groupHasMembers(m,gid)&&!m.groups.get(gid).dev) m.pos.delete(gid); autoLayout(m); done.layout=true; return; }
   }
   // Show the change on the board without adding an undo step yet.
@@ -11788,8 +12190,12 @@ Rules:
     const list=chat(); let h='';
     if(!list.length){
       if(known&&!sample) h='<div class="ai-empty"><b>Claude works here when orim is opened inside Claude</b>Open the copy of orim shared from Claude to use this tab: it uses your own Claude account and needs no setup. Here, use Export, then Ask an AI, to copy a prompt for any AI chat.</div>';
-      else h='<div class="ai-empty"><b>Tell Claude what to change</b>It edits the board as it answers, and every request can be undone in one step. Select shapes first to talk about just those.<div class="ai-try">'+
-        ['Add a Redis cache between the API and the database','Put the security services into a frame called Security','Colour the Azure services light blue','What does this diagram show?'].map(t=>'<button type="button" data-try="'+esc(t)+'">'+esc(t)+'</button>').join('')+'</div></div>';
+      else { const blank=!state.model||(!state.model.nodes.size&&!state.model.groups.size);
+        // Starters that show what the AI can make here: diagrams, screens, docs, tables and tickets.
+        const T=blank?[['Create','a simple web shop on Azure: front end, API, database and sign-in'],['Mock up','a login, a product list and a profile screen for mobile'],['Compare','Crystallize and Optimizely in a table, and link the parts to a diagram'],['Plan','a customer portal: a short spec doc, the database tables and the first tickets']]
+          :[['Expand','this with the services it is missing, like monitoring and secrets'],['Plan it out','with a spec doc, the database tables and tickets for the work'],['Mock up','the screens a user would see, and connect them to the services'],['Explain','what this board shows, in a document card']];
+        h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What should we build?':'What should we do with this board?')+'</b>Describe it and Claude builds it here while it answers: architecture with real Azure icons, screens, docs, tables and tickets. Each request is one undo step, and selected shapes are what "this" means.<div class="ai-try">'+
+          T.map(([v,r])=>{ const t=v+' '+r; return '<button type="button" data-try="'+esc(t)+'"><b>'+esc(v)+'</b> '+esc(r)+'</button>'; }).join('')+'</div></div>'; }
     }
     for(const t of list){
       if(t.role==='user') h+='<div class="ai-msg me">'+esc(t.content)+'</div>';
@@ -11808,12 +12214,12 @@ Rules:
     if(!state.model||state.fatal){ toast('Fix the code errors first'); return; }
     flushEditorHist(); histPush(state.code);
     const list=chat(); const turn={role:'assistant',content:'',view:'',pending:true,phase:'Thinking',work:{added:0,linked:0,changed:0,removed:0,layout:false},undoAt:null};
-    const req=input(text); list.push({role:'user',content:text}); list.push(turn); inp.value=''; busy=true; paint();
+    const req=input(text); list.push({role:'user',content:text}); list.push(turn); inp.value=''; busy=true; paint(); Ghost.start();
     const before=state.code, prevIds=nodeIds(); const done={say:[],added:0,linked:0,changed:0,removed:0,layout:false,fresh:[]};
     let pending='', applied=0;
     const eat=line=>{ line=line.trim().replace(/^```\w*$/,''); if(!line) return; let op; try{ op=JSON.parse(line); }catch(_){ return; }
       try{ apply(op,done); applied++; if(op.op!=='say') live(); }catch(err){ console.error(err); }
-      turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; paint(); };
+      turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; Ghost.phase(op&&op.op==='say'?null:'Changing the board'); paint(); };
     ctl=new AbortController();
     try{
       await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick',
@@ -11827,7 +12233,10 @@ Rules:
       if(c==='not_granted'||c==='sampling_disabled'){ sample=null; }
     }
     // One undo step for the whole request.
-    turn.pending=false; busy=false; ctl=null;
+    turn.pending=false; busy=false; ctl=null; Ghost.stop();
+    // Whatever Claude added or moved is pushed clear of everything else, so nothing ends up on top of something.
+    if(state.code!==before&&state.model&&done.fresh.length&&!done.layout){ const m=state.model; const top=id=>{ let cur=m.nodes.get(id)?m.nodes.get(id).group:id, last=id, k=0; while(cur&&m.groups.has(cur)&&k++<60){ last=cur; cur=m.groups.get(cur).parent; } return last; };
+      const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov)) live(); }catch(err){ console.error(err); } }
     if(state.code!==before){ histPush(state.code); turn.undoAt=H.i-1; setEditorFromCode(); syncTitle(); saveLocal(); revealNew(prevIds);
       setTimeout(()=>{ for(const id of done.fresh.filter(id=>prevIds.has(id)).slice(-12)){ const el=R.nodeEls.get(id); if(!el) continue; el.classList.remove('flash'); void el.getBoundingClientRect(); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } },60); }
     turn.content=turn.view; turn.summary=(turn.view||'')+(done.added||done.linked||done.changed||done.removed?' ['+[done.added&&done.added+' added',done.linked&&done.linked+' connected',done.changed&&done.changed+' changed',done.removed&&done.removed+' removed'].filter(Boolean).join(', ')+']':'');
@@ -12273,8 +12682,8 @@ const Boards=(()=>{
   function thumbFor(id){ const m=meta(id); const key=id+':'+(m&&m.updated); if(!thumbs.has(key)){ const code=LS.get(CODE+id,''); thumbs.set(key,thumbSVG(code)); } return thumbs.get(key); }
 
   /* ---- home page ---- */
-  const TPL_CARDS=()=>[{id:'blank',name:'Blank board',desc:'Start from nothing',plus:true},{id:'text',name:'From text',desc:'Type A -> B, get a diagram',text:true},...TEMPLATES.filter(t=>t.id!=='blank').map(t=>({id:t.id,name:t.name,desc:t.desc,code:t.code,tint:t.tint}))];
-  const tplThumb=t=>t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
+  const TPL_CARDS=()=>[{id:'ai',name:'Start with AI',desc:'Describe it, Claude draws it',ai:true},{id:'blank',name:'Blank board',desc:'Start from nothing',plus:true},{id:'text',name:'From text',desc:'Type A -> B, get a diagram',text:true},...TEMPLATES.filter(t=>t.id!=='blank').map(t=>({id:t.id,name:t.name,desc:t.desc,code:t.code,tint:t.tint}))];
+  const tplThumb=t=>t.ai?'<span class="th-ai">'+(typeof aiSpark==='function'?aiSpark():'')+'</span>':t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
   function renderStatic(){
     $('#homeTpl').innerHTML=TPL_CARDS().map(t=>'<button type="button" class="tpl" data-tpl-id="'+t.id+'"'+(t.tint?' style="--tint:'+t.tint+'"':'')+'><span class="th">'+tplThumb(t)+'</span><b>'+esc(t.name)+'</b><small>'+esc(t.desc||'')+'</small></button>').join('');
     const cards=$('#homeTpl').children.length; $('#homeTpl').style.setProperty('--n',Math.ceil(cards/2)); requestAnimationFrame(updTplNav);
@@ -12325,9 +12734,9 @@ const Boards=(()=>{
     const el=$('#homeRecents'); const items=[...list].sort((a,b)=>(b.opened||0)-(a.opened||0));
     $('#home').classList.toggle('landing',!items.length); $('#recentsSec').hidden=!items.length; renderWelcome();
     if(!items.length){ el.innerHTML=''; return; }
-    el.className='recents '+view;
+    el.className='recents '+view; const ra=$('#removeAllBtn'); if(ra) ra.hidden=view!=='grid';
     if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
-    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>Created '+esc(when(b.created))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
+    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span class="rl-act"><button type="button" class="ibtn" data-remove-all title="Delete all boards" aria-label="Delete all boards">'+ico('trash')+'</button></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>Created '+esc(when(b.created))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
   }
   function boardMenu(id,anchor){
     const mn=$('#homeMenu'); mn.dataset.id=id; mn.hidden=false;
@@ -12348,6 +12757,14 @@ const Boards=(()=>{
     const m=meta(id); if(!m) return;
     openModal('Delete board','<p>Delete "'+esc(m.title||'Untitled board')+'"? This removes it from this browser and can\'t be undone. Export a board file first if you want to keep a copy.</p>',[{label:'Delete board',primary:true,run:()=>{ try{ localStorage.removeItem(CODE+id); localStorage.removeItem(IMGS+id); }catch(_){} list=list.filter(b=>b.id!==id); saveList(); if(current===id) current=null; closeModal(); renderRecents(); toast('Board deleted'); }}]);
   }
+  // A new board with the AI tab open, ready to type.
+  function startWithAI(){ openNew('flowchart LR\n','Untitled board'); setTimeout(()=>{ if(typeof openAITab==='function') openAITab(); },80); }
+  function removeAll(){
+    const n=list.length; if(!n) return;
+    openModal('Delete all boards','<p>Delete all '+n+(n===1?' board':' boards')+' in this browser? This can\'t be undone. Export board files first for anything you want to keep.</p>',[{label:'Delete '+n+(n===1?' board':' boards'),primary:true,run:()=>{
+      for(const b of list){ try{ localStorage.removeItem(CODE+b.id); localStorage.removeItem(IMGS+b.id); }catch(_){} }
+      list=[]; saveList(); current=null; thumbs.clear(); closeModal(); renderRecents(); toast('All boards deleted'); }}]);
+  }
   function exportFile(id){ open(id); setTimeout(()=>{ const b=document.querySelector('#exportMenu [data-export=json]'); if(b) b.click(); },120); }
 
   // wiring
@@ -12363,24 +12780,28 @@ const Boards=(()=>{
   window.addEventListener('resize',updTplNav);
   $('#homeTpl').addEventListener('click',e=>{
     const b=e.target.closest('[data-tpl-id]'); if(!b) return; const id=b.dataset.tplId;
+    if(id==='ai'){ startWithAI(); return; }
     if(id==='blank'){ openNew('flowchart LR\n','Untitled board'); return; }
     if(id==='text'){ openQuickText(true); return; }
     const t=TEMPLATES.find(x=>x.id===id); if(t) openNew(t.code);
   });
   $('#homeRecents').addEventListener('click',e=>{
+    if(e.target.closest('[data-remove-all]')){ removeAll(); return; }
     const mo=e.target.closest('[data-more]'); if(mo){ e.stopPropagation(); boardMenu(mo.dataset.more,mo); return; }
     const op=e.target.closest('[data-open]'); if(op) open(op.dataset.open);
   });
   $('#homeMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-hm]'); if(!b) return; const id=$('#homeMenu').dataset.id; $('#homeMenu').hidden=true;
     ({open,rename,duplicate,remove,export:exportFile})[b.dataset.hm](id); });
   document.addEventListener('click',e=>{ if(!e.target.closest('#homeMenu')&&!e.target.closest('[data-more]')) $('#homeMenu').hidden=true; });
+  $('#removeAllBtn').addEventListener('click',removeAll);
   $('#homeView').addEventListener('click',e=>{ const b=e.target.closest('[data-view]'); if(!b) return; view=b.dataset.view; LS.set('orim.homeView',view); renderStatic(); renderRecents(); });
   $('#homeNew').addEventListener('click',()=>openNew('flowchart LR\n','Untitled board'));
   $('#heroStart').addEventListener('click',()=>openNew('flowchart LR\n','Untitled board'));
+  $('#heroAI').addEventListener('click',startWithAI);
   $('#heroText').addEventListener('click',()=>openQuickText(true));
   $('#heroTry').addEventListener('click',()=>{ const t=TEMPLATES.find(x=>x.id==='pp'); if(t) openNew(t.code); });
   $('#homeImport').addEventListener('click',()=>$('#fileIn').click());
-  $('.welcome-cta').addEventListener('click',e=>{ const b=e.target.closest('[data-welcome]'); if(!b) return; const k=b.dataset.welcome; if(k==='new') openNew('flowchart LR\n','Untitled board'); else if(k==='text') openQuickText(true); else $('#fileIn').click(); });
+  $('.welcome-cta').addEventListener('click',e=>{ const b=e.target.closest('[data-welcome]'); if(!b) return; const k=b.dataset.welcome; if(k==='new') openNew('flowchart LR\n','Untitled board'); else if(k==='ai') startWithAI(); else if(k==='text') openQuickText(true); else $('#fileIn').click(); });
   $('#homeTheme').addEventListener('click',()=>$('#themeBtn').click());
   $('#homeBtn').addEventListener('click',showHome);
 

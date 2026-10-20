@@ -122,8 +122,8 @@ const Boards=(()=>{
   function thumbFor(id){ const m=meta(id); const key=id+':'+(m&&m.updated); if(!thumbs.has(key)){ const code=LS.get(CODE+id,''); thumbs.set(key,thumbSVG(code)); } return thumbs.get(key); }
 
   /* ---- home page ---- */
-  const TPL_CARDS=()=>[{id:'blank',name:'Blank board',desc:'Start from nothing',plus:true},{id:'text',name:'From text',desc:'Type A -> B, get a diagram',text:true},...TEMPLATES.filter(t=>t.id!=='blank').map(t=>({id:t.id,name:t.name,desc:t.desc,code:t.code,tint:t.tint}))];
-  const tplThumb=t=>t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
+  const TPL_CARDS=()=>[{id:'ai',name:'Start with AI',desc:'Describe it, Claude draws it',ai:true},{id:'blank',name:'Blank board',desc:'Start from nothing',plus:true},{id:'text',name:'From text',desc:'Type A -> B, get a diagram',text:true},...TEMPLATES.filter(t=>t.id!=='blank').map(t=>({id:t.id,name:t.name,desc:t.desc,code:t.code,tint:t.tint}))];
+  const tplThumb=t=>t.ai?'<span class="th-ai">'+(typeof aiSpark==='function'?aiSpark():'')+'</span>':t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
   function renderStatic(){
     $('#homeTpl').innerHTML=TPL_CARDS().map(t=>'<button type="button" class="tpl" data-tpl-id="'+t.id+'"'+(t.tint?' style="--tint:'+t.tint+'"':'')+'><span class="th">'+tplThumb(t)+'</span><b>'+esc(t.name)+'</b><small>'+esc(t.desc||'')+'</small></button>').join('');
     const cards=$('#homeTpl').children.length; $('#homeTpl').style.setProperty('--n',Math.ceil(cards/2)); requestAnimationFrame(updTplNav);
@@ -174,9 +174,9 @@ const Boards=(()=>{
     const el=$('#homeRecents'); const items=[...list].sort((a,b)=>(b.opened||0)-(a.opened||0));
     $('#home').classList.toggle('landing',!items.length); $('#recentsSec').hidden=!items.length; renderWelcome();
     if(!items.length){ el.innerHTML=''; return; }
-    el.className='recents '+view;
+    el.className='recents '+view; const ra=$('#removeAllBtn'); if(ra) ra.hidden=view!=='grid';
     if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
-    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>Created '+esc(when(b.created))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
+    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span class="rl-act"><button type="button" class="ibtn" data-remove-all title="Delete all boards" aria-label="Delete all boards">'+ico('trash')+'</button></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>Created '+esc(when(b.created))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
   }
   function boardMenu(id,anchor){
     const mn=$('#homeMenu'); mn.dataset.id=id; mn.hidden=false;
@@ -197,6 +197,14 @@ const Boards=(()=>{
     const m=meta(id); if(!m) return;
     openModal('Delete board','<p>Delete "'+esc(m.title||'Untitled board')+'"? This removes it from this browser and can\'t be undone. Export a board file first if you want to keep a copy.</p>',[{label:'Delete board',primary:true,run:()=>{ try{ localStorage.removeItem(CODE+id); localStorage.removeItem(IMGS+id); }catch(_){} list=list.filter(b=>b.id!==id); saveList(); if(current===id) current=null; closeModal(); renderRecents(); toast('Board deleted'); }}]);
   }
+  // A new board with the AI tab open, ready to type.
+  function startWithAI(){ openNew('flowchart LR\n','Untitled board'); setTimeout(()=>{ if(typeof openAITab==='function') openAITab(); },80); }
+  function removeAll(){
+    const n=list.length; if(!n) return;
+    openModal('Delete all boards','<p>Delete all '+n+(n===1?' board':' boards')+' in this browser? This can\'t be undone. Export board files first for anything you want to keep.</p>',[{label:'Delete '+n+(n===1?' board':' boards'),primary:true,run:()=>{
+      for(const b of list){ try{ localStorage.removeItem(CODE+b.id); localStorage.removeItem(IMGS+b.id); }catch(_){} }
+      list=[]; saveList(); current=null; thumbs.clear(); closeModal(); renderRecents(); toast('All boards deleted'); }}]);
+  }
   function exportFile(id){ open(id); setTimeout(()=>{ const b=document.querySelector('#exportMenu [data-export=json]'); if(b) b.click(); },120); }
 
   // wiring
@@ -212,24 +220,28 @@ const Boards=(()=>{
   window.addEventListener('resize',updTplNav);
   $('#homeTpl').addEventListener('click',e=>{
     const b=e.target.closest('[data-tpl-id]'); if(!b) return; const id=b.dataset.tplId;
+    if(id==='ai'){ startWithAI(); return; }
     if(id==='blank'){ openNew('flowchart LR\n','Untitled board'); return; }
     if(id==='text'){ openQuickText(true); return; }
     const t=TEMPLATES.find(x=>x.id===id); if(t) openNew(t.code);
   });
   $('#homeRecents').addEventListener('click',e=>{
+    if(e.target.closest('[data-remove-all]')){ removeAll(); return; }
     const mo=e.target.closest('[data-more]'); if(mo){ e.stopPropagation(); boardMenu(mo.dataset.more,mo); return; }
     const op=e.target.closest('[data-open]'); if(op) open(op.dataset.open);
   });
   $('#homeMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-hm]'); if(!b) return; const id=$('#homeMenu').dataset.id; $('#homeMenu').hidden=true;
     ({open,rename,duplicate,remove,export:exportFile})[b.dataset.hm](id); });
   document.addEventListener('click',e=>{ if(!e.target.closest('#homeMenu')&&!e.target.closest('[data-more]')) $('#homeMenu').hidden=true; });
+  $('#removeAllBtn').addEventListener('click',removeAll);
   $('#homeView').addEventListener('click',e=>{ const b=e.target.closest('[data-view]'); if(!b) return; view=b.dataset.view; LS.set('orim.homeView',view); renderStatic(); renderRecents(); });
   $('#homeNew').addEventListener('click',()=>openNew('flowchart LR\n','Untitled board'));
   $('#heroStart').addEventListener('click',()=>openNew('flowchart LR\n','Untitled board'));
+  $('#heroAI').addEventListener('click',startWithAI);
   $('#heroText').addEventListener('click',()=>openQuickText(true));
   $('#heroTry').addEventListener('click',()=>{ const t=TEMPLATES.find(x=>x.id==='pp'); if(t) openNew(t.code); });
   $('#homeImport').addEventListener('click',()=>$('#fileIn').click());
-  $('.welcome-cta').addEventListener('click',e=>{ const b=e.target.closest('[data-welcome]'); if(!b) return; const k=b.dataset.welcome; if(k==='new') openNew('flowchart LR\n','Untitled board'); else if(k==='text') openQuickText(true); else $('#fileIn').click(); });
+  $('.welcome-cta').addEventListener('click',e=>{ const b=e.target.closest('[data-welcome]'); if(!b) return; const k=b.dataset.welcome; if(k==='new') openNew('flowchart LR\n','Untitled board'); else if(k==='ai') startWithAI(); else if(k==='text') openQuickText(true); else $('#fileIn').click(); });
   $('#homeTheme').addEventListener('click',()=>$('#themeBtn').click());
   $('#homeBtn').addEventListener('click',showHome);
 

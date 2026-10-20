@@ -40,16 +40,17 @@ function rowRect(n,row){ const L=n._tl||tableLayout(n); const r=Math.max(0,Math.
 function rowAt(n,y){ const L=n._tl||tableLayout(n); let yy=n.y+L.top; for(let i=0;i<L.rows.length;i++){ if(y<yy+L.rows[i]) return i; yy+=L.rows[i]; } return L.rows.length-1; }
 const DOCF={h1:[19,700,10],h2:[16,700,8],h3:[14,700,6],p:[13,400,4],ul:[13,400,2],ol:[13,400,2]};
 function docLayout(n){
-  const W=n.w||380, PADX=22, PADT=n.label&&n.label.trim()?44:20; const out=[]; let y=PADT, k=0;
+  const tk=n.doc&&TICKET_TYPES[n.doc.kind];
+  const W=n.w||380, PADX=22, PADT=tk?(ticketLine(n)?84:68):n.label&&n.label.trim()?44:20; const out=[]; let y=PADT, k=0;
   for(const b of (n.doc&&n.doc.blocks)||[]){
     const [fs,wt,gap]=DOCF[b.t]||DOCF.p; const lh=Math.round(fs*1.45); const ind=b.t==='ul'||b.t==='ol'?18:0;
     if(b.t==='ol') k++; else k=0;
     y+=out.length?gap:0;
     // words with their style, wrapped greedily
-    const words=[]; for(const r of b.r) for(const part of r.x.split(/(\s+|\n)/)){ if(!part) continue; if(part==='\n'){ words.push({nl:1}); continue; } if(/^\s+$/.test(part)){ words.push({sp:1,b:r.b,i:r.i}); continue; } words.push({x:part,b:r.b,i:r.i}); }
+    const words=[]; for(const r of b.r) for(const part of r.x.split(/(\s+|\n)/)){ if(!part) continue; if(part==='\n'){ words.push({nl:1}); continue; } if(/^\s+$/.test(part)){ words.push({sp:1,b:r.b,i:r.i,u:r.u}); continue; } words.push({x:part,b:r.b,i:r.i,u:r.u}); }
     const maxW=W-PADX*2-ind; const lines=[[]]; let lw=0;
     const width=w=>Core.measure(w.x,fs)*((w.b||wt>=700)?1.08:1);
-    for(const w of words){ if(w.nl){ lines.push([]); lw=0; continue; } if(w.sp){ if(lines[lines.length-1].length){ lines[lines.length-1].push({x:' ',b:w.b,i:w.i}); lw+=fs*0.3; } continue; }
+    for(const w of words){ if(w.nl){ lines.push([]); lw=0; continue; } if(w.sp){ if(lines[lines.length-1].length){ lines[lines.length-1].push({x:' ',b:w.b,i:w.i,u:w.u}); lw+=fs*0.3; } continue; }
       const ww=width(w); if(lw+ww>maxW&&lines[lines.length-1].length){ const L=lines[lines.length-1]; while(L.length&&L[L.length-1].x===' ') L.pop(); lines.push([]); lw=0; } lines[lines.length-1].push(w); lw+=ww; }
     if(!lines[lines.length-1].length&&lines.length>1) lines.pop();
     out.push({t:b.t,fs,wt,lh,ind,num:k,y,lines}); y+=lines.length*lh;
@@ -57,7 +58,7 @@ function docLayout(n){
   return {blocks:out,h:Math.max(PADT+40,y+22),padx:PADX};
 }
 function sizeNode(n){
-  if(isUi(n)){ const k=UI_KINDS[n.shape]; if(!n.sized||!n.w){ n.w=k.w; n.h=k.h; } n.lines=[]; return; }
+  if(isUi(n)){ const k=UI_KINDS[n.shape]; if(!n.sized||!n.w){ n.w=k.w*MOCK; n.h=k.h*MOCK; } n.lines=[]; return; }
   if(n.shape==='table'){ if(!n.table) n.table={rows:[['','Option A','Option B'],['','',''],['','','']],colors:{}}; const L=tableLayout(n); n.w=Math.round(L.w); n.h=Math.ceil(L.h); n._tl=L; n.lines=[]; return; }
   if(n.shape==='doc'){ if(!n.doc) n.doc={blocks:[{t:'p',r:[]}]}; if(!n.sized||!n.w) n.w=380; const L=docLayout(n); n.h=Math.min(1600,Math.ceil(L.h)); n._dl=L; n.lines=[]; return; }
   if(n.shape==='sticky'){
@@ -133,14 +134,14 @@ function layoutBlocks(m){
   const childIn=(id,block)=>{ if(!m.nodes.has(id)&&!used.has(id)) return null; let cur=id,k=0; while(k++<60){ const p=parentOf(cur); if(p===block) return cur; if(p===null) return null; cur=p; } return null; };
   const blocks=new Map();
   const devBox=block=>{ const g=block&&m.groups.get(block); if(!g||!g.dev) return null; const D=DEVICES[g.dev]; const p=m.pos.get(block); if(p&&p.w) return {x:p.x,y:p.y,w:p.w,h:p.h};
-    let x0=Infinity,y0=Infinity; for(const n of m.nodes.values()) if(n.group===block&&n.x!=null){ x0=Math.min(x0,n.x); y0=Math.min(y0,n.y); } return {x:isFinite(x0)?x0:0,y:isFinite(y0)?y0-D.top:0,w:D.w,h:D.h}; };
+    let x0=Infinity,y0=Infinity; for(const n of m.nodes.values()) if(n.group===block&&n.x!=null){ x0=Math.min(x0,n.x); y0=Math.min(y0,n.y); } return {x:isFinite(x0)?x0:0,y:isFinite(y0)?y0-D.top*MOCK:0,w:D.w*MOCK,h:D.h*MOCK}; };
   function layout(block){
     if(blocks.has(block)) return blocks.get(block);
     const kids=[]; for(const id of m.nodeOrder) if(m.nodes.has(id)&&parentOf(id)===block) kids.push(id);
     for(const gid of m.groupOrder) if(used.has(gid)&&parentOf(gid)===block) kids.push(gid);
     // A screen is a drawing: its pieces keep their places inside the device.
     const db=devBox(block);
-    if(db){ const pos=new Map(); for(const k of kids){ const n=m.nodes.get(k); if(n&&n.x!=null) pos.set(k,{x:n.x-db.x,y:n.y-db.y}); else if(n) pos.set(k,{x:16,y:DEVICES[m.groups.get(block).dev].top+16}); }
+    if(db){ const pos=new Map(); for(const k of kids){ const n=m.nodes.get(k); if(n&&n.x!=null) pos.set(k,{x:n.x-db.x,y:n.y-db.y}); else if(n) pos.set(k,{x:8,y:DEVICES[m.groups.get(block).dev].top*devScale(m,block)+8}); }
       const r={w:db.w,h:db.h,pos,dev:true}; blocks.set(block,r); return r; }
     const sz=new Map(kids.map(k=>{ const n=m.nodes.get(k); if(n) return [k,{w:n.w,h:n.h}]; const b=layout(k); return [k,{w:b.w,h:b.h}]; }));
     const raw=(block&&m.groups.get(block).dir)||m.dir; const dir=raw==='TD'?'TB':(raw||'LR');
@@ -225,7 +226,7 @@ function groupBoxes(m,exclude){
     const p=m.pos.get(gid); const fixed=p&&p.w?{x:p.x,y:p.y,w:p.w,h:p.h}:null;
     // A device frame keeps its size; what is dragged past its edge is cut off from view, not added.
     const dv=m.groups.get(gid).dev&&DEVICES[m.groups.get(gid).dev];
-    if(dv){ boxes.set(gid,fixed||(cb?{x:cb.x+PAD,y:cb.y+PAD_TOP,w:dv.w,h:dv.h}:{x:p?p.x:0,y:p?p.y:0,w:dv.w,h:dv.h})); continue; }
+    if(dv){ boxes.set(gid,fixed||(cb?{x:cb.x+PAD,y:cb.y+PAD_TOP,w:dv.w*MOCK,h:dv.h*MOCK}:{x:p?p.x:0,y:p?p.y:0,w:dv.w*MOCK,h:dv.h*MOCK})); continue; }
     if(cb&&fixed) boxes.set(gid,unionRect(cb,fixed));
     else if(cb) boxes.set(gid,cb);
     else if(fixed) boxes.set(gid,fixed);
@@ -466,3 +467,28 @@ function resolveArrow(m,a){
   return {...a,x1:p0.x,y1:p0.y,x2:p1.x,y2:p1.y};
 }
 function arrowBox(a){ const pad=a.kind==='block'?a.w*4.4+9:a.w*3+8; const x0=Math.min(a.x1,a.x2),y0=Math.min(a.y1,a.y2); return {x:x0-pad,y:y0-pad,w:Math.abs(a.x2-a.x1)+pad*2,h:Math.abs(a.y2-a.y1)+pad*2}; }
+// Push top-level things apart so none overlap: shapes outside frames, and whole frames (with
+// everything in them, and the title above them). Only the blocks in `movable` move; null moves any.
+// Returns how many blocks moved.
+function separateBlocks(m,movable,gap){
+  const G=gap||40, TITLE=30; const boxes=groupBoxes(m); const blocks=[];
+  for(const n of m.nodes.values()) if(n.x!=null&&!(n.group&&m.groups.has(n.group))) blocks.push({id:n.id,n,x:n.x,y:n.y,w:n.w,h:n.h});
+  for(const g of m.groups.values()){ if(g.parent&&m.groups.has(g.parent)) continue; const b=boxes.get(g.id); if(b) blocks.push({id:g.id,g,x:b.x,y:b.y-TITLE,w:b.w,h:b.h+TITLE}); }
+  const can=b=>!movable||movable.has(b.id);
+  const moved=new Map();
+  for(let pass=0;pass<40;pass++){ let any=false;
+    for(const a of blocks) for(const b of blocks){ if(a===b||!can(b)) continue;
+      const ox=Math.min(a.x+a.w,b.x+b.w)+G-Math.max(a.x,b.x), oy=Math.min(a.y+a.h,b.y+b.h)+G-Math.max(a.y,b.y);
+      if(ox<=0||oy<=0) continue;
+      if(can(a)&&!movable&&(a.y>b.y||(a.y===b.y&&a.x>b.x))) continue; // of two movable blocks, move the later one
+      // Move along the axis that needs the shorter push, away from the other block.
+      let dx=0,dy=0; if(ox<=oy) dx=(b.x+b.w/2>=a.x+a.w/2?1:-1)*ox; else dy=(b.y+b.h/2>=a.y+a.h/2?1:-1)*oy;
+      b.x+=dx; b.y+=dy; const mv=moved.get(b.id)||{dx:0,dy:0}; mv.dx+=dx; mv.dy+=dy; moved.set(b.id,mv); any=true; }
+    if(!any) break; }
+  for(const b of blocks){ const mv=moved.get(b.id); if(!mv) continue; const dx=Math.round(mv.dx), dy=Math.round(mv.dy);
+    if(b.n){ b.n.x+=dx; b.n.y+=dy; continue; }
+    const inside=new Set([b.id]); let grew=true; while(grew){ grew=false; for(const g of m.groups.values()) if(!inside.has(g.id)&&g.parent&&inside.has(g.parent)){ inside.add(g.id); grew=true; } }
+    for(const n of m.nodes.values()) if(n.group&&inside.has(n.group)&&n.x!=null){ n.x+=dx; n.y+=dy; }
+    for(const gid of inside){ const p=m.pos.get(gid); if(p) m.pos.set(gid,{...p,x:p.x+dx,y:p.y+dy}); } }
+  return moved.size;
+}

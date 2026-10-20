@@ -13,7 +13,8 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Every board has its own link (`#b-<id>`), so the browser's back button and bookmarks work.
 
 **Two editors, one board**
-- Split and Canvas views, with a draggable splitter. On a phone, Split stacks the code above the board.
+- Split and Canvas views, with a draggable splitter. Going to Canvas fits the board to the larger view. On a phone, Split stacks the code above the board.
+- The colourful sparkle at the bottom of the toolbar opens the AI tab beside the board. The home page has Start with AI too, and the list view's bin icon deletes all boards in this browser after a confirmation.
 - Mermaid mode: flowchart syntax with highlighting, line errors and autocomplete for keywords, arrows, node ids and icon nodes.
 - Text mode: write `Browser -> API -> Database`, `- list items` and `# Headings`. Basic [D2](https://d2lang.com) also works.
 - Paste any text onto the board to turn it into connected boxes or sticky notes.
@@ -22,7 +23,9 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut.
 - Tables for comparisons: edit cells in place, Tab to the next cell (Tab in the last cell adds a row), Enter to go down, add and delete rows and columns, colour cells green, amber or red. The header row and first column are bold. Pasting cells from a spreadsheet fills the table.
 - Connectors can attach to one table row: hover a table for a dot at each end of every row, or drop a connector on a row. Rows keep their connectors when you add, move or delete other rows.
-- Simple UI mockups: the Mockup tool adds a phone, iPad or desktop screen, blank or as a login or main page, made of grey wireframe pieces (heading, text, button, input, image, top bar, bottom menu, side menu). Each piece can be moved, edited and connected to anything on the board; screens connect to each other for a flow. Auto layout moves screens as a whole and leaves their pieces alone.
+- Simple UI mockups, drawn at half size so they sit well next to other shapes: the Mockup tool adds a phone, iPad or desktop screen, blank or as a login or main page, made of grey wireframe pieces (heading, text, button, input, image, top bar, bottom menu, side menu, table), each with an optional accent colour (blue, green, yellow, red, purple or black) from its toolbar. Each piece can be moved, edited and connected to anything on the board; screens connect to each other for a flow. Auto layout moves screens as a whole and leaves their pieces alone.
+- Tickets: set a document's type to Epic, Feature, User Story, Bug or Task and it becomes a work item card with an Azure Boards colour strip, the type's fields (story points, priority, severity, remaining work, activity, tags) and a starting template (for a story: Description as "As a …, I want …, so that …" and Acceptance criteria). Copy puts a ticket, or every selected document, on the clipboard as formatted text (pastes into Azure DevOps, Jira, Word or Teams) with Markdown as plain text. Export → Tickets for Azure DevOps saves the CSV that Boards → Work items → Import reads; a ticket connected to a higher level one (epic, feature, story or bug, task) becomes its child.
+- Links in documents: select text and press Ctrl+K (or the link button), or paste a web address. Ctrl or Cmd+click a link to open it, on the board or in the editor.
 - Document cards, like Miro docs: headings, paragraphs, bulleted and numbered lists, bold and italic, from the toolbar or by typing `# `, `## `, `### `, `- ` or `1. ` at the start of a line. Expand opens a larger view for reading and writing.
 - Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color. Frames connect too: hover a frame's border or title for its blue dots, or start the Arrow tool there.
 - Arrow ends snap to shapes; pull hard to detach.
@@ -31,7 +34,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Elbow connectors are routed around shapes with right angles, like Miro. Tidy up → Connectors sets Curved, Straight or Elbow for the whole board; it is saved as Mermaid's own `curve` setting (`basis`, `linear`, `step`), so other Mermaid tools draw it the same way.
 - Dragging something to the edge of the view scrolls the board and, if you keep pushing, zooms out a little.
 - A minimap shows in the corner while you pan or zoom; click or drag in it to jump. Ctrl or Cmd with the mouse wheel zooms about 10% per notch.
-- Dragging shows alignment guides and snaps to other shapes' edges and centres (hold Alt to move freely). Tidy up → Line up straightens rows and columns but keeps your layout; Auto layout rearranges everything.
+- Dragging shows alignment guides and snaps to other shapes' edges and centres (hold Alt to move freely). Tidy up → Line up straightens rows and columns but keeps your layout, and pushes overlapping frames and screens apart; Auto layout rearranges everything.
 - Text in a shape wraps and the shape grows while you type.
 - Lasso empty space to create a frame. Drag frame edges to resize, or pick a format such as 16:9 or A4.
 - Text styling: size, bold, italic, color and highlight.
@@ -88,6 +91,7 @@ orim/
 ├── js/
 │   ├── core/               Pure logic, no DOM; covered by tests
 │   │   ├── mockups.js      Device sizes, wireframe pieces and screen presets
+│   │   ├── tickets.js      Work item types and fields, copy text, Azure DevOps CSV
 │   │   ├── mermaid.js      Mermaid parser and serializer, canvas data comments
 │   │   ├── geometry.js     Text wrap, node sizing, auto layout, connector shapes
 │   │   └── templates.js    Starter boards
@@ -151,7 +155,7 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 %% @route <edgeIndex> curved|straight|elbow [<from> <to>] [ra=<row>] [rb=<row>]   connector routing; sides t r b l, or - for automatic; ra/rb attach an end to a table row
 %% @device <frameId> mobile|tablet|desktop          the frame is a mockup screen of that device
 %% @table <id> <json>                               table cells {rows:[[…]], colors:{"row,col":"g|a|r"}}; row 0 is the header
-%% @doc   <id> <json>                               document {blocks:[{t:h1|h2|h3|p|ul|ol, r:[{x:text, b:1, i:1}]}]}
+%% @doc   <id> <json>                               document {blocks:[{t:h1|h2|h3|p|ul|ol, r:[{x:text, b:1, i:1, u:url}]}], kind?:epic|feature|story|bug|task, fields?:{…}}
 %% @arrow <id> <kind> <x1> <y1> <x2> <y2> <w> <color> [from=<id>] [to=<id>]
 %% @ink   <id> pen|hl <color> <w> <x,y> <dx,dy> ...   pen and highlighter strokes
 %% @image <id> <x> <y> <w> <h> [front]               image placement; front = above shapes (pixels live in the board file)
@@ -224,11 +228,13 @@ The prompt is about 5,000 characters plus the board. **Download guide (.md)** sa
 
 When orim is opened inside Claude (the copy shared from Claude), the editor has a third tab, **AI**. Type what you want ("add a Redis cache between the API and the database", "put these in a frame called Security", "what does this show?") and Claude changes the board while it answers. It uses your own Claude account, with no keys or setup.
 
-- Claude replies with one small command per line (add, connect, update, frame, delete, screen, table, cell, doc, layout, say); each is applied as it arrives.
-- Ask for a comparison ("compare Crystallize and Optimizely and link the parts to the table") and Claude builds a table, colours the stronger option, and connects shapes to the rows they belong to. Longer notes become a document card. "Mock up a login and home screen for mobile and desktop" makes screens from the presets and adjusts their pieces. Claude sees the tables and documents on the board, so you can ask about them or have them updated.
+- Claude replies with one small command per line (add, connect, update, frame, delete, screen, table, cell, doc, layout, say). A doc with a type is a ticket; each is applied as it arrives.
+- Ask for a comparison ("compare Crystallize and Optimizely and link the parts to the table") and Claude builds a table, colours the stronger option, and connects shapes to the rows they belong to. Longer notes become a document card. "Mock up a login and home screen for mobile and desktop" makes screens from the presets and adjusts their pieces. "Map out the tickets for this" makes an epic with stories, bugs and tasks, connected to each other and to the screens and services they touch. New items are pushed clear of what is already on the board. Claude sees the tables and documents on the board, so you can ask about them or have them updated.
 - Every request is one undo step, with an Undo button on the reply.
 - Selected shapes are sent along, so "these" means your selection. Open comments are sent too.
 - **Think harder** uses a slower, more capable model for bigger changes.
+- While Claude works, a blurred sketch drifts at the side of the canvas with a status note, and the real changes appear as they arrive.
+- "Make it vertical" or "left to right" changes the flow direction and lays the board out again; pinned connection points turn with it.
 - On GitHub Pages or a local copy the tab explains that it needs Claude; use Export → Ask an AI there.
 
 ## Move a board to another device
