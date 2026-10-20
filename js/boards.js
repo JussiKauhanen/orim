@@ -66,7 +66,7 @@ const Boards=(()=>{
     Object.assign(IMG,LS.get(IMGS+id,{})||{});
     const code=LS.get(CODE+id,'flowchart LR\n');
     lastSaved.set(id,code);
-    state.sel.clear(); state.cache.clear(); H.stack=[]; H.i=-1; closeModal(); closeMenus(); cmClose();
+    state.sel.clear(); state.cache.clear(); H.stack=[]; H.i=-1; closeModal(); closeMenus(); cmClose(); if(typeof AI!=='undefined') AI.onBoard();
     $('#home').hidden=true; app.hidden=false;
     loadCode(typeof code==='string'?code:'flowchart LR\n',{clearCache:true}); updUndo();
     state.viewQuietUntil=performance.now()+1500; requestAnimationFrame(()=>{ applyView(); render(); fit(); });

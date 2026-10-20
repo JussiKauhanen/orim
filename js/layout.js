@@ -3,14 +3,15 @@
  */
 'use strict';
 const narrow=matchMedia('(max-width:760px)');
+// Split shows the code beside the board (stacked on phones); Canvas shows the board alone.
 function setMode(mode){
-  if(narrow.matches&&mode==='split') mode='canvas';
+  if(mode!=='split'&&mode!=='canvas') mode='split';
   state.mode=mode; LS.set('mab.mode',mode); app.dataset.mode=mode;
   for(const b of document.querySelectorAll('#viewSeg button')) b.setAttribute('aria-pressed',String(b.dataset.mode===mode));
-  if(mode!=='code') requestAnimationFrame(()=>{ applyView(); render(); });
+  requestAnimationFrame(()=>{ applyView(); render(); });
 }
 $('#viewSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-mode]'); if(b) setMode(b.dataset.mode); });
-narrow.addEventListener('change',()=>setMode(state.mode==='split'?'canvas':state.mode));
+narrow.addEventListener('change',()=>setMode(state.mode));
 const work=$('#work'); const savedSplit=LS.get('mab.split',null); if(savedSplit) work.style.setProperty('--split',savedSplit+'px');
 const splitter=$('#splitter');
 splitter.addEventListener('pointerdown',e=>{

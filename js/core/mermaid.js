@@ -11,7 +11,7 @@ const V11={rect:'rect',rectangle:'rect',proc:'rect',process:'rect',square:'rect'
 const BRACKETS=[['(((',[')))'],'circle'],['([',['])'],'stadium'],['[(',[')]'],'cyl'],['((',['))'],'circle'],['[[',[']]'],'sub'],['[/',['/]','\\]'],'para'],['[\\',['\\]','/]'],'para'],['{{',['}}'],'hex'],['(',[')'],'round'],['[',[']'],'rect'],['{',['}'],'diamond'],['>',[']'],'rect']];
 const BR_OUT={rect:['[',']'],round:['(',')'],stadium:['([','])'],cyl:['[(',')]'],circle:['((','))'],sub:['[[',']]'],para:['[/','/]'],hex:['{{','}}'],diamond:['{','}']};
 const LAYOUT_MARK=/^%%\s*layout\b/i;
-const POS_RE=/^\s*%%\s*@(pos|ink|arrow|route|image|comment)\b/;
+const POS_RE=/^\s*%%\s*@(pos|ink|arrow|route|image|comment|table|doc|device)\b/;
 const ID_RE=/^[\p{L}\p{N}_]+(?:[-.][\p{L}\p{N}_]+)*/u;
 
 function decodeLabel(t){return String(t).replace(/<br\s*\/?>/gi,'\n').replace(/#quot;/g,'"').replace(/#amp;/g,'&').replace(/#lt;/g,'<').replace(/#gt;/g,'>').replace(/#35;/g,'#')}
@@ -150,7 +150,7 @@ function applyClassDefs(m){
     mm=/^class\s+(.+?)\s+([\w-]+);?\s*$/.exec(x); if(mm) for(const id of mm[1].split(',')) if(id.trim()) classOf.set(id.trim(),mm[2]);
   }
   if(!defs.size) return;
-  for(const n of m.nodes.values()){ if(n.shape==='sticky') continue; const c=n.cls||classOf.get(n.id); const src=(c&&defs.get(c))||defs.get('default'); if(src) m.cstyles.set(n.id,parseStyle(src)); }
+  for(const n of m.nodes.values()){ if(n.shape==='sticky'||n.shape==='table'||n.shape==='doc'||isUi(n)) continue; const c=n.cls||classOf.get(n.id); const src=(c&&defs.get(c))||defs.get('default'); if(src) m.cstyles.set(n.id,parseStyle(src)); }
   for(const g of m.groups.values()){ const c=classOf.get(g.id); if(c&&defs.has(c)) m.cstyles.set(g.id,parseStyle(defs.get(c))); }
 }
 function styleOf(m,id){
@@ -158,6 +158,34 @@ function styleOf(m,id){
   const out={...c}; for(const [k,v] of Object.entries(own)){ if(k==='extra') continue; if(v!=null&&v!==false) out[k]=v; }
   out.extra=[...(c.extra||[]),...(own.extra||[])]; return out;
 }
+// Tables: {rows:[[cell,…],…], colors:{"r,c":"g"|"a"|"r"}}. Row 0 is the header row.
+function cleanTable(d){
+  let rows=Array.isArray(d&&d.rows)?d.rows.filter(Array.isArray).map(r=>r.slice(0,20).map(c=>String(c==null?'':c).slice(0,500))):[];
+  if(!rows.length) rows=[['','Option A','Option B'],['','',''],['','','']];
+  const nc=Math.max(1,...rows.map(r=>r.length)); rows=rows.slice(0,60).map(r=>{ const x=r.slice(); while(x.length<nc) x.push(''); return x; });
+  const colors={}; if(d&&d.colors&&typeof d.colors==='object') for(const [k,v] of Object.entries(d.colors)) if(/^\d+,\d+$/.test(k)&&/^[gar]$/.test(v)) colors[k]=v;
+  return {rows,colors};
+}
+// Documents: {blocks:[{t:'h1'|'h2'|'h3'|'p'|'ul'|'ol', r:[{x:text, b?:1, i?:1}]}]}.
+function cleanDoc(d){
+  const T=new Set(['h1','h2','h3','p','ul','ol']);
+  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>({t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; return o; })})):[];
+  if(!blocks.length) blocks=[{t:'p',r:[]}];
+  return {blocks:blocks.slice(0,400)};
+}
+// Markdown (what the AI writes) to document blocks: # ## ### headings, - and 1. lists, **bold**, *italic*.
+function mdToDoc(md){
+  const blocks=[]; const runs=s=>{ const out=[]; const re=/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g; let last=0,m;
+    while((m=re.exec(s))){ if(m.index>last) out.push({x:s.slice(last,m.index)}); const t=m[0]; if(t.startsWith('**')) out.push({x:t.slice(2,-2),b:1}); else out.push({x:t.slice(1,-1),i:1}); last=m.index+t.length; }
+    if(last<s.length) out.push({x:s.slice(last)}); return out.filter(r=>r.x); };
+  for(const raw of String(md||'').replace(/\r/g,'').split('\n')){ const l=raw.trimEnd(); if(!l.trim()) continue; let m;
+    if((m=/^(#{1,3})\s+(.*)$/.exec(l))) blocks.push({t:'h'+m[1].length,r:runs(m[2])});
+    else if((m=/^\s*[-*•]\s+(.*)$/.exec(l))) blocks.push({t:'ul',r:runs(m[1])});
+    else if((m=/^\s*\d+[.)]\s+(.*)$/.exec(l))) blocks.push({t:'ol',r:runs(m[1])});
+    else blocks.push({t:'p',r:runs(l.trim())}); }
+  return cleanDoc({blocks});
+}
+function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ const s=b.r.map(r=>r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x).join(''); if(b.t==='ol') k++; else k=0; return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:s; }).join('\n'); }
 function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[],cstyles:new Map()};}
 const r10=v=>Math.round(v*10)/10;
 function encodeInk(k){
@@ -199,7 +227,7 @@ function parseMermaid(src){
   }
   const removeNode=id=>{m.nodes.delete(id); m.nodeOrder=m.nodeOrder.filter(x=>x!==id);};
   const taken=id=>m.nodes.has(id)||m.groups.has(id);
-  let header=false; const stack=[]; const pendRoute=new Map(),pendLink=[];
+  let header=false; const stack=[]; const pendRoute=new Map(),pendLink=[],pendRich=new Map(),pendDev=new Map();
   const cur=()=>stack.length?stack[stack.length-1]:null;
   function registerRef(ref){
     const id=ref.id;
@@ -211,7 +239,7 @@ function parseMermaid(src){
     else if(!n.group&&g) n.group=g.id;
     if(ref.def){ n.implicit=false; n.shape=ref.shape; n.icon=ref.icon||null; if(ref.label!=null) n.label=ref.label; }
     if(ref.cls) n.cls=ref.cls;
-    if(n.cls==='sticky'){ n.shape='sticky'; n.cls=null; }
+    if(n.cls==='sticky'||n.cls==='table'||n.cls==='doc'||UI_KINDS[n.cls]){ n.shape=n.cls; n.cls=null; }
     return id;
   }
   for(;li<lines.length;li++){
@@ -229,8 +257,12 @@ function parseMermaid(src){
       if(am){ let msgs=[]; try{ msgs=JSON.parse(am[5]).filter(x=>x&&typeof x.t==='string').map(x=>{ const q={t:x.t,d:+x.d||0}; if(typeof x.a==='string'&&x.a) q.a=x.a; return q; }); }catch(_){}
         const fl=am[4]||''; const on=/on=(\S+)/.exec(fl);
         m.threads.push({id:am[1],x:+am[2],y:+am[3],on:on?on[1]:null,done:/\bdone\b/.test(fl),msgs}); continue; }
-      am=/^%%\s*@route\s+(\d+)\s+(straight|elbow|curved)(?:\s+([trbl-])\s+([trbl-]))?\s*$/.exec(t);
-      if(am){ pendRoute.set(+am[1],{r:am[2],a:am[3]&&am[3]!=='-'?am[3]:null,b:am[4]&&am[4]!=='-'?am[4]:null}); continue; }
+      am=/^%%\s*@route\s+(\d+)\s+(straight|elbow|curved)(?:\s+([trbl-])\s+([trbl-]))?((?:\s+r[ab]=\d+)*)\s*$/.exec(t);
+      if(am){ const rr={r:am[2],a:am[3]&&am[3]!=='-'?am[3]:null,b:am[4]&&am[4]!=='-'?am[4]:null}; const ra=/ra=(\d+)/.exec(am[5]||''), rb=/rb=(\d+)/.exec(am[5]||''); if(ra) rr.ra=+ra[1]; if(rb) rr.rb=+rb[1]; pendRoute.set(+am[1],rr); continue; }
+      am=/^%%\s*@(table|doc)\s+(\S+)\s+(\{.*\})\s*$/.exec(t);
+      if(am){ try{ pendRich.set(am[2],{kind:am[1],data:JSON.parse(am[3])}); }catch(_){} continue; }
+      am=/^%%\s*@device\s+(\S+)\s+(mobile|tablet|desktop)\s*$/.exec(t);
+      if(am){ pendDev.set(am[1],am[2]); continue; }
       if(LAYOUT_MARK.test(t)) continue;
       (header?m.comments:m.pre).push(t); continue;
     }
@@ -284,7 +316,10 @@ function parseMermaid(src){
   if(!fatal&&stack.length) errors.push({line:stack[stack.length-1].line,msg:'subgraph "'+stack[stack.length-1].label+'" needs a closing "end"'});
   for(const id of [...m.nodes.keys()]) if(m.groups.has(id)) removeNode(id);
   for(const L of pendLink) for(const i of L.idx){ const e=m.edges[i]; if(!e) continue; if(L.width) e.width=L.width; if(L.color) e.color=L.color; }
-  for(const [i,r] of pendRoute){ const e=m.edges[i]; if(!e) continue; e.route=r.r; if(r.a) e.sa=r.a; if(r.b) e.sb=r.b; }
+  for(const [i,r] of pendRoute){ const e=m.edges[i]; if(!e) continue; e.route=r.r; if(r.a) e.sa=r.a; if(r.b) e.sb=r.b; if(r.ra!=null) e.ra=r.ra; if(r.rb!=null) e.rb=r.rb; }
+  for(const [id,x] of pendRich){ const n=m.nodes.get(id); if(!n) continue; if(x.kind==='table'){ n.shape='table'; n.table=cleanTable(x.data); } else { n.shape='doc'; n.doc=cleanDoc(x.data); } }
+  for(const [gid,dv] of pendDev){ const g=m.groups.get(gid); if(g) g.dev=dv; }
+  for(const n of m.nodes.values()){ if(n.shape==='table'&&!n.table) n.table=cleanTable({}); if(n.shape==='doc'&&!n.doc) n.doc=cleanDoc({}); }
   for(const n of m.nodes.values()) if(n.group&&!m.groups.has(n.group)) n.group=null;
   applyClassDefs(m); m.curve=boardCurve(m);
   return {model:m,errors,fatal};
@@ -308,7 +343,7 @@ function arrowStr(e){
 function nodeDef(n){
   if(n.shape==='icon') return n.id+'@{ icon: "'+n.icon+'", label: "'+encodeQuoted(n.label)+'" }';
   if(n.shape==='text') return n.id+'@{ shape: text, label: "'+encodeQuoted(n.label)+'" }';
-  if(n.shape==='sticky') return n.id+'['+q(n.label)+']:::sticky';
+  if(n.shape==='sticky'||n.shape==='table'||n.shape==='doc'||isUi(n)) return n.id+'['+q(n.label)+']:::'+n.shape;
   if(n.shape==='rect'&&n.label===n.id&&!n.cls) return n.id;
   const br=BR_OUT[n.shape]||BR_OUT.rect;
   return n.id+br[0]+q(n.label)+br[1]+(n.cls?':::'+n.cls:'');
@@ -331,11 +366,13 @@ function layoutLines(m,boxes){
   for(const gid of m.groupOrder){
     const p=m.pos.get(gid);
     if(p&&p.w) L.push('%% @pos '+gid+' '+r1(p.x)+' '+r1(p.y)+' '+r1(p.w)+' '+r1(p.h));
+    const g=m.groups.get(gid); if(g&&g.dev) L.push('%% @device '+gid+' '+g.dev);
   }
-  (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb; if((e.route&&e.route!==(m.curve||'curved'))||sd) L.push('%% @route '+i+' '+(e.route||m.curve||'curved')+(sd?' '+(e.sa||'-')+' '+(e.sb||'-'):'')); });
+  (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb, rw=e.ra!=null||e.rb!=null; if((e.route&&e.route!==(m.curve||'curved'))||sd||rw) L.push('%% @route '+i+' '+(e.route||m.curve||'curved')+(sd||rw?' '+(e.sa||'-')+' '+(e.sb||'-'):'')+(e.ra!=null?' ra='+e.ra:'')+(e.rb!=null?' rb='+e.rb:'')); });
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }
   for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
+  for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n) continue; if(n.shape==='table'&&n.table) L.push('%% @table '+id+' '+JSON.stringify(n.table)); if(n.shape==='doc'&&n.doc) L.push('%% @doc '+id+' '+JSON.stringify(n.doc)); }
   for(const c of (m.threads||[])){
     if(!c.msgs||!c.msgs.length) continue;
     // on=<node>: x y are offsets from the node, so the comment moves with it. If the node is gone, keep the last place on the board.
@@ -386,6 +423,9 @@ function serializeMermaid(m){
   for(const [id,st] of m.styles){ if(!m.nodes.has(id)&&!m.groups.has(id)) continue; const d=styleDef(id,st); if(d) sl.push('  '+d); }
   m.edges.forEach((e,i)=>{ const pr=[]; if(e.width) pr.push('stroke-width:'+(+e.width)+'px'); if(e.color) pr.push('stroke:'+e.color); if(pr.length) sl.push('  linkStyle '+i+' '+pr.join(',')); });
   if([...m.nodes.values()].some(n=>n.shape==='sticky')&&!m.extras.some(x=>/^classDef\s+sticky\b/.test(x))) m.extras.unshift('classDef sticky stroke-width:0px,color:#1d2026');
+  for(const k of ['table','doc']) if([...m.nodes.values()].some(n=>n.shape===k)&&!m.extras.some(x=>new RegExp('^classDef\\s+'+k+'\\b').test(x))) m.extras.unshift('classDef '+k+' fill:#ffffff,stroke:#c9ccd1');
+  // Wireframe pieces get grey classes, so other Mermaid tools show them as a sketch too.
+  for(const k of Object.keys(UI_KINDS)) if([...m.nodes.values()].some(n=>n.shape===k)&&!m.extras.some(x=>new RegExp('^classDef\\s+'+k+'\\b').test(x))) m.extras.push('classDef '+k+' '+(k==='uiButton'?'fill:#5f6470,stroke:#5f6470,color:#ffffff':'fill:#eceef2,stroke:#c4c8d0,color:#4b5160'));
   if(sl.length||m.extras.length){ L.push(''); L.push(...sl); for(const x of m.extras) L.push('  '+x); }
   const lay=layoutLines(m);
   return L.join('\n')+(lay.length?'\n\n'+lay.join('\n'):'')+'\n';

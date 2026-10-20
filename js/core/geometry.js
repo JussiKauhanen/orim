@@ -23,7 +23,43 @@ function iconSize(n){
   const th=(n.lines||[]).filter(Boolean).length*lineH(n);
   return Math.max(20,Math.min(n.w,n.h-th-8));
 }
+// ---- tables and documents: sizes and line layout, shared by drawing, editing and connectors ----
+const TBL={title:32,pad:8,lh:17,fs:12.5,min:30};
+function tableLayout(n){
+  const rows=(n.table&&n.table.rows)||[[]]; const nc=Math.max(1,...rows.map(r=>r.length));
+  const want=[]; for(let c=0;c<nc;c++){ let w=0; rows.forEach((r,ri)=>{ for(const l of String(r[c]||'').split('\n')) w=Math.max(w,Core.measure(l,TBL.fs)*((ri===0||c===0)?1.07:1)); }); want.push(Math.min(280,Math.max(84,w+TBL.pad*2+4))); }
+  let total=want.reduce((a,b)=>a+b,0); const W=n.sized&&n.w?Math.max(nc*48,n.w):Math.max(260,total);
+  const cols=want.map(w=>w*W/total);
+  const cells=rows.map(r=>cols.map((cw,c)=>wrapText(String(r[c]||''),Math.max(20,cw-TBL.pad*2),TBL.fs)));
+  const hs=cells.map(rc=>Math.max(TBL.min,Math.max(...rc.map(ls=>ls.length))*TBL.lh+12));
+  const top=n.label&&n.label.trim()?TBL.title:0;
+  return {cols,rows:hs,cells,top,w:W,h:top+hs.reduce((a,b)=>a+b,0)};
+}
+// The band of one table row, for connectors that attach to a row.
+function rowRect(n,row){ const L=n._tl||tableLayout(n); const r=Math.max(0,Math.min(L.rows.length-1,row|0)); let y=n.y+L.top; for(let i=0;i<r;i++) y+=L.rows[i]; return {x:n.x,y,w:n.w,h:L.rows[r]}; }
+function rowAt(n,y){ const L=n._tl||tableLayout(n); let yy=n.y+L.top; for(let i=0;i<L.rows.length;i++){ if(y<yy+L.rows[i]) return i; yy+=L.rows[i]; } return L.rows.length-1; }
+const DOCF={h1:[19,700,10],h2:[16,700,8],h3:[14,700,6],p:[13,400,4],ul:[13,400,2],ol:[13,400,2]};
+function docLayout(n){
+  const W=n.w||380, PADX=22, PADT=n.label&&n.label.trim()?44:20; const out=[]; let y=PADT, k=0;
+  for(const b of (n.doc&&n.doc.blocks)||[]){
+    const [fs,wt,gap]=DOCF[b.t]||DOCF.p; const lh=Math.round(fs*1.45); const ind=b.t==='ul'||b.t==='ol'?18:0;
+    if(b.t==='ol') k++; else k=0;
+    y+=out.length?gap:0;
+    // words with their style, wrapped greedily
+    const words=[]; for(const r of b.r) for(const part of r.x.split(/(\s+|\n)/)){ if(!part) continue; if(part==='\n'){ words.push({nl:1}); continue; } if(/^\s+$/.test(part)){ words.push({sp:1,b:r.b,i:r.i}); continue; } words.push({x:part,b:r.b,i:r.i}); }
+    const maxW=W-PADX*2-ind; const lines=[[]]; let lw=0;
+    const width=w=>Core.measure(w.x,fs)*((w.b||wt>=700)?1.08:1);
+    for(const w of words){ if(w.nl){ lines.push([]); lw=0; continue; } if(w.sp){ if(lines[lines.length-1].length){ lines[lines.length-1].push({x:' ',b:w.b,i:w.i}); lw+=fs*0.3; } continue; }
+      const ww=width(w); if(lw+ww>maxW&&lines[lines.length-1].length){ const L=lines[lines.length-1]; while(L.length&&L[L.length-1].x===' ') L.pop(); lines.push([]); lw=0; } lines[lines.length-1].push(w); lw+=ww; }
+    if(!lines[lines.length-1].length&&lines.length>1) lines.pop();
+    out.push({t:b.t,fs,wt,lh,ind,num:k,y,lines}); y+=lines.length*lh;
+  }
+  return {blocks:out,h:Math.max(PADT+40,y+22),padx:PADX};
+}
 function sizeNode(n){
+  if(isUi(n)){ const k=UI_KINDS[n.shape]; if(!n.sized||!n.w){ n.w=k.w; n.h=k.h; } n.lines=[]; return; }
+  if(n.shape==='table'){ if(!n.table) n.table={rows:[['','Option A','Option B'],['','',''],['','','']],colors:{}}; const L=tableLayout(n); n.w=Math.round(L.w); n.h=Math.ceil(L.h); n._tl=L; n.lines=[]; return; }
+  if(n.shape==='doc'){ if(!n.doc) n.doc={blocks:[{t:'p',r:[]}]}; if(!n.sized||!n.w) n.w=380; const L=docLayout(n); n.h=Math.min(1600,Math.ceil(L.h)); n._dl=L; n.lines=[]; return; }
   if(n.shape==='sticky'){
     if(!n.sized){ n.w=160; n.h=160; }
     if(n.fsSet){ n.fs=n.fsSet; n.lines=wrapText(n.label,Math.max(20,n.w-28),n.fsSet); return; }
@@ -96,10 +132,16 @@ function layoutBlocks(m){
   const parentOf=id=>{ const n=m.nodes.get(id); if(n) return n.group&&used.has(n.group)?n.group:null; const g=m.groups.get(id); return g&&g.parent&&used.has(g.parent)?g.parent:null; };
   const childIn=(id,block)=>{ if(!m.nodes.has(id)&&!used.has(id)) return null; let cur=id,k=0; while(k++<60){ const p=parentOf(cur); if(p===block) return cur; if(p===null) return null; cur=p; } return null; };
   const blocks=new Map();
+  const devBox=block=>{ const g=block&&m.groups.get(block); if(!g||!g.dev) return null; const D=DEVICES[g.dev]; const p=m.pos.get(block); if(p&&p.w) return {x:p.x,y:p.y,w:p.w,h:p.h};
+    let x0=Infinity,y0=Infinity; for(const n of m.nodes.values()) if(n.group===block&&n.x!=null){ x0=Math.min(x0,n.x); y0=Math.min(y0,n.y); } return {x:isFinite(x0)?x0:0,y:isFinite(y0)?y0-D.top:0,w:D.w,h:D.h}; };
   function layout(block){
     if(blocks.has(block)) return blocks.get(block);
     const kids=[]; for(const id of m.nodeOrder) if(m.nodes.has(id)&&parentOf(id)===block) kids.push(id);
     for(const gid of m.groupOrder) if(used.has(gid)&&parentOf(gid)===block) kids.push(gid);
+    // A screen is a drawing: its pieces keep their places inside the device.
+    const db=devBox(block);
+    if(db){ const pos=new Map(); for(const k of kids){ const n=m.nodes.get(k); if(n&&n.x!=null) pos.set(k,{x:n.x-db.x,y:n.y-db.y}); else if(n) pos.set(k,{x:16,y:DEVICES[m.groups.get(block).dev].top+16}); }
+      const r={w:db.w,h:db.h,pos,dev:true}; blocks.set(block,r); return r; }
     const sz=new Map(kids.map(k=>{ const n=m.nodes.get(k); if(n) return [k,{w:n.w,h:n.h}]; const b=layout(k); return [k,{w:b.w,h:b.h}]; }));
     const raw=(block&&m.groups.get(block).dir)||m.dir; const dir=raw==='TD'?'TB':(raw||'LR');
     const ks=new Set(kids), es=[], ext=[];
@@ -127,7 +169,8 @@ function layoutBlocks(m){
     blocks.set(block,r); return r;
   }
   layout(null);
-  const place=(block,ox,oy)=>{ for(const [k,p] of blocks.get(block).pos){ const n=m.nodes.get(k); if(n){ n.x=SNAP(ox+p.x); n.y=SNAP(oy+p.y); } else place(k,ox+p.x,oy+p.y); } };
+  const place=(block,ox,oy)=>{ const B=blocks.get(block); if(B.dev) m.pos.set(block,{x:SNAP(ox),y:SNAP(oy),w:B.w,h:B.h});
+    for(const [k,p] of B.pos){ const n=m.nodes.get(k); if(n){ n.x=B.dev?SNAP(ox)+p.x:SNAP(ox+p.x); n.y=B.dev?SNAP(oy)+p.y:SNAP(oy+p.y); } else place(k,ox+p.x,oy+p.y); } };
   place(null,40,40);
 }
 // Shapes in a frame with no arrows between them: a neat column (left-to-right boards) or row (top-down).
@@ -180,6 +223,9 @@ function groupBoxes(m,exclude){
     }
     const cb=any?{x:x0-PAD,y:y0-PAD_TOP,w:x1-x0+PAD*2,h:y1-y0+PAD_TOP+PAD}:null;
     const p=m.pos.get(gid); const fixed=p&&p.w?{x:p.x,y:p.y,w:p.w,h:p.h}:null;
+    // A device frame keeps its size; what is dragged past its edge is cut off from view, not added.
+    const dv=m.groups.get(gid).dev&&DEVICES[m.groups.get(gid).dev];
+    if(dv){ boxes.set(gid,fixed||(cb?{x:cb.x+PAD,y:cb.y+PAD_TOP,w:dv.w,h:dv.h}:{x:p?p.x:0,y:p?p.y:0,w:dv.w,h:dv.h})); continue; }
     if(cb&&fixed) boxes.set(gid,unionRect(cb,fixed));
     else if(cb) boxes.set(gid,cb);
     else if(fixed) boxes.set(gid,fixed);
@@ -258,7 +304,7 @@ function geomPath(g,s0,s3){
   pts[0]={x:p0.x-t0.x*s0,y:p0.y-t0.y*s0}; pts[n-1]={x:p3.x-t3.x*s3,y:p3.y-t3.y*s3};
   let total=0; const seg=[]; for(let i=1;i<n;i++){ const L=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y); seg.push(L); total+=L; }
   let half=total/2,mid=pts[0]; for(let i=1;i<n;i++){ if(half<=seg[i-1]){ const t=seg[i-1]?half/seg[i-1]:0; mid={x:pts[i-1].x+(pts[i].x-pts[i-1].x)*t,y:pts[i-1].y+(pts[i].y-pts[i-1].y)*t}; break; } half-=seg[i-1]; }
-  return {d:roundPoly(pts,8),mid,t0,t3,p0,p3};
+  return {d:roundPoly(pts,g.r||8),mid,t0,t3,p0,p3};
 }
 // ---- Orthogonal routing for elbow connectors ----
 // Right-angle paths that go around shapes, with few bends, the way Miro draws diagrams.
@@ -343,7 +389,38 @@ function orthoRoutes(m,items){
     simp.push(pts[pts.length-1]);
     out.set(it.i,{type:'poly',pts:simp});
   }
+  nudgeRoutes(out);
   return out;
+}
+// Connectors that share a channel are drawn side by side instead of on top of each other,
+// ordered by where they come from so they cross as little as possible.
+function nudgeRoutes(out){
+  const GAP=8, segs={h:[],v:[]};
+  for(const [i,g] of out){ const p=g.pts; for(let k=1;k<p.length-2;k++){ const a=p[k],b=p[k+1];
+    if(Math.abs(a.y-b.y)<0.01) segs.h.push({i,a,b,c:a.y,lo:Math.min(a.x,b.x),hi:Math.max(a.x,b.x),key:(p[k-1].y+p[k+2].y)/2});
+    else if(Math.abs(a.x-b.x)<0.01) segs.v.push({i,a,b,c:a.x,lo:Math.min(a.y,b.y),hi:Math.max(a.y,b.y),key:(p[k-1].x+p[k+2].x)/2}); } }
+  for(const [kind,list] of Object.entries(segs)){
+    const by=new Map(); for(const s of list){ const k=Math.round(s.c); if(!by.has(k)) by.set(k,[]); by.get(k).push(s); }
+    for(const grp of by.values()){ if(grp.length<2) continue; grp.sort((p,q)=>p.lo-q.lo);
+      let cl=[], hi=-Infinity;
+      const flush=()=>{ const ids=[...new Set(cl.map(s=>s.i))]; if(ids.length>1){ const key=new Map(); for(const s of cl) key.set(s.i,s.key); ids.sort((p,q)=>key.get(p)-key.get(q));
+          const off=new Map(ids.map((id,k)=>[id,(k-(ids.length-1)/2)*Math.min(GAP,32/ids.length)]));
+          for(const s of cl){ const o=off.get(s.i); if(kind==='h'){ s.a.y=s.c+o; s.b.y=s.c+o; } else { s.a.x=s.c+o; s.b.x=s.c+o; } } }
+        cl=[]; };
+      for(const s of grp){ if(cl.length&&s.lo>=hi-1){ flush(); hi=-Infinity; } cl.push(s); hi=Math.max(hi,s.hi); }
+      if(cl.length) flush();
+    }
+  }
+  // Then keep lines that run close beside each other at least GAP apart. Segments that leave or enter
+  // a shape stay where they are; the ones between them move.
+  for(const kind of ['h','v']){
+    const all=[]; for(const [i,g] of out){ const p=g.pts; for(let k=0;k<p.length-1;k++){ const a=p[k],b=p[k+1]; const hz=Math.abs(a.y-b.y)<0.01, vt=Math.abs(a.x-b.x)<0.01; if(kind==='h'?!hz:!vt) continue; all.push({i,a,b,fixed:k===0||k===p.length-2,len:p.length}); } }
+    const C=s=>kind==='h'?s.a.y:s.a.x, LO=s=>kind==='h'?Math.min(s.a.x,s.b.x):Math.min(s.a.y,s.b.y), HI=s=>kind==='h'?Math.max(s.a.x,s.b.x):Math.max(s.a.y,s.b.y);
+    for(let pass=0;pass<3;pass++) for(const s of all){ if(s.fixed) continue;
+      for(const t of all){ if(t===s||t.i===s.i) continue; const ov=Math.min(HI(s),HI(t))-Math.max(LO(s),LO(t)); if(ov<6) continue;
+        const d=C(s)-C(t); if(Math.abs(d)>=GAP-0.5) continue;
+        const to=C(t)+(d>=0?GAP:-GAP); if(kind==='h'){ s.a.y=to; s.b.y=to; } else { s.a.x=to; s.b.x=to; } } }
+  }
 }
 // Mermaid's curve setting (frontmatter config or %%{init}%%) gives the board's connector style.
 function boardCurve(m){

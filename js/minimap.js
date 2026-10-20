@@ -26,6 +26,7 @@ const Mini=(()=>{
     for(const b of (state.boxes||new Map()).values()){ g.fillStyle=panel; g.strokeStyle=line; g.lineWidth=1; g.fillRect(X(b.x),Y(b.y),b.w*s,b.h*s); g.strokeRect(X(b.x)+.5,Y(b.y)+.5,b.w*s,b.h*s); }
     for(const im of m.images||[]){ g.fillStyle=line; g.globalAlpha=.5; g.fillRect(X(im.x),Y(im.y),im.w*s,im.h*s); g.globalAlpha=1; }
     for(const n of m.nodes.values()){ if(n.x==null) continue; const st=styleOf(m,n.id);
+      if(n.shape==='table'||n.shape==='doc'){ g.fillStyle=panel; g.strokeStyle=ink; g.globalAlpha=.9; g.fillRect(X(n.x),Y(n.y),n.w*s,n.h*s); g.strokeRect(X(n.x)+.5,Y(n.y)+.5,n.w*s,n.h*s); g.globalAlpha=1; continue; }
       g.fillStyle=n.shape==='sticky'?((st&&st.fill)||'#fff9b1'):n.shape==='icon'?acc:((st&&st.fill)||ink);
       g.globalAlpha=n.shape==='sticky'||n.shape==='icon'?.9:.55; g.fillRect(X(n.x),Y(n.y),Math.max(2,n.w*s),Math.max(2,n.h*s)); g.globalAlpha=1; }
     g.strokeStyle=acc; g.lineWidth=1.5; g.fillStyle=acc; g.globalAlpha=.1; g.fillRect(X(vw.x),Y(vw.y),vw.w*s,vw.h*s); g.globalAlpha=1;

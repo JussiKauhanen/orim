@@ -84,9 +84,8 @@
       <input id="docTitle" class="title-input" placeholder="Untitled board" aria-label="Diagram title" spellcheck="false">
     </div>
     <div class="seg" id="viewSeg" aria-label="Panels">
-      <button type="button" data-mode="code" title="Code only (Alt+1)">Code</button>
-      <button type="button" data-mode="split" title="Split view (Alt+2)">Split</button>
-      <button type="button" data-mode="canvas" title="Canvas only (Alt+3)">Canvas</button>
+      <button type="button" data-mode="split" title="Split view (Alt+1)">Split</button>
+      <button type="button" data-mode="canvas" title="Canvas only (Alt+2)">Canvas</button>
     </div>
     <div class="top-actions">
       <button type="button" class="ibtn" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
@@ -126,7 +125,7 @@
   <main class="work" id="work">
     <section class="pane code-pane" id="codePane" aria-label="Mermaid code">
       <div class="pane-head">
-        <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button></div>
+        <div class="mode-seg" id="modeSeg" role="group" aria-label="Editor language"><button type="button" data-emode="mermaid" title="Edit as Mermaid code">Mermaid</button><button type="button" data-emode="text" title="Edit as simple text: A -> B, - list items, # Heading">Text</button><button type="button" data-emode="ai" title="Tell Claude what to change on the board">AI</button></div>
         <span class="chip err" id="status" hidden></span>
         <span class="grow"></span>
         <label class="toggle" title="Show the positions and drawings stored as %% comments"><input type="checkbox" id="layoutToggle"><span>Canvas data</span></label>
@@ -142,6 +141,18 @@
         </div>
       </div>
       <div class="problems" id="problems" hidden></div>
+      <div class="ai-pane" id="aiPane" hidden>
+        <div class="ai-log" id="aiLog" aria-live="polite"></div>
+        <form class="ai-input" id="aiForm">
+          <textarea id="aiIn" rows="3" placeholder="Tell Claude what to change, for example: add a Redis cache between the API and the database" aria-label="Request for Claude"></textarea>
+          <div class="ai-bar">
+            <label class="toggle" title="Slower, for bigger changes and questions that need thought"><input type="checkbox" id="aiDeep"><span>Think harder</span></label>
+            <span class="ai-sel" id="aiSel"></span><span class="grow"></span>
+            <button type="button" class="btn sm" id="aiStop" hidden>Stop</button>
+            <button type="submit" class="btn primary sm" id="aiSend">Send</button>
+          </div>
+        </form>
+      </div>
     </section>
     <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Resize panels" tabindex="0"></div>
     <section class="pane board-pane" id="boardPane" aria-label="Canvas">
@@ -251,6 +262,7 @@ User <- Email -- Logic App
 
   <script src="vendor/dagre/dagre.min.js"></script>
   <script src="vendor/qrcode-generator/qrcode.js"></script>
+  <script src="js/core/mockups.js"></script>
   <script src="js/core/mermaid.js"></script>
   <script src="js/core/geometry.js"></script>
   <script src="js/core/templates.js"></script>
@@ -264,6 +276,7 @@ User <- Email -- Logic App
   <script src="js/hit-test.js"></script>
   <script src="js/pointer.js"></script>
   <script src="js/label-editor.js"></script>
+  <script src="js/rich-edit.js"></script>
   <script src="js/selection.js"></script>
   <script src="js/context-toolbar.js"></script>
   <script src="js/library.js"></script>
@@ -277,6 +290,7 @@ User <- Email -- Logic App
   <script src="js/export.js"></script>
   <script src="js/share-qr.js"></script>
   <script src="js/ai-guide.js"></script>
+  <script src="js/ai-assist.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/tooltips.js"></script>
   <script src="js/me.js"></script>

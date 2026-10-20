@@ -83,7 +83,7 @@ function setBoardCurve(v){
 // Auto layout: rearranges everything from the connections (dagre).
 function tidy(){
   const m=state.model; if(!m||!m.nodes.size) return;
-  for(const gid of m.groupOrder) if(groupHasMembers(m,gid)) m.pos.delete(gid);
+  for(const gid of m.groupOrder) if(groupHasMembers(m,gid)&&!m.groups.get(gid).dev) m.pos.delete(gid);
   autoLayout(m); mutate(()=>{}, {structural:false}); fit(); toast('Rearranged. Undo with Ctrl+Z');
 }
 // Line up: keeps your layout and only straightens it. Shapes whose centres are nearly in a row or column

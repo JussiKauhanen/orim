@@ -30,8 +30,8 @@ const INK_W={pen:2.5,hl:16};
 const SHAPE_TOOLS=['rect','round','stadium','circle','diamond','hex','cyl','para','sub'];
 const MIRO_COLORS=['#ffffff','#e6e6e6','#808080','#1a1a1a','#fff9b1','#f5d128','#ff9d48','#f24726','#d5f692','#c9df56','#93d275','#0ca789','#a6ccf5','#6cd8fa','#2d9bf0','#414bb2','#ffcee0','#ea94bb','#c6a2d2','#9510ac'];
 const SWATCHES=[null,...MIRO_COLORS.map(c=>({fill:c,stroke:null}))];
-const PAL_LIVE={nodeFill:'var(--node-fill)',nodeStroke:'var(--node-stroke)',nodeText:'var(--node-text)',edge:'var(--edge)',accent:'var(--accent)',labelBg:'var(--label-bg)',labelText:'var(--muted)',frameFill:'var(--frame-fill)',frameStroke:'var(--frame-stroke)',frameText:'var(--frame-text)',muted:'var(--faint)',font:FONT_ATTR,nodeSw:'var(--node-sw)',frameSw:'var(--frame-sw)',edgeSw:'var(--edge-sw)',edgeThick:'var(--edge-thick)',inkBlack:'var(--ink-black)',frameOut:false};
-const PAL_EXPORT={nodeFill:'#ffffff',nodeStroke:'#1a1a1a',nodeText:'#1a1a1a',edge:'#1a1a1a',accent:'#1a1a1a',labelBg:'#ffffff',labelText:'#596273',frameFill:'#ffffff',frameStroke:'#e3e3e3',frameText:'#1d2026',muted:'#8a92a1',font:FONT_EXPORT,nodeSw:2,frameSw:1.2,edgeSw:2,edgeThick:4,inkBlack:'#1a1a1a',frameOut:true};
+const PAL_LIVE={nodeFill:'var(--node-fill)',nodeStroke:'var(--node-stroke)',nodeText:'var(--node-text)',edge:'var(--edge)',accent:'var(--accent)',labelBg:'var(--label-bg)',labelText:'var(--muted)',frameFill:'var(--frame-fill)',frameStroke:'var(--frame-stroke)',frameText:'var(--frame-text)',muted:'var(--faint)',font:FONT_ATTR,nodeSw:'var(--node-sw)',frameSw:'var(--frame-sw)',edgeSw:'var(--edge-sw)',edgeThick:'var(--edge-thick)',inkBlack:'var(--ink-black)',frameOut:false,devFill:'var(--dev-fill)',devStroke:'var(--dev-stroke)',wfFill:'var(--wf-fill)',wfLine:'var(--wf-line)',wfInk:'var(--wf-ink)',wfText:'var(--wf-text)'};
+const PAL_EXPORT={nodeFill:'#ffffff',nodeStroke:'#1a1a1a',nodeText:'#1a1a1a',edge:'#1a1a1a',accent:'#1a1a1a',labelBg:'#ffffff',labelText:'#596273',frameFill:'#ffffff',frameStroke:'#e3e3e3',frameText:'#1d2026',muted:'#8a92a1',font:FONT_EXPORT,nodeSw:2,frameSw:1.2,edgeSw:2,edgeThick:4,inkBlack:'#1a1a1a',frameOut:true,devFill:'#ffffff',devStroke:'#3b3f48',wfFill:'#eceef2',wfLine:'#c4c8d0',wfInk:'#5f6470',wfText:'#4b5160'};
 
 const I={
   select:'<path d="M5.5 3.5l13 7.2-5.8 1.6-2.6 5.6z"/>',
@@ -91,6 +91,31 @@ const I={
   hl:'<path d="M14.5 4.5l5 5-7.5 7.5h-5v-5z"/><path d="M7 12l-3 3v3h3"/><path d="M4 21h9"/>',
   eraser:'<path d="M9 20h11"/><path d="M4.6 14.6l9.2-9.2a2 2 0 0 1 2.8 0l2.9 2.9a2 2 0 0 1 0 2.8L12 18.6a2 2 0 0 1-1.4.6H8.4a2 2 0 0 1-1.4-.6l-2.4-2.4a2 2 0 0 1 0-2.8z"/><path d="M9.5 9.7l5.6 5.6"/>',
   sticky:'<path d="M5 4.5h14v9.5L13.5 19.5H5z"/><path d="M13.5 19.5v-5.5H19"/>',
+  phone:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 5h3"/>',
+  tablet:'<rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M11 18h2"/>',
+  desktop:'<rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M2.5 7.5h19M9 20.5h6M12 17v3.5"/>',
+  uiHeading:'<path d="M5 6v12M13 6v12M5 12h8M16.5 18h3"/>',
+  uiText:'<path d="M4 7h16M4 11h16M4 15h16M4 19h9"/>',
+  uiButton:'<rect x="3" y="7.5" width="18" height="9" rx="3"/><path d="M8.5 12h7"/>',
+  uiInput:'<rect x="3" y="7.5" width="18" height="9" rx="2"/><path d="M6.5 10v4"/>',
+  uiImage:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 16l5-5 4 4 2.5-2.5 5.5 5"/><circle cx="15.5" cy="9" r="1.3"/>',
+  uiTopbar:'<rect x="3.5" y="4" width="17" height="16" rx="1.5"/><path d="M3.5 9h17M6 6.5h3"/>',
+  uiTabbar:'<rect x="3.5" y="4" width="17" height="16" rx="1.5"/><path d="M3.5 15h17M7.5 17.5h1M11.5 17.5h1M15.5 17.5h1"/>',
+  uiSidebar:'<rect x="3.5" y="4" width="17" height="16" rx="1.5"/><path d="M9 4v16M5.5 7.5h1.5M5.5 10.5h1.5"/>',
+  table:'<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/>',
+  doc:'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/>',
+  rowAdd:'<rect x="3.5" y="4.5" width="17" height="9" rx="1.5"/><path d="M3.5 9h17M12 16.5v5M9.5 19h5"/>',
+  colAdd:'<rect x="3.5" y="3.5" width="9" height="17" rx="1.5"/><path d="M8 3.5v17M16.5 12h5M19 9.5v5"/>',
+  rowDel:'<rect x="3.5" y="4.5" width="17" height="9" rx="1.5"/><path d="M3.5 9h17M9.5 19h5"/>',
+  colDel:'<rect x="3.5" y="3.5" width="9" height="17" rx="1.5"/><path d="M8 3.5v17M16.5 12h5"/>',
+  h1:'<path d="M4.5 6v12M12.5 6v12M4.5 12h8"/><path d="M16.5 9l2.5-1.5V18"/>',
+  h2:'<path d="M4.5 6v12M12.5 6v12M4.5 12h8"/><path d="M16 9.5a2.2 2.2 0 0 1 4.3.6c0 1.6-4.3 4.4-4.3 7.9h4.5"/>',
+  h3:'<path d="M4.5 6v12M12.5 6v12M4.5 12h8"/><path d="M16 8h4l-2.4 3.4a2.4 2.4 0 1 1-1.8 4.2"/>',
+  para:'<path d="M5 7h14M5 12h14M5 17h9"/>',
+  list:'<circle cx="5.5" cy="7" r="1" fill="currentColor"/><circle cx="5.5" cy="12" r="1" fill="currentColor"/><circle cx="5.5" cy="17" r="1" fill="currentColor"/><path d="M9.5 7h10M9.5 12h10M9.5 17h10"/>',
+  olist:'<path d="M4.5 5.5l1.2-.8V9.5M4.2 13.6a1.2 1.2 0 0 1 2.3.4c0 .9-2.3 1.7-2.3 3.4h2.5"/><path d="M10 7h10M10 12h10M10 17h10"/>',
+  expand:'<path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/>',
+  collapse:'<path d="M20 10h-6V4M4 14h6v6M14 10l6-6M10 14l-6 6"/>',
   shapes:'<rect x="3.5" y="10" width="9.5" height="9.5" rx="1.5"/><circle cx="15.5" cy="8.5" r="5"/>',
   format:'<rect x="4" y="6" width="16" height="12" rx="1.5"/><path d="M4 10h16"/>',
   fitIn:'<path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5"/>'

@@ -81,14 +81,14 @@ const QA_ARROW_OUT=e=>e.line==='thick'?'=>':(e.head==='none'&&e.tail==='none')?'
 function quickSafe(l){ return l&&!/[\n:,{}#]|->|<-|--|=>|→|←|↔|⇒/.test(l)&&!/^[-*•+]\s|^\d+[.)]\s/.test(l)&&l.trim()===l; }
 function modelToQuick(m){
   if(!m) return '';
-  const L=[]; const nonSticky=[...m.nodeOrder].map(id=>m.nodes.get(id)).filter(n=>n&&n.shape!=='sticky');
+  const DV=devFrames(m); const L=[]; const nonSticky=[...m.nodeOrder].map(id=>m.nodes.get(id)).filter(n=>n&&n.shape!=='sticky'&&!keptNode(n,DV));
   const cnt=new Map(); for(const n of nonSticky){ const k=n.label.toLowerCase(); cnt.set(k,(cnt.get(k)||0)+1); }
   const ref=new Map(), needDecl=new Set();
   const linked=new Set(); for(const e of m.edges){ linked.add(e.from); linked.add(e.to); }
   for(const n of nonSticky){ if(linked.has(n.id)&&quickSafe(n.label)&&cnt.get(n.label.toLowerCase())===1) ref.set(n.id,n.label); else { ref.set(n.id,n.id); needDecl.add(n.id); } }
   // Frames in arrows are written by name; a box with the same name wins, so the frame falls back to its id.
   const gcnt=new Map(); for(const g of m.groups.values()){ const k=g.label.toLowerCase(); gcnt.set(k,(gcnt.get(k)||0)+1); }
-  for(const g of m.groups.values()) if(linked.has(g.id)) ref.set(g.id,quickSafe(g.label)&&gcnt.get(g.label.toLowerCase())===1&&!cnt.has(g.label.toLowerCase())?g.label:g.id);
+  for(const g of m.groups.values()) if(linked.has(g.id)&&!DV.has(g.id)) ref.set(g.id,quickSafe(g.label)&&gcnt.get(g.label.toLowerCase())===1&&!cnt.has(g.label.toLowerCase())?g.label:g.id);
   if(m.dir&&m.dir!=='LR') L.push('direction: '+({TB:'down',TD:'down',BT:'up',RL:'left'}[m.dir]||'right'));
   const decl=n=>needDecl.has(n.id)?n.id+': '+String(n.label).replace(/\n/g,' '):n.label;
   for(const n of nonSticky) if(!n.group&&needDecl.has(n.id)) L.push(decl(n));
@@ -102,14 +102,19 @@ function modelToQuick(m){
   })(null,'');
   const edgeLines=m.edges.filter(e=>ref.has(e.from)&&ref.has(e.to)).map(e=>ref.get(e.from)+' '+QA_ARROW_OUT(e)+' '+ref.get(e.to)+(e.label?': '+e.label.replace(/\n/g,' '):''));
   if(edgeLines.length){ if(L.length) L.push(''); L.push(...edgeLines); }
-  const stick=[...m.nodeOrder].map(id=>m.nodes.get(id)).filter(n=>n&&n.shape==='sticky');
+  const stick=[...m.nodeOrder].map(id=>m.nodes.get(id)).filter(n=>n&&n.shape==='sticky'&&!keptNode(n,DV));
   const rootS=stick.filter(n=>!n.group||!m.groups.has(n.group));
   if(rootS.length){ L.push(''); for(const n of rootS) L.push('- '+String(n.label).replace(/\n/g,' ')); }
-  for(const gid of m.groupOrder){ const ss=stick.filter(n=>n.group===gid); const g=m.groups.get(gid);
+  for(const gid of m.groupOrder){ if(DV.has(gid)) continue; const ss=stick.filter(n=>n.group===gid); const g=m.groups.get(gid);
     const empty=!hasNodes(gid)&&!ss.length;
     if(!ss.length&&!empty) continue; L.push(''); L.push('# '+g.label); for(const n of ss) L.push('- '+String(n.label).replace(/\n/g,' ')); }
   const out=L.join('\n').replace(/^\n+/,''); return out?out+'\n':'';
 }
+// Tables and documents have no text form: Text mode leaves them, and their connectors, as they are.
+const isRich=n=>n&&(n.shape==='table'||n.shape==='doc');
+// Mockup screens (device frames, everything inside them, and loose wireframe pieces) are kept the same way.
+function devFrames(m){ const s=new Set(); for(const g of m.groups.values()) if(g.dev) s.add(g.id); let grew=true; while(grew){ grew=false; for(const g of m.groups.values()) if(!s.has(g.id)&&g.parent&&s.has(g.parent)){ s.add(g.id); grew=true; } } return s; }
+const keptNode=(n,dv)=>isRich(n)||isUi(n)||!!(n&&n.group&&dv.has(n.group));
 function isDescIn(m,gid,anc){ let p=m.groups.get(gid),k=0; while(p&&k++<60){ if(p.id===anc) return true; p=p.parent?m.groups.get(p.parent):null; } return false; }
 function applyQuickText(text){
   const prevIds=nodeIds();
@@ -117,13 +122,16 @@ function applyQuickText(text){
   const m=newModel(); m.title=cur.title; m.fmExtra=cur.fmExtra; m.pre=cur.pre; m.comments=cur.comments; m.dir=q.dirSet?q.dir:(cur.dir||'LR');
   m.extras=cur.extras.slice(); m.inks=cur.inks; m.arrows=cur.arrows; m.images=cur.images||[];
   const taken=id=>m.nodes.has(id)||m.groups.has(id);
-  const gmap=new Map(); const curGroupsByLabel=new Map(); for(const g of cur.groups.values()) if(!curGroupsByLabel.has(g.label.toLowerCase())) curGroupsByLabel.set(g.label.toLowerCase(),g);
+  const DV=devFrames(cur);
+  for(const gid of cur.groupOrder){ if(!DV.has(gid)) continue; const g=cur.groups.get(gid); m.groups.set(gid,{...g,parent:g.parent&&DV.has(g.parent)?g.parent:null}); m.groupOrder.push(gid); if(cur.styles.has(gid)) m.styles.set(gid,cur.styles.get(gid)); if(cur.pos.has(gid)) m.pos.set(gid,cur.pos.get(gid)); }
+  const gmap=new Map(); const curGroupsByLabel=new Map(); for(const g of cur.groups.values()) if(!DV.has(g.id)&&!curGroupsByLabel.has(g.label.toLowerCase())) curGroupsByLabel.set(g.label.toLowerCase(),g);
   for(const g of q.groups){ const ex=curGroupsByLabel.get(g.label.toLowerCase())||cur.groups.get(g.label);
     const id=ex&&!m.groups.has(ex.id)?ex.id:idFrom(g.label,taken); gmap.set(g.key,id);
     m.groups.set(id,{id,label:g.label,parent:null,dir:ex?ex.dir:null}); m.groupOrder.push(id);
     if(ex){ if(cur.styles.has(ex.id)) m.styles.set(id,cur.styles.get(ex.id)); if(cur.pos.has(ex.id)) m.pos.set(id,cur.pos.get(ex.id)); } }
   for(const g of q.groups){ const id=gmap.get(g.key); let par=g.parent?gmap.get(g.parent)||null:null; const old=cur.groups.get(id); if(!par&&g.list&&old&&old.parent&&m.groups.has(old.parent)&&old.parent!==id&&!isDescIn(m,old.parent,id)) par=old.parent; m.groups.get(id).parent=par; }
-  const byLabel=new Map(); for(const n of cur.nodes.values()) if(n.shape!=='sticky'){ const k=n.label.toLowerCase(); if(!byLabel.has(k)) byLabel.set(k,n); }
+  for(const id of cur.nodeOrder){ const n=cur.nodes.get(id); if(!keptNode(n,DV)) continue; const c={...n}; if(c.group&&!m.groups.has(c.group)) c.group=null; m.nodes.set(id,c); m.nodeOrder.push(id); if(cur.styles.has(id)) m.styles.set(id,cur.styles.get(id)); if(cur.pos.has(id)) m.pos.set(id,cur.pos.get(id)); }
+  const byLabel=new Map(); for(const n of cur.nodes.values()) if(n.shape!=='sticky'&&!keptNode(n,DV)){ const k=n.label.toLowerCase(); if(!byLabel.has(k)) byLabel.set(k,n); }
   const used=new Set(); const kmap=new Map(); const curIdLower=new Map(); for(const n of cur.nodes.values()) curIdLower.set(n.id.toLowerCase(),n);
   const frameByName=new Map(), dupe=new Set();
   for(const id of m.groupOrder){ const g=m.groups.get(id); const k=g.label.toLowerCase(); if(frameByName.has(k)&&frameByName.get(k)!==id) dupe.add(k); else frameByName.set(k,id); }
@@ -134,7 +142,7 @@ function applyQuickText(text){
     const qn=q.nodes.get(key);
     // A bare name used in arrows that matches a frame, with no box of that name: it is the frame.
     if(!qn.group&&!qn.shape&&qn.label.toLowerCase()===key&&frameByName.has(key)&&!boxNamed.has(key)){ kmap.set(key,frameByName.get(key)); continue; }
-    let ex=curIdLower.get(key); if(ex&&ex.shape==='sticky') ex=null; if(!ex) ex=byLabel.get(qn.label.toLowerCase()); if(ex&&used.has(ex.id)) ex=null;
+    let ex=curIdLower.get(key); if(ex&&(ex.shape==='sticky'||keptNode(ex,DV))) ex=null; if(!ex) ex=byLabel.get(qn.label.toLowerCase()); if(ex&&used.has(ex.id)) ex=null;
     const id=ex?ex.id:idFrom(qn.label,taken); if(ex) used.add(ex.id); kmap.set(key,id);
     let shape,icon=null;
     if(qn.shape){ shape=qn.shape; if(shape.startsWith('icon:')){ icon=shape.slice(5); shape='icon'; } }
@@ -144,7 +152,7 @@ function applyQuickText(text){
     m.nodes.set(id,n); m.nodeOrder.push(id);
     if(ex){ if(cur.styles.has(ex.id)) m.styles.set(id,cur.styles.get(ex.id)); if(cur.pos.has(ex.id)) m.pos.set(id,cur.pos.get(ex.id)); }
   }
-  const stickByText=new Map(); for(const n of cur.nodes.values()) if(n.shape==='sticky'){ const k=n.label.toLowerCase().replace(/\s+/g,' ').trim(); if(!stickByText.has(k)) stickByText.set(k,[]); stickByText.get(k).push(n); }
+  const stickByText=new Map(); for(const n of cur.nodes.values()) if(n.shape==='sticky'&&!keptNode(n,DV)){ const k=n.label.toLowerCase().replace(/\s+/g,' ').trim(); if(!stickByText.has(k)) stickByText.set(k,[]); stickByText.get(k).push(n); }
   const groupColor=new Map(); let ci=0;
   for(const st of q.stickies){
     const k=st.text.toLowerCase().replace(/\s+/g,' ').trim(); const list=stickByText.get(k); let ex=null; while(list&&list.length){ const c=list.shift(); if(!used.has(c.id)){ ex=c; break; } }
@@ -158,6 +166,8 @@ function applyQuickText(text){
   const curEdge=new Map(); cur.edges.forEach(e=>{ const k=e.from+'\u0001'+e.to; if(!curEdge.has(k)) curEdge.set(k,e); });
   for(const e of q.edges){ const from=kmap.get(e.from),to=kmap.get(e.to); if(!from||!to) continue; const old=curEdge.get(from+'\u0001'+to);
     const ne={from,to,line:e.line,head:e.head,tail:e.tail,label:e.label}; if(old){ if(old.route) ne.route=old.route; if(old.sa) ne.sa=old.sa; if(old.sb) ne.sb=old.sb; if(old.width) ne.width=old.width; if(old.color) ne.color=old.color; if(e.line==='solid'&&old.line==='dotted') ne.line='dotted'; } m.edges.push(ne); }
+  const keptEnd=id=>DV.has(id)||keptNode(cur.nodes.get(id),DV);
+  for(const e of cur.edges) if((keptEnd(e.from)||keptEnd(e.to))&&(m.nodes.has(e.from)||m.groups.has(e.from))&&(m.nodes.has(e.to)||m.groups.has(e.to))) m.edges.push({...e});
   for(const a of m.arrows){ if(a.from&&!m.nodes.has(a.from)&&!m.groups.has(a.from)) a.from=null; if(a.to&&!m.nodes.has(a.to)&&!m.groups.has(a.to)) a.to=null; }
   resolveGeometry(m,state.cache);
   // Empty frames have no content to size them: keep their saved box, or give new ones a spot beside the board.

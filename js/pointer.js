@@ -17,7 +17,7 @@ function onDown(e){
   if(state.fly&&state.fly!=='ink') closeFly();
   const ae=document.activeElement; if(ae&&ae!==document.body&&ae.blur) ae.blur();
   closePop(); closeMenus();
-  const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind;
+  const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
   if(e.button===1||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;
   if(kind==='phandle'){ const im=state.model.images.find(x=>x.id===tgt.dataset.id); if(im){ state.drag={mode:'presize',id:im.id,corner:tgt.dataset.corner,start:p,orig:{...im},moved:false}; } return; }
@@ -26,21 +26,24 @@ function onDown(e){
   if(kind==='handle'&&tgt.dataset.gid){ const gid=tgt.dataset.gid; const b=state.boxes.get(gid); if(!b) return; state.drag={mode:'gresize',gid,corner:tgt.dataset.corner,start:p,orig:{...b},min:state.boxes.content.get(gid)||null,moved:false}; return; }
   if(kind==='handle'){ const n=state.model.nodes.get(tgt.dataset.id); state.drag={mode:'resize',id:n.id,corner:tgt.dataset.corner,start:p,orig:{x:n.x,y:n.y,w:n.w,h:n.h},ofs:labelSize(n),moved:false,styled:false}; return; }
   const tl=state.tool;
+  // Drawing closes the pen menu, so it is out of the way.
+  if((tl==='pen'||tl==='hl'||tl==='eraser')&&state.fly){ state.fly=null; renderFly(); }
   if(tl==='pen'||tl==='hl'){ state.drag={mode:'draw',tool:tl,color:INK_COLORS[tl][state.inkColor[tl]]||INK_COLORS[tl][0],w:INK_W[tl],pts:[[r10(p.x),r10(p.y)]]}; renderOverlay(); return; }
   if(tl==='eraser'){ state.drag={mode:'erase',hits:new Set(),cur:p}; eraseAt(p); render(); return; }
   if(tl==='sticky'){ state.drag={mode:'sticky',start:p}; return; }
+  if(tl==='table'||tl==='doc'||tl==='ui'){ state.drag={mode:'place',kind:tl,start:p}; return; }
   if(tl==='comment'){ startComment(p); return; }
-  if(kind==='port'){ state.drag={mode:'connect',from:tgt.dataset.id,side:tgt.dataset.side,start:p,cur:p,target:null,moved:false}; renderOverlay(); return; }
+  if(kind==='port'){ state.drag={mode:'connect',from:tgt.dataset.id,side:tgt.dataset.side,fromRow:tgt.dataset.row!=null?+tgt.dataset.row:null,start:p,cur:p,target:null,moved:false}; renderOverlay(); return; }
   const tool=state.tool;
   if([...SHAPE_TOOLS,'text','frame'].includes(tool)){ state.drag={mode:'create',shape:tool,start:p,cur:p}; return; }
   if(tool==='connector'){
     const nid=(kind==='node'&&tgt.dataset.id)||nodeAt(p)||frameEdgeAt(p);
     if(state.pendingFrom){
       const from=state.pendingFrom; state.pendingFrom=null; const to=nid||linkAt(p,0,from);
-      if(to&&to!==from&&(state.model.nodes.has(from)||state.model.groups.has(from))){ addToolEdge(from,to); return; }
+      if(to&&to!==from&&(state.model.nodes.has(from)||state.model.groups.has(from))){ const rp=rowPick(state.model,to,p); addToolEdge(from,to,{a:state.pendRow!=null?state.pendSide:null,b:rp?rp.side:null,ra:state.pendRow,rb:rp?rp.row:null}); return; }
       renderOverlay(); if(!nid) return;
     }
-    if(nid&&state.arrowKind!=='block'){ state.drag={mode:'connect',from:nid,side:null,start:p,cur:p,target:null,moved:false}; renderOverlay(); }
+    if(nid&&state.arrowKind!=='block'){ const rp=rowPick(state.model,nid,p); state.drag={mode:'connect',from:nid,side:rp?rp.side:null,fromRow:rp?rp.row:null,auto:true,start:p,cur:p,target:null,moved:false}; renderOverlay(); }
     else state.drag={mode:'farrow',start:p,cur:p,fromNode:state.arrowKind==='block'?nid:null};
     return;
   }
@@ -273,6 +276,8 @@ function smartSnap(d,dx,dy){
   if(!d.snapPool){
     const moving=new Set(d.orig.keys());
     d.snapPool=[...m.nodes.values()].filter(n=>!moving.has(n.id)&&n.x!=null).map(n=>({x:n.x,y:n.y,w:n.w,h:n.h}));
+    // Screen edges and centre line, so mockup pieces line up inside their device.
+    for(const g of m.groups.values()){ if(!g.dev) continue; const b=state.boxes&&state.boxes.get(g.id); if(b) d.snapPool.push({x:b.x,y:b.y,w:b.w,h:b.h}); }
     let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity; for(const [id,o] of d.orig){ const n=m.nodes.get(id); if(!n) continue; x0=Math.min(x0,o.x); y0=Math.min(y0,o.y); x1=Math.max(x1,o.x+n.w); y1=Math.max(y1,o.y+n.h); }
     d.snapBox={x:x0,y:y0,w:x1-x0,h:y1-y0};
   }
@@ -323,8 +328,8 @@ function onUp(e){
   if(d.mode==='presize'){ if(d.moved) mutate(()=>{}, {structural:false}); else render(); return; }
   if(d.mode==='eend'){
     const e2=m.edges[d.idx]; if(!e2||!d.moved){ render(); return; }
-    if(d.target){ const tr=nodeRect(m,d.target,state.boxes); const sd=sideNear(tr,d.cur); const same=(d.end?e2.to:e2.from)===d.target;
-      mutate(mm=>{ const x=mm.edges[d.idx]; if(d.end){ x.to=d.target; if(sd) x.sb=sd; else delete x.sb; } else { x.from=d.target; if(sd) x.sa=sd; else delete x.sa; } }); toast(same?(sd?'Connection point moved':'Connection point set to automatic'):'Reconnected'); return; }
+    if(d.target){ const tr=nodeRect(m,d.target,state.boxes); const rp=rowPick(m,d.target,d.cur); const sd=rp?rp.side:sideNear(tr,d.cur); const same=(d.end?e2.to:e2.from)===d.target;
+      mutate(mm=>{ const x=mm.edges[d.idx]; if(d.end){ x.to=d.target; if(sd) x.sb=sd; else delete x.sb; if(rp) x.rb=rp.row; else delete x.rb; } else { x.from=d.target; if(sd) x.sa=sd; else delete x.sa; if(rp) x.ra=rp.row; else delete x.ra; } }); toast(same?(sd?'Connection point moved':'Connection point set to automatic'):'Reconnected'); return; }
     const a=nodeRect(m,e2.from,state.boxes),b=nodeRect(m,e2.to,state.boxes); if(!a||!b){ render(); return; }
     if(Math.hypot(d.cur.x-(d.end?b.x+b.w/2:a.x+a.w/2),d.cur.y-(d.end?b.y+b.h/2:a.y+a.h/2))*state.view.z<20){ render(); return; }
     const g=geomPath(edgeShapeAt(m,d.idx,state.boxes),0,0); let id=null;
@@ -338,6 +343,16 @@ function onUp(e){
     const q=d.cur; if(Math.hypot(q.x-d.start.x,q.y-d.start.y)*state.view.z<8){ renderOverlay(); return; }
     if(d.fromNode&&snap&&state.arrowKind!=='block'){ addToolEdge(d.fromNode,snap); return; }
     addFreeArrow(d.start,q,d.fromNode,snap); return;
+  }
+  if(d.mode==='place'&&d.kind==='ui'){
+    const pk=state.uiPick||{dev:'mobile'}; let sel=null, edit=null;
+    if(pk.dev){ const D=DEVICES[pk.dev]; mutate(mm=>{ const r=addScreen(mm,{dev:pk.dev,preset:state.uiPreset,x:d.start.x-D.w/2,y:d.start.y-80,parent:groupAt(d.start)||null}); sel='g:'+r.gid; edit=r.gid; }); }
+    else { const k=UI_KINDS[pk.piece]||UI_KINDS.uiButton; const nid=createNode({shape:pk.piece,label:k.def,idBase:k.name,rect:{x:SNAP(d.start.x-k.w/2),y:SNAP(d.start.y-k.h/2),w:k.w,h:k.h},group:groupAt(d.start)||null}); sel=nid&&'n:'+nid; }
+    setTool('select'); if(sel){ state.sel=new Set([sel]); selChanged(); } if(edit) openEditor('group',edit); return;
+  }
+  if(d.mode==='place'){
+    const nid=createNode({shape:d.kind,label:d.kind==='table'?'Comparison':'',idBase:d.kind==='table'?'table':'doc',cx:d.start.x,cy:d.start.y,group:groupAt(d.start)||null});
+    setTool('select'); if(nid){ state.sel=new Set(['n:'+nid]); selChanged(); Rich.open(nid,null,true); } return;
   }
   if(d.mode==='sticky'){
     const nid=createNode({shape:'sticky',label:'',idBase:'note',cx:d.start.x,cy:d.start.y,group:groupAt(d.start)||null,style:{fill:STICKY_COLORS[state.stickyColor]||STICKY_COLORS[0],stroke:null,color:null,fontSize:null,bold:false,italic:false,bg:null,extra:[]}});
@@ -377,13 +392,13 @@ function onUp(e){
   if(d.mode==='connect'){
     const from=nodeRect(m,d.from,state.boxes); if(!from){ render(); return; }
     if(d.target){
-      const tr=nodeRect(m,d.target,state.boxes); const sb=sideNear(tr,p);
-      if(!d.side&&state.tool==='connector'){ addToolEdge(d.from,d.target,{a:null,b:sb}); return; }
-      const to=d.target; mutate(mm=>{ const ne={from:d.from,to,line:'solid',head:'arrow',tail:'none',label:''}; if(d.side) ne.sa=d.side; if(sb) ne.sb=sb; mm.edges.push(ne); });
+      const tr=nodeRect(m,d.target,state.boxes); const rp=rowPick(m,d.target,p); const sb=rp?rp.side:sideNear(tr,p);
+      if(state.tool==='connector'&&(!d.side||d.auto)){ addToolEdge(d.from,d.target,{a:d.side||null,b:sb,ra:d.fromRow,rb:rp?rp.row:null}); return; }
+      const to=d.target; mutate(mm=>{ const ne={from:d.from,to,line:'solid',head:'arrow',tail:'none',label:''}; if(d.side) ne.sa=d.side; if(sb) ne.sb=sb; if(d.fromRow!=null) ne.ra=d.fromRow; if(rp) ne.rb=rp.row; mm.edges.push(ne); });
       state.sel=new Set(['e:'+(state.model.edges.length-1)]); selChanged(); setTool('select'); return;
     }
-    if(!d.moved&&!d.side&&state.tool==='connector'){ state.pendingFrom=d.from; state.pendPt=p; renderOverlay(); toast('Now click the shape to connect to'); return; }
-    if(d.moved&&!d.side&&state.tool==='connector'){ addFreeArrow(clipToRect(from,p),p,d.from,null); return; }
+    if(!d.moved&&(!d.side||d.auto)&&state.tool==='connector'){ state.pendingFrom=d.from; state.pendRow=d.fromRow; state.pendSide=d.side; state.pendPt=p; renderOverlay(); toast('Now click the shape to connect to'); return; }
+    if(d.moved&&(!d.side||d.auto)&&state.tool==='connector'){ addFreeArrow(clipToRect(from,p),p,d.from,null); return; }
     const shape=!from.shape?'round':from.shape==='icon'||from.shape==='text'?'rect':from.shape;
     let cx,cy;
     if(d.moved){ cx=p.x; cy=p.y; }
@@ -420,7 +435,7 @@ board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
 function snapAngle(o,p){ const dx=p.x-o.x,dy=p.y-o.y,L=Math.hypot(dx,dy),a=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*(Math.PI/4); return {x:o.x+Math.cos(a)*L,y:o.y+Math.sin(a)*L}; }
 function addToolEdge(from,to,sides){
   const k=state.arrowKind; const route=k==='line'?'straight':(k==='block'?'straight':k);
-  mutate(mm=>{ const e={from,to,line:'solid',head:k==='line'?'none':'arrow',tail:'none',label:''}; if(sides&&sides.a) e.sa=sides.a; if(sides&&sides.b) e.sb=sides.b; if(route!=='curved'&&route!==(mm.curve||'curved')) e.route=route; if(state.arrowW!==2) e.width=state.arrowW; if(state.arrowColor) e.color=ARROW_COLORS[state.arrowColor]; mm.edges.push(e); });
+  mutate(mm=>{ const e={from,to,line:'solid',head:k==='line'?'none':'arrow',tail:'none',label:''}; if(sides&&sides.a) e.sa=sides.a; if(sides&&sides.b) e.sb=sides.b; if(sides&&sides.ra!=null) e.ra=sides.ra; if(sides&&sides.rb!=null) e.rb=sides.rb; if(route!=='curved'&&route!==(mm.curve||'curved')) e.route=route; if(state.arrowW!==2) e.width=state.arrowW; if(state.arrowColor) e.color=ARROW_COLORS[state.arrowColor]; mm.edges.push(e); });
   state.sel=new Set(['e:'+(state.model.edges.length-1)]); selChanged(); setTool('select');
 }
 function nextArrowId(mm){ const ids=new Set(mm.arrows.map(x=>x.id)); let n=mm.arrows.length+1; while(ids.has('a'+n)) n++; return 'a'+n; }
@@ -490,7 +505,7 @@ function dropTarget(n,d){
   if(!n.group||d.popped.has(n.id)) return t;
   if(t===n.group) return t;
   if(t&&isDesc(m,t,n.group)) return t;
-  const hb=d.home.get(n.group); const mg=56/state.view.z;
+  const hb=d.home.get(n.group); const gg=m.groups.get(n.group); const mg=gg&&gg.dev?0:56/state.view.z;
   if(hb&&ctr.x>=hb.x-mg&&ctr.x<=hb.x+hb.w+mg&&ctr.y>=hb.y-mg&&ctr.y<=hb.y+hb.h+mg) return n.group;
   return t;
 }
@@ -515,7 +530,8 @@ function createNode(o){
     const label=o.label!=null?o.label:sh.def;
     nid=idFrom(o.idBase||label,id=>mm.nodes.has(id)||mm.groups.has(id));
     const n={id:nid,label,shape:o.shape==='icon'?'icon':sh.id,icon:o.icon||null,group:o.group||null,cls:null};
-    if(o.shape==='sticky') n.shape='sticky';
+    if(o.shape==='sticky'||o.shape==='table'||o.shape==='doc'||UI_KINDS[o.shape]) n.shape=o.shape;
+    if(n.shape==='table') n.table=cleanTable(o.table); if(n.shape==='doc') n.doc=cleanDoc(o.doc);
     if(o.rect){ n.w=o.rect.w; n.h=o.rect.h; n.sized=true; }
     sizeNode(n);
     if(o.rect){ n.x=o.rect.x; n.y=o.rect.y; }
@@ -526,9 +542,9 @@ function createNode(o){
   return nid;
 }
 board.addEventListener('dblclick',e=>{
-  if(!state.model||state.fatal) return;
+  if(!state.model||state.fatal||state.richId) return;
   const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind;
-  if(kind==='node'){ if(state.editing&&state.editing.kind==='node'&&state.editing.id===tgt.dataset.id) return; state.pendingEdit=null; openEditor('node',tgt.dataset.id); return; }
+  if(kind==='node'){ if(state.editing&&state.editing.kind==='node'&&state.editing.id===tgt.dataset.id) return; state.pendingEdit=null; openEditor('node',tgt.dataset.id,toWorld(e)); return; }
   if(kind==='edge'){ if(state.editing&&state.editing.kind==='edge'&&state.editing.id===+tgt.dataset.idx) return; state.pendingEdit=null; openEditor('edge',+tgt.dataset.idx); return; }
   if(kind==='group'&&tgt.dataset.part!=='body'){ openEditor('group',tgt.dataset.id); return; }
   if(kind&&kind!=='group') return;

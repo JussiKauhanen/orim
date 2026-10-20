@@ -2,7 +2,7 @@
  * Delete, group, copy, paste, nudge, align, icons, frames, images.
  */
 'use strict';
-function selChanged(){ closePop(); render(); }
+function selChanged(){ closePop(); render(); if(typeof AI!=='undefined') AI.onSel(); }
 function selKinds(){ const k={n:0,e:0,g:0,k:0,a:0,p:0}; for(const s of state.sel) k[s[0]]++; return k; }
 function deleteSel(){
   if(!state.sel.size) return;
@@ -57,7 +57,7 @@ function ungroupSel(){
 function copySel(){
   const m=state.model; if(!m) return false; const nodes=selNodes(); if(!nodes.length) return false;
   const ids=new Set(nodes.map(n=>n.id));
-  state.clip={nodes:nodes.map(n=>({id:n.id,label:n.label,shape:n.shape,icon:n.icon,x:n.x,y:n.y,w:n.w,h:n.h,sized:n.sized,group:n.group,style:m.styles.get(n.id)?JSON.parse(JSON.stringify(m.styles.get(n.id))):null})),edges:m.edges.filter(e=>ids.has(e.from)&&ids.has(e.to)).map(e=>({...e}))};
+  state.clip={nodes:nodes.map(n=>({id:n.id,label:n.label,shape:n.shape,icon:n.icon,x:n.x,y:n.y,w:n.w,h:n.h,sized:n.sized,group:n.group,table:n.table?JSON.parse(JSON.stringify(n.table)):null,doc:n.doc?JSON.parse(JSON.stringify(n.doc)):null,style:m.styles.get(n.id)?JSON.parse(JSON.stringify(m.styles.get(n.id))):null})),edges:m.edges.filter(e=>ids.has(e.from)&&ids.has(e.to)).map(e=>({...e}))};
   state.pasteN=0; return true;
 }
 function pasteClip(){
@@ -66,7 +66,7 @@ function pasteClip(){
   mutate(m=>{
     for(const o of c.nodes){
       const nid=idFrom(o.id.replace(/\d+$/,''),id=>m.nodes.has(id)||m.groups.has(id)); map.set(o.id,nid);
-      const n={id:nid,label:o.label,shape:o.shape,icon:o.icon,group:o.group&&m.groups.has(o.group)?o.group:null,cls:null,x:o.x+off,y:o.y+off,sized:o.sized,w:o.w,h:o.h};
+      const n={id:nid,label:o.label,shape:o.shape,icon:o.icon,group:o.group&&m.groups.has(o.group)?o.group:null,cls:null,x:o.x+off,y:o.y+off,sized:o.sized,w:o.w,h:o.h}; if(o.table) n.table=JSON.parse(JSON.stringify(o.table)); if(o.doc) n.doc=JSON.parse(JSON.stringify(o.doc));
       sizeNode(n); m.nodes.set(nid,n); m.nodeOrder.push(nid); if(o.style) m.styles.set(nid,JSON.parse(JSON.stringify(o.style))); sel.push('n:'+nid);
     }
     for(const e of c.edges) m.edges.push({...e,from:map.get(e.from),to:map.get(e.to)});

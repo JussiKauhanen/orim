@@ -19,7 +19,7 @@ function selBBox(){
 let ctxSig='';
 function updCtx(){
   const m=state.model;
-  if(!m||!state.sel.size||state.editing||(state.drag&&state.drag.mode!=='pan')){ ctxEl.hidden=true; ctxSig=''; return; }
+  if(!m||!state.sel.size||state.editing||state.richId||(state.drag&&state.drag.mode!=='pan')){ ctxEl.hidden=true; ctxSig=''; return; }
   const k=selKinds(); let html='';
   const b=(act,icon,title,extra='')=>'<button type="button" class="ibtn" data-act="'+act+'" title="'+title+'" aria-label="'+title+'" '+extra+'>'+ico(icon)+'</button>';
   const sep='<span class="vsep"></span>';
@@ -34,6 +34,11 @@ function updCtx(){
     html+='<div class="seg2">'+ARROW_KINDS.map(([id,ic,tt])=>b('akind-'+id,ic,tt,'aria-pressed="'+(a0.kind===id)+'"')).join('')+'</div>'+sep+thick(a0.w)+sep+lineColorBtn(a0.color)+sep+b('del','trash','Delete (Del)');
   } else if(k.k&&!k.n&&!k.e&&!k.g&&!k.p){
     html+='<span class="ctx-count">'+k.k+(k.k===1?' drawing':' drawings')+'</span>'+sep+b('del','trash','Delete (Del)');
+  } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p&&selNodes().every(n=>n.shape==='table'||n.shape==='doc')){
+    // Tables and documents: edit them in their own editor; the rest is the frame and copy actions.
+    const ns=selNodes(); if(ns.length>1) html+='<span class="ctx-count">'+ns.length+' selected</span>';
+    if(ns.length===1) html+='<button type="button" class="btn" data-act="editLabel" title="Edit (Enter)">'+(ns[0].shape==='table'?'Edit table':'Edit document')+'</button>'+sep;
+    html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p){
     const ns=selNodes(); const first=ns[0]; const st=m.styles.get(first.id);
     const allIcon=ns.every(n=>n.shape==='icon'); const allSticky=ns.every(n=>n.shape==='sticky');
@@ -69,9 +74,10 @@ function updCtx(){
     const g=m.groups.get([...state.sel][0].slice(2)); const st=g&&m.styles.get(g.id);
     if(k.g===1) html+='<button type="button" class="btn" data-act="editLabel" title="Rename frame (Enter)">'+esc(g?g.label:'Frame')+'</button>'+sep;
     else html+='<span class="ctx-count">'+k.g+' frames</span>'+sep;
-    if(k.g===1) html+='<button type="button" class="btn" data-act="format" title="Frame format">'+ico('format')+'<span>'+esc(frameFormatName(g.id))+'</span></button>';
-    html+='<button type="button" class="ibtn" data-act="colors" title="Background color" aria-label="Background color"><span class="dot" style="'+(st&&st.fill?'background:'+st.fill+';border-color:'+(st.stroke||st.fill):'')+'"></span></button>';
-    if(k.g===1&&g){ const p=m.pos.get(g.id); if(p&&p.w&&groupHasMembers(m,g.id)) html+=b('fitGroup','fitIn','Resize to fit content'); }
+    if(k.g===1&&g&&g.dev) html+='<span class="ctx-count">'+esc(DEVICES[g.dev].name)+'</span>';
+    else if(k.g===1) html+='<button type="button" class="btn" data-act="format" title="Frame format">'+ico('format')+'<span>'+esc(frameFormatName(g.id))+'</span></button>';
+    if(!(k.g===1&&g&&g.dev)) html+='<button type="button" class="ibtn" data-act="colors" title="Background color" aria-label="Background color"><span class="dot" style="'+(st&&st.fill?'background:'+st.fill+';border-color:'+(st.stroke||st.fill):'')+'"></span></button>';
+    if(k.g===1&&g&&!g.dev){ const p=m.pos.get(g.id); if(p&&p.w&&groupHasMembers(m,g.id)) html+=b('fitGroup','fitIn','Resize to fit content'); }
     html+=sep+b('ungroup','ungroup','Remove frame, keep contents (Ctrl+Shift+G)')+b('del','trash','Delete frame and contents (Del)');
   } else {
     html+='<span class="ctx-count">'+state.sel.size+' selected</span>'+b('group','group','Group into frame (Ctrl+G)')+b('del','trash','Delete (Del)');

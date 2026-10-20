@@ -46,7 +46,8 @@ function editorText(){ if(state.emode==='text') return modelToQuick(state.model)
 function setEmode(md){
   flushEditorHist(); state.emode=md; LS.set('mab.emode',md);
   for(const b of document.querySelectorAll('#modeSeg [data-emode]')) b.setAttribute('aria-pressed',String(b.dataset.emode===md));
-  $('#layoutToggle').parentElement.hidden=md==='text'; $('#formatBtn').hidden=md==='text';
+  $('#layoutToggle').parentElement.hidden=md!=='mermaid'; $('#formatBtn').hidden=md!=='mermaid'; $('#copyBtn').hidden=md==='ai';
+  $('#ed').hidden=md==='ai'; $('#aiPane').hidden=md!=='ai'; if(md==='ai'){ $('#problems').hidden=true; if(typeof AI!=='undefined') AI.show(); } else if(typeof updStatus==='function') updStatus();
   ta.setAttribute('aria-label',md==='text'?'Board as simple text':'Mermaid code'); ta.placeholder=md==='text'?'Browser -> API -> Database\n\n# Ideas\n- First sticky note\n\nSuggestions appear as you type.\nCtrl+Space shows them anywhere.':'';
   acClose(); setEditorFromCode();
 }

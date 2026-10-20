@@ -13,13 +13,17 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Every board has its own link (`#b-<id>`), so the browser's back button and bookmarks work.
 
 **Two editors, one board**
-- Code, Split and Canvas views, with a draggable splitter.
+- Split and Canvas views, with a draggable splitter. On a phone, Split stacks the code above the board.
 - Mermaid mode: flowchart syntax with highlighting, line errors and autocomplete for keywords, arrows, node ids and icon nodes.
 - Text mode: write `Browser -> API -> Database`, `- list items` and `# Headings`. Basic [D2](https://d2lang.com) also works.
 - Paste any text onto the board to turn it into connected boxes or sticky notes.
 
 **Board**
 - Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut.
+- Tables for comparisons: edit cells in place, Tab to the next cell (Tab in the last cell adds a row), Enter to go down, add and delete rows and columns, colour cells green, amber or red. The header row and first column are bold. Pasting cells from a spreadsheet fills the table.
+- Connectors can attach to one table row: hover a table for a dot at each end of every row, or drop a connector on a row. Rows keep their connectors when you add, move or delete other rows.
+- Simple UI mockups: the Mockup tool adds a phone, iPad or desktop screen, blank or as a login or main page, made of grey wireframe pieces (heading, text, button, input, image, top bar, bottom menu, side menu). Each piece can be moved, edited and connected to anything on the board; screens connect to each other for a flow. Auto layout moves screens as a whole and leaves their pieces alone.
+- Document cards, like Miro docs: headings, paragraphs, bulleted and numbered lists, bold and italic, from the toolbar or by typing `# `, `## `, `### `, `- ` or `1. ` at the start of a line. Expand opens a larger view for reading and writing.
 - Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color. Frames connect too: hover a frame's border or title for its blue dots, or start the Arrow tool there.
 - Arrow ends snap to shapes; pull hard to detach.
 - Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
@@ -83,6 +87,7 @@ orim/
 │   └── orim.css            All styles, with light and dark theme tokens
 ├── js/
 │   ├── core/               Pure logic, no DOM; covered by tests
+│   │   ├── mockups.js      Device sizes, wireframe pieces and screen presets
 │   │   ├── mermaid.js      Mermaid parser and serializer, canvas data comments
 │   │   ├── geometry.js     Text wrap, node sizing, auto layout, connector shapes
 │   │   └── templates.js    Starter boards
@@ -96,6 +101,7 @@ orim/
 │   ├── hit-test.js         Hit testing
 │   ├── pointer.js          Mouse, pen and touch interaction
 │   ├── label-editor.js     Inline text editing
+│   ├── rich-edit.js        Table and document editors
 │   ├── selection.js        Selection actions
 │   ├── context-toolbar.js  Selection toolbar and popovers
 │   ├── library.js          Icon library panel
@@ -109,6 +115,7 @@ orim/
 │   ├── export.js           Other exports
 │   ├── share-qr.js         QR code and shared links (#m=…)
 │   ├── ai-guide.js         Ask an AI: prompt, format guide, paste back
+│   ├── ai-assist.js        AI tab: Claude edits the board live (inside Claude)
 │   ├── theme.js            Theme switching
 │   ├── tooltips.js         Tooltips
 │   ├── me.js               Your name and avatar for comments
@@ -141,7 +148,10 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 
 ```
 %% @pos   <id> <x> <y> [<w> <h>]                     node or frame position and size
-%% @route <edgeIndex> curved|straight|elbow [<from> <to>]   connector routing; sides t r b l, or - for automatic
+%% @route <edgeIndex> curved|straight|elbow [<from> <to>] [ra=<row>] [rb=<row>]   connector routing; sides t r b l, or - for automatic; ra/rb attach an end to a table row
+%% @device <frameId> mobile|tablet|desktop          the frame is a mockup screen of that device
+%% @table <id> <json>                               table cells {rows:[[…]], colors:{"row,col":"g|a|r"}}; row 0 is the header
+%% @doc   <id> <json>                               document {blocks:[{t:h1|h2|h3|p|ul|ol, r:[{x:text, b:1, i:1}]}]}
 %% @arrow <id> <kind> <x1> <y1> <x2> <y2> <w> <color> [from=<id>] [to=<id>]
 %% @ink   <id> pen|hl <color> <w> <x,y> <dx,dy> ...   pen and highlighter strokes
 %% @image <id> <x> <y> <w> <h> [front]               image placement; front = above shapes (pixels live in the board file)
@@ -151,6 +161,10 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 Icon nodes use Mermaid 11 shape syntax: `fn@{ icon: "azure:function-apps", label: "API" }`. Packs are `azure:`, `pp:` (Power Platform) and `d365:`. Other Mermaid renderers show these as plain nodes unless the same icon pack is registered there.
 
 `classDef`, `class` and `:::name` colours are drawn as Mermaid draws them; a `style` line for a node wins over its class. Auto layout lays out each frame on its own first and then places the frames, so frames stay compact.
+
+Mockup pieces are nodes with classes such as `uiButton`, `uiInput` and `uiTabbar` (menu items one per line). A screen is a frame with a `@device` line and a saved size.
+
+Tables and documents are nodes with the `table` and `doc` classes, so other Mermaid tools show them as a box with the title. Text mode leaves them, mockup screens and their connectors as they are.
 
 Sticky notes are nodes with the `sticky` class. Text styling uses standard `style` properties (`font-size`, `font-weight`, `font-style`, `color`), plus `background` for the highlight.
 
@@ -206,6 +220,17 @@ The assistant replies with the complete board in a ```` ```mermaid ```` block. P
 
 The prompt is about 5,000 characters plus the board. **Download guide (.md)** saves the guide with every Azure icon id as a skill file with a name and description at the top, so it can be added to an assistant that supports skills or custom instructions. A copy is in [docs/orim-board.md](docs/orim-board.md); it is generated from `js/ai-guide.js`, so download a fresh one after changing the format or the icons.
 
+## AI tab
+
+When orim is opened inside Claude (the copy shared from Claude), the editor has a third tab, **AI**. Type what you want ("add a Redis cache between the API and the database", "put these in a frame called Security", "what does this show?") and Claude changes the board while it answers. It uses your own Claude account, with no keys or setup.
+
+- Claude replies with one small command per line (add, connect, update, frame, delete, screen, table, cell, doc, layout, say); each is applied as it arrives.
+- Ask for a comparison ("compare Crystallize and Optimizely and link the parts to the table") and Claude builds a table, colours the stronger option, and connects shapes to the rows they belong to. Longer notes become a document card. "Mock up a login and home screen for mobile and desktop" makes screens from the presets and adjusts their pieces. Claude sees the tables and documents on the board, so you can ask about them or have them updated.
+- Every request is one undo step, with an Undo button on the reply.
+- Selected shapes are sent along, so "these" means your selection. Open comments are sent too.
+- **Think harder** uses a slower, more capable model for bigger changes.
+- On GitHub Pages or a local copy the tab explains that it needs Claude; use Export → Ask an AI there.
+
 ## Move a board to another device
 
 **Export → QR code** shows a large QR code, the link it contains and the board's Mermaid code. Scanning the code, or opening the link, creates a copy of the board on the other device.
@@ -228,7 +253,7 @@ The prompt is about 5,000 characters plus the board. **Download guide (.md)** sa
 | Ctrl+D, Ctrl+G, Ctrl+Shift+G | Duplicate, group into frame, ungroup |
 | Ctrl+B, Ctrl+I | Bold, italic |
 | Shift+1, Shift+L | Fit to screen, line up |
-| Alt+1, Alt+2, Alt+3 | Code, Split, Canvas |
+| Alt+1, Alt+2 | Split, Canvas |
 | Esc | Close panel, cancel tool, clear selection |
 
 ## Development

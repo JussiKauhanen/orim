@@ -9,10 +9,12 @@ import assert from 'node:assert/strict';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ctx = vm.createContext({ console });
-for (const f of ['js/core/mermaid.js', 'js/core/geometry.js', 'js/core/templates.js']) {
+for (const f of ['js/core/mockups.js', 'js/core/mermaid.js', 'js/core/geometry.js', 'js/core/templates.js']) {
   vm.runInContext(readFileSync(join(root, f), 'utf8'), ctx, { filename: f });
 }
 const run = (code) => vm.runInContext(code, ctx);
+// dagre for the auto layout tests; it is a browser bundle, so give it a window.
+ctx.window = ctx; vm.runInContext(readFileSync(join(root, 'vendor/dagre/dagre.min.js'), 'utf8'), ctx, { filename: 'dagre.min.js' });
 ctx.__src = '';
 const roundTrip = (src) => {
   ctx.__src = src;
@@ -133,6 +135,50 @@ flowchart LR
   assert.equal(r.model.edges[0].route, undefined);
   assert.equal(r.model.edges[1].route, 'curved');
   assert.ok(r.s2.includes('%% @route 1 curved'));
+});
+
+test('tables, documents and row connectors', () => {
+  const r = roundTrip(`flowchart LR
+  cmp["Crystallize vs Optimizely"]:::table
+  notes["Summary"]:::doc
+  api[Orders API]
+  api --> cmp
+  cmp --> notes
+%% @table cmp {"rows":[["","Crystallize","Optimizely"],["Pricing","Usage","Seats"],["PIM","Built in","Add-on"]],"colors":{"2,1":"g","2,2":"r"}}
+%% @doc notes {"blocks":[{"t":"h2","r":[{"x":"Why"}]},{"t":"ul","r":[{"x":"Fast "},{"x":"API","b":1}]}]}
+%% @route 0 curved - l rb=2
+%% @route 1 curved r - ra=1`);
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  const m = r.model, t = m.nodes.get('cmp'), d = m.nodes.get('notes');
+  assert.equal(t.shape, 'table'); assert.equal(t.table.rows[2][2], 'Add-on'); assert.equal(t.table.colors['2,1'], 'g');
+  assert.equal(d.shape, 'doc'); assert.equal(d.doc.blocks[1].r[1].b, 1);
+  assert.equal(m.edges[0].rb, 2); assert.equal(m.edges[0].sb, 'l'); assert.equal(m.edges[1].ra, 1);
+  assert.ok(t.w > 200 && t.h > 90, 'table is sized from its cells');
+  assert.match(r.s1, /classDef table /);
+  ctx.__md = '# Title\n- one **two**\n1. first\nplain *it*';
+  const doc = run('mdToDoc(__md)');
+  assert.equal(doc.blocks.map(b => b.t).join(','), 'h1,ul,ol,p');
+  assert.equal(run('docToMd(mdToDoc(__md))'), '# Title\n- one **two**\n1. first\nplain *it*');
+});
+
+test('mockup screens: device frames and wireframe pieces', () => {
+  ctx.__m = run('(() => { const m = newModel(); addScreen(m, { dev: "mobile", preset: "login", x: 0, y: 0 }); addScreen(m, { dev: "desktop", preset: "main", x: 400, y: 0 }); return serializeMermaid(m); })()');
+  const r = roundTrip(run('__m'));
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  const m = r.model, login = m.groups.get('login'), main = m.groups.get('mainPage');
+  assert.equal(login.dev, 'mobile'); assert.equal(main.dev, 'desktop');
+  const btn = [...m.nodes.values()].find(n => n.group === 'login' && n.shape === 'uiButton');
+  assert.ok(btn && btn.label === 'Sign in' && btn.w > 200);
+  assert.ok([...m.nodes.values()].some(n => n.group === 'mainPage' && n.shape === 'uiSidebar'));
+  assert.match(r.s1, /%% @device login mobile/); assert.match(r.s1, /classDef uiButton /);
+  // Auto layout moves screens as a whole and keeps their pieces in place.
+  ctx.__src = r.s1;
+  const kept = run(`(() => { const a = parseMermaid(__src).model; resolveGeometry(a, new Map()); const b = a.nodes.get('${btn.id}'); const p = a.pos.get('login'); const before = [b.x - p.x, b.y - p.y];
+    autoLayout(a); const q = a.pos.get('login'); const bx = groupBoxes(a).get('login'); return JSON.stringify([before, [b.x - q.x, b.y - q.y], bx.w, bx.h]); })()`);
+  const [before, after, w, h] = JSON.parse(kept);
+  assert.deepEqual(after, before); assert.equal(w, 300); assert.equal(h, 620);
 });
 
 test('reports errors with line numbers', () => {

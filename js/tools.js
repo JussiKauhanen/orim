@@ -2,7 +2,7 @@
  * Left toolbar, tool fly-outs, tool switching.
  */
 'use strict';
-const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons']];
+const TOOLS=[['select','select','Select (V)','Select'],['hand','hand','Hand (H or Space)','Hand'],'|',['sticky','sticky','Sticky note (N)','Sticky'],['text','text','Text (T)','Text'],['table','table','Table','Table'],['doc','doc','Document','Doc'],['ui','phone','Mockups: phone, iPad and desktop screens','Mockup'],['shapes','shapes','Shapes (S)','Shapes'],['connector','arCurved','Arrows and connectors (A)','Arrows'],['ink','pen','Pen, highlighter and eraser (P)','Draw'],['frame','frame','Frame (F)','Frame'],['image','picture','Image: paste, drop or pick a file','Image'],['comment','comment','Comment (C)','Comment'],'|',['library','library','Icon library (I)','Icons']];
 state.inkColor=LS.get('mab.inkColor',{pen:0,hl:0}); state.stickyColor=LS.get('mab.stickyColor',0); state.lastShape='rect'; state.lastInk='pen'; state.fly=null;
 const INK_TOOLS=['pen','hl','eraser'];
 state.arrowKind=LS.get('mab.arrowKind','curved'); state.arrowW=LS.get('mab.arrowW',2); state.arrowColor=LS.get('mab.arrowColor',0);
@@ -22,7 +22,7 @@ function updTools(){
     if(id==='connector'){ const ak=ARROW_KINDS.find(x=>x[0]===state.arrowKind); ti.innerHTML=ico(ak?ak[1]:'arCurved'); }
   }
   board.classList.toggle('t-hand',t==='hand');
-  board.classList.toggle('t-draw',[...SHAPE_TOOLS,'text','frame','sticky'].includes(t));
+  board.classList.toggle('t-draw',[...SHAPE_TOOLS,'text','frame','sticky','table','doc','ui'].includes(t));
   board.classList.toggle('t-connector',t==='connector');
   board.classList.toggle('t-ink',t==='pen'||t==='hl');
   board.classList.toggle('t-eraser',t==='eraser');
@@ -49,6 +49,12 @@ function renderFly(){
     h+='<div class="fly-sec">Thickness</div><label class="thick" title="Thickness"><input type="range" min="1" max="12" step="0.5" value="'+state.arrowW+'" data-fly-thick aria-label="Thickness"><output>'+state.arrowW+'</output></label>';
     h+='<div class="fly-sec">Color</div><div class="fly-dots">'+ARROW_COLORS.map((c,i)=>'<button type="button" class="ink-dot" data-fly-acolor="'+i+'" aria-pressed="'+(state.arrowColor===i)+'" title="'+c+'" aria-label="Color '+c+'" style="width:22px;height:22px;background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+'"></button>').join('')+'</div>';
   }
+  if(kind==='ui'){
+    const pk=state.uiPick||{};
+    h=head('Mockups')+[['mobile','phone'],['tablet','tablet'],['desktop','desktop']].map(([d,ic])=>row('data-ui-dev="'+d+'"',t==='ui'&&pk.dev===d,ic,DEVICES[d].name,'')).join('');
+    h+='<div class="fly-seg" role="group" aria-label="Screen">'+SCREEN_PRESETS.map(([id,nm])=>'<button type="button" data-ui-preset="'+id+'" aria-pressed="'+(state.uiPreset===id)+'">'+nm+'</button>').join('')+'</div>';
+    h+='<div class="fly-sec">Pieces</div>'+Object.entries(UI_KINDS).map(([id,k])=>row('data-ui-piece="'+id+'"',t==='ui'&&pk.piece===id,id,k.name,'')).join('');
+  }
   if(kind==='sticky') h=head('Sticky note color')+'<div class="fly-colors">'+STICKY_COLORS.slice(0,12).map((c,i)=>'<button type="button" class="ink-dot" data-sticky-color="'+i+'" aria-pressed="'+(state.stickyColor===i)+'" title="'+c+'" style="background:'+c+';border-radius:4px"></button>').join('')+'</div>';
   fl.innerHTML=h; fl.hidden=false;
   const btn=$('#tools [data-tool="'+kind+'"]'); const pr=boardPane.getBoundingClientRect(); const lb=$('#leftbar').getBoundingClientRect(); const br=btn?btn.getBoundingClientRect():lb;
@@ -66,8 +72,13 @@ $('#flyout').addEventListener('click',e=>{
   if(ac){ state.arrowColor=+ac.dataset.flyAcolor; LS.set('mab.arrowColor',state.arrowColor); renderFly(); }
   if(ic){ state.inkColor[state.tool]=+ic.dataset.inkColor; LS.set('mab.inkColor',state.inkColor); renderFly(); }
   if(sc){ state.stickyColor=+sc.dataset.stickyColor; LS.set('mab.stickyColor',state.stickyColor); renderFly(); }
+  const ud=e.target.closest('[data-ui-dev]'),up=e.target.closest('[data-ui-piece]'),us=e.target.closest('[data-ui-preset]');
+  if(ud){ state.uiPick={dev:ud.dataset.uiDev}; setTool('ui'); }
+  if(up){ state.uiPick={piece:up.dataset.uiPiece}; setTool('ui'); }
+  if(us){ state.uiPreset=us.dataset.uiPreset; LS.set('orim.uiPreset',state.uiPreset); if(!state.uiPick||!state.uiPick.dev) state.uiPick={dev:'mobile'}; setTool('ui'); }
 });
-function toolFamily(t){ return SHAPE_TOOLS.includes(t)?'shapes':INK_TOOLS.includes(t)?'ink':t==='sticky'?'sticky':t==='connector'?'connector':null; }
+state.uiPreset=LS.get('orim.uiPreset','blank'); state.uiPick={dev:'mobile'};
+function toolFamily(t){ return SHAPE_TOOLS.includes(t)?'shapes':INK_TOOLS.includes(t)?'ink':t==='sticky'?'sticky':t==='connector'?'connector':t==='ui'?'ui':null; }
 function setTool(t,fromBar){
   if(t==='library'){ setLib(!state.libOpen); return; }
   if(t==='image'){ $('#imgIn').click(); return; }

@@ -61,13 +61,16 @@ flowchart LR
 - Labels: \`<br>\` for a line break, \`#quot;\` for a quote; quote labels with brackets: \`id["Cache (Redis)"]\`.
 - A node belongs to the frame (subgraph) it is declared in. Frames can nest.
 - linkStyle numbers edges from 0 in order; renumber if you add or remove edges above it.
-- Sticky colors: ${STICKY_COLORS.slice(0,10).join(' ')}. Keep any \`classDef sticky\` line.
+- Sticky colors: ${STICKY_COLORS.slice(0,10).join(' ')}. Keep any \`classDef sticky\`, \`classDef table\` and \`classDef doc\` line.
+- Table (for comparisons): \`cmp["Crystallize vs Optimizely"]:::table\` plus \`%% @table cmp {"rows":[["","Crystallize","Optimizely"],["Pricing","Usage based","Per seat"]],"colors":{"1,1":"g"}}\`. Row 0 is the header, column 0 the row names; colors "row,col" are g (good), a (partly), r (weak).
+- UI mockup screen: a frame with \`%% @device <id> mobile|tablet|desktop\` and \`%% @pos <id> x y w h\` (phone 300x620, iPad 560x760, desktop 960x600), holding grey wireframe pieces such as \`loginBtn["Sign in"]:::uiButton\`, each with \`%% @pos id x y w h\` in board coordinates. Pieces: uiHeading, uiText, uiButton, uiInput (label = placeholder), uiImage, uiTopbar (label = title), uiTabbar and uiSidebar (menu items separated by \`<br>\`). Keep pieces inside their device.
+- Document card: \`notes["Summary"]:::doc\` plus \`%% @doc notes {"blocks":[{"t":"h2","r":[{"x":"Heading"}]},{"t":"ul","r":[{"x":"Point "},{"x":"bold","b":1}]}]}\`. Block types h1 h2 h3 p ul ol; runs have x (text), b (bold), i (italic).
 
 ## %% lines (canvas data, after the code)
 
 - \`%% @pos id x y [w h]\` is where the user placed a node or frame. Keep it for every item you keep; rename or delete it with the item. New nodes need none: orim places them next to what they connect to. If you rebuild most of the board, delete all @pos and @route lines and orim lays it out again.
-- \`%% @route i kind [from to]\` pins edge number i to sides of its shapes (t r b l, - for automatic); renumber it if you add or remove edges before it.
-- Copy \`%% @route\`, \`@arrow\`, \`@ink\`, \`@image\` and \`@comment\` lines unchanged. \`@comment\` lines are the user's review comments; read them, they may say what to change.
+- \`%% @route i kind [from to] [ra=N] [rb=N]\` pins edge number i to sides of its shapes (t r b l, - for automatic); ra and rb attach its start or end to row N of a table. To link a shape to a table row, add the edge and a route line such as \`%% @route 3 curved - - rb=2\`. Renumber route lines if you add or remove edges before them.
+- Copy \`%% @route\`, \`@table\`, \`@doc\`, \`@device\`, \`@arrow\`, \`@ink\`, \`@image\` and \`@comment\` lines unchanged unless the task is about them. \`@comment\` lines are the user's review comments; read them, they may say what to change.
 
 ## Icons
 
