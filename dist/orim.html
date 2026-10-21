@@ -11768,7 +11768,8 @@ function showExportFallback(fmt,filename,data,preview){
  * The board's Mermaid code is deflated and base64url-encoded into the link:
  *   https://<host>/orim/#m=<data>
  * Opening that link creates a new board from it (see Boards.route).
- * Images are not included; their pixels are far too large for a QR code.
+ * Images are not included; their pixels are far too large for a link or a QR code.
+ * The link always carries the whole board; a QR code may carry a smaller version that fits.
  */
 'use strict';
 const ORIM_PAGES='https://jussikauhanen.github.io/orim/';
@@ -11799,15 +11800,16 @@ async function decodeBoard(hash){
   return new TextDecoder().decode(await pipeBytes(data,new DecompressionStream('deflate-raw')));
 }
 
-// Three sizes of the same board, largest first: everything except image placement,
-// then without pen strokes, then without any canvas data (the board is laid out again).
+// Three sizes of the same board, largest first: everything except image placement, then without
+// pen strokes, then without positions and arrows (laid out again on the other device). Documents,
+// tables, tickets, mockup screens and comments are content, so every size keeps them.
 function shareVariants(code){
   const lines=String(code).split('\n');
   const keep=re=>lines.filter(l=>!re.test(l)).join('\n').replace(/\n{3,}/g,'\n\n').replace(/\s+$/,'')+'\n';
   return [
-    {code:keep(/^\s*%%\s*@image\b/),note:'Positions, arrows and drawings included.'},
+    {code:keep(/^\s*%%\s*@image\b/),note:'Everything except images.'},
     {code:keep(/^\s*%%\s*@(image|ink)\b/),note:'Positions included. Pen and highlighter strokes left out to fit.'},
-    {code:stripLayout(code)+'\n',note:'Positions left out to fit; the board is laid out again on the other device.'}
+    {code:keep(/^\s*%%\s*(@(image|ink|pos|route|arrow)\b|layout:)/),note:'Positions left out to fit; the board is laid out again on the other device.'}
   ];
 }
 
@@ -11829,28 +11831,27 @@ async function openShareQR(){
     const url=base+'#'+await encodeBoard(v.code);
     opts.push(Object.assign({url},v));
   }
-  const fits=opts.filter(o=>o.url.length<=QR_MAX);
-  if(!fits.length){
-    openModal('Too large for a QR code','<p>This board is too large to fit in a QR code, even without positions. Export a board file (.json) and open it on the other device with Import.</p>',[]);
-    return;
-  }
+  // The link always carries the whole board; only the QR code may have to leave things out to fit.
+  const full=opts[0], fits=opts.filter(o=>o.url.length<=QR_MAX);
   let i=0;
   const hasImg=((state.model&&state.model.images)||[]).length>0;
   const show=()=>{
-    const o=fits[i], q=qrSVG(o.url);
+    const o=fits[i], q=o?qrSVG(o.url):null;
     openModal('Open on another device',
       '<div class="qr-wrap">'+
-        '<div class="qr-code">'+q.svg+'</div>'+
+        (q?'<div class="qr-code">'+q.svg+'</div>':'')+
         '<div class="qr-side">'+
-          '<p>Scan with a phone or tablet camera to open this board there. The link carries the whole board, so nothing is uploaded. You can also save the link or the code below.</p>'+
-          '<p class="qr-note">'+esc(o.note)+(hasImg?' Images are not included.':'')+' '+o.url.length+' characters.</p>'+
-          '<label class="qr-lbl">Link</label><input class="modal-input qr-url" readonly value="'+esc(o.url)+'">'+
-          '<label class="qr-lbl">Mermaid</label><textarea class="qr-code-text" readonly>'+esc(o.code)+'</textarea>'+
+          (q?'<p>Scan with a phone or tablet camera to open this board there. The link carries the whole board, so nothing is uploaded.</p>'+
+            '<p class="qr-note">QR code: '+esc(o.note)+(o===full?'':' The link below has everything.')+'</p>'
+            :'<p>This board is too large for a QR code. Copy the link instead: it carries the whole board, so nothing is uploaded.</p>')+
+          '<p class="qr-note">Link: everything'+(hasImg?' except images (use a board file for those)':'')+', '+full.url.length+' characters.</p>'+
+          '<label class="qr-lbl">Link</label><input class="modal-input qr-url" readonly value="'+esc(full.url)+'">'+
+          '<label class="qr-lbl">Mermaid</label><textarea class="qr-code-text" readonly>'+esc(full.code)+'</textarea>'+
         '</div>'+
       '</div>',
-      [{label:'Copy link',primary:true,run:()=>copyText(o.url,'Link copied')},
-       {label:'Copy Mermaid',run:()=>copyText(o.code,'Mermaid code copied')}]
-        .concat(fits.length>1?[{label:i<fits.length-1?'Smaller code':'Larger code',run:()=>{ i=i<fits.length-1?i+1:0; show(); }}]:[]));
+      [{label:'Copy link',primary:true,run:()=>copyText(full.url,'Link copied')},
+       {label:'Copy Mermaid',run:()=>copyText(full.code,'Mermaid code copied')}]
+        .concat(fits.length>1?[{label:i<fits.length-1?'Smaller QR code':'Larger QR code',run:()=>{ i=i<fits.length-1?i+1:0; show(); }}]:[]));
     $('.modal').classList.add('qr');
     const u=$('#modalBody .qr-url'); u.addEventListener('focus',()=>u.select());
   };

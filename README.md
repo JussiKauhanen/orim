@@ -29,7 +29,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Document cards, like Miro docs: headings, paragraphs, bulleted and numbered lists, bold and italic, from the toolbar or by typing `# `, `## `, `### `, `- ` or `1. ` at the start of a line. Expand opens a larger view for reading and writing.
 - Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color. Frames connect too: hover a frame's border or title for its blue dots, or start the Arrow tool there.
 - Arrow ends snap to shapes; pull hard to detach.
-- Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
+- Items pop out of a frame when flicked out fast; slow drags grow the frame instead. Dragging a frame's handles smaller than its contents moves the contents closer together, keeping their arrangement (undo restores them).
 - Connectors keep their connection points: the side you drag out from and the side you drop on. Drag a connector's end to another side of the same shape to move it, or drop it in the middle of the shape to let orim choose.
 - Elbow connectors are routed around shapes with right angles, like Miro. Tidy up → Connectors sets Curved, Straight or Elbow for the whole board; it is saved as Mermaid's own `curve` setting (`basis`, `linear`, `step`), so other Mermaid tools draw it the same way.
 - Dragging something to the edge of the view scrolls the board and, if you keep pushing, zooms out a little.
@@ -244,7 +244,8 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 
 - The board travels inside the link itself (`#m=` followed by the deflated, base64url-encoded Mermaid), so nothing is uploaded or stored anywhere else.
 - Only the current board is included, and images are left out.
-- A QR code holds about 2,900 characters. If the board is too large, pen strokes and then positions are dropped (the board is laid out again on arrival); **Smaller code** switches between the sizes. Boards that still do not fit need a board file.
+- **Copy link** and **Copy Mermaid** always carry the whole board: positions, arrows, drawings, documents, tables, tickets, mockup screens and comments (only images are left out).
+- A QR code holds about 2,900 characters. If the board is too large for it, the QR code alone drops pen strokes and then positions and arrows (the board is laid out again on arrival); documents, tables, tickets, screens and comments always stay. **Smaller QR code** switches between the sizes. A board that does not fit at all shows just the link.
 - On GitHub Pages or `localhost` the link points to the same site. Anywhere else it points to `https://jussikauhanen.github.io/orim/`; change `ORIM_PAGES` in `js/share-qr.js` for your own deployment.
 
 ## Keyboard shortcuts
