@@ -20,6 +20,9 @@ function onDown(e){
   const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
   // Links in documents: Ctrl or Cmd+click opens them.
   const lk=e.target.closest&&e.target.closest('.doc-link'); if(lk&&(e.ctrlKey||e.metaKey)&&e.button===0){ e.preventDefault(); openLink(lk.dataset.href); return; }
+  // Checklist boxes in documents tick and untick with a click, right on the board.
+  const td=e.target.closest&&e.target.closest('[data-todo]'); if(td&&e.button===0&&!e.shiftKey&&(state.tool==='select')){ const nid=td.closest('[data-kind="node"]').dataset.id, bi=+td.dataset.todo;
+    e.preventDefault(); mutate(mm=>{ const n=mm.nodes.get(nid); const b=n&&n.doc&&n.doc.blocks[bi]; if(b&&b.t==='todo'){ if(b.c) delete b.c; else b.c=1; } },{structural:false}); return; }
   // Middle or right mouse button drags the board around; so do the Hand tool and Space.
   if(e.button===1||e.button===2||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;

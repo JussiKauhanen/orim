@@ -3,15 +3,38 @@
  */
 'use strict';
 const Core={measure:(t,size)=>String(t).length*size*0.56};
-function measureN(n,t,size){ return Core.measure(t,size)*(n&&n.bold?1.07:1); }
+// Fonts for shapes and notes, saved as a plain CSS font-family in the style line (style A font-family:Caveat),
+// so other Mermaid tools use the font if they have it and their default if not.
+const FONTS={caveat:{name:'Caveat',hint:'Handwritten',css:"'Caveat',cursive",g:'Caveat:wght@500;700',k:1.18},bangers:{name:'Bangers',hint:'Marker',css:"'Bangers',Impact,sans-serif",g:'Bangers',k:1},
+  fredoka:{name:'Fredoka',hint:'Rounded',css:"'Fredoka',system-ui,sans-serif",g:'Fredoka:wght@400;500;600',k:1},georgia:{name:'Georgia',hint:'Serif',css:"Georgia,'Times New Roman',serif",k:1},
+  mono:{name:'Mono',hint:'Code',css:"'JetBrains Mono',ui-monospace,monospace",g:'JetBrains+Mono:wght@400;500',k:1,token:'monospace'}};
+const fontKey=v=>{ const s=String(v||'').replace(/['"]/g,'').split(',')[0].trim().toLowerCase().replace(/\s+/g,''); return s==='monospace'||s==='jetbrainsmono'?'mono':FONTS[s]?s:null; };
+const fontCss=k=>k&&FONTS[k]?FONTS[k].css:null;
+function measureN(n,t,size){ return Core.measure(t,size,n&&n.font)*(n&&n.bold?1.07:1); }
 const GRID=8, SNAP=v=>Math.round(v/GRID)*GRID;
 const PAD=24, PAD_TOP=40, ICON=52;
 const RESERVED=new Set(['end','graph','flowchart','subgraph','style','class','classDef','click','linkStyle','direction','default','call','href']);
-const V11={rect:'rect',rectangle:'rect',proc:'rect',process:'rect',square:'rect',rounded:'round',event:'round',stadium:'stadium',pill:'stadium',terminal:'stadium',cyl:'cyl',cylinder:'cyl',db:'cyl',database:'cyl','h-cyl':'cyl','lin-cyl':'cyl',das:'cyl',circle:'circle',circ:'circle','sm-circ':'circle','dbl-circ':'circle','double-circle':'circle',start:'circle',stop:'circle',diamond:'diamond',diam:'diamond',decision:'diamond',question:'diamond',hex:'hex',hexagon:'hex',prepare:'hex','lean-r':'para','lean-l':'para','in-out':'para','out-in':'para','lean-right':'para','lean-left':'para',trap:'para','trap-b':'para','trap-t':'para',text:'text',subproc:'sub',subprocess:'sub',subroutine:'sub','fr-rect':'sub',doc:'rect',document:'rect'};
+const V11={rect:'rect',rectangle:'rect',proc:'rect',process:'rect',square:'rect',rounded:'round',event:'round',stadium:'stadium',pill:'stadium',terminal:'stadium',cyl:'cyl',cylinder:'cyl',db:'cyl',database:'cyl','h-cyl':'cyl','lin-cyl':'cyl',das:'cyl',circle:'circle',circ:'circle','sm-circ':'circle','dbl-circ':'circle','double-circle':'circle',start:'circle',stop:'circle',diamond:'diamond',diam:'diamond',decision:'diamond',question:'diamond',hex:'hex',hexagon:'hex',prepare:'hex','lean-r':'para','lean-l':'para','in-out':'para','out-in':'para','lean-right':'para','lean-left':'para',trap:'para','trap-b':'para','trap-t':'para',text:'text',subproc:'sub',subprocess:'sub',subroutine:'sub','fr-rect':'sub',doc:'paper',document:'paper',cloud:'cloud',tri:'tri',triangle:'tri',extract:'tri',star:'star',flag:'chevron','notch-pent':'chevron',callout:'bubble',comment:'bubble'};
 const BRACKETS=[['(((',[')))'],'circle'],['([',['])'],'stadium'],['[(',[')]'],'cyl'],['((',['))'],'circle'],['[[',[']]'],'sub'],['[/',['/]','\\]'],'para'],['[\\',['\\]','/]'],'para'],['{{',['}}'],'hex'],['(',[')'],'round'],['[',[']'],'rect'],['{',['}'],'diamond'],['>',[']'],'rect']];
 const BR_OUT={rect:['[',']'],round:['(',')'],stadium:['([','])'],cyl:['[(',')]'],circle:['((','))'],sub:['[[',']]'],para:['[/','/]'],hex:['{{','}}'],diamond:['{','}']};
+// Shapes beyond Mermaid's classic set. They are written as the nearest classic shape plus a class (A("Idea"):::cloud),
+// so GitHub, Azure DevOps and draw.io still show a box with the right text, and orim draws the real shape.
+const XSHAPES={cloud:'round',bubble:'round',tri:'rect',star:'rect',arrow:'rect',chevron:'rect',paper:'rect'};
+// Board themes: colours for the board, shapes, lines and frames. Saved as one canvas line (%% @theme midnight),
+// so other Mermaid tools simply show their own colours. Frames take the accent colours in turn.
+const BOARD_THEMES={
+  classic:{name:'Classic'},
+  midnight:{name:'Midnight',dark:true,bg:'#2d2f4e',grid:'rgba(255,255,255,.07)',node:'#2d2f4e',stroke:'#c9cbe0',text:'#ffffff',edge:'#b8bbd6',frame:'rgba(255,255,255,.035)',frameText:'#e9eaf5',label:'#2d2f4e',code:'#25273f',edgeText:'#e9eaf5',ink:'#ffffff',accents:['#6cc7b9','#f6c97f','#f2805f','#9ea9ff','#f7a8cf']},
+  pastel:{name:'Pastel',bg:'#fbf8f3',grid:'rgba(60,40,20,.06)',node:'#ffffff',stroke:'#3d3d3d',text:'#262626',edge:'#7a7a7a',frame:'#ffffff',frameText:'#4a4a4a',label:'#fbf8f3',code:'#f4f1ea',edgeText:'#4a4a4a',accents:['#56b8a6','#e3a93c','#ea7f5f','#7f88f5','#de74a6'],tint:true},
+  blueprint:{name:'Blueprint',dark:true,bg:'#1f4f8f',grid:'rgba(255,255,255,.13)',node:'rgba(255,255,255,.06)',stroke:'#e6f0ff',text:'#ffffff',edge:'#cfe0ff',frame:'rgba(255,255,255,.04)',frameText:'#e6f0ff',label:'#1f4f8f',code:'#1a4579',edgeText:'#ffffff',ink:'#ffffff',font:'mono'},
+  sketch:{name:'Sketch',bg:'#f7f4ec',grid:'rgba(60,50,30,.07)',node:'#fffdf7',stroke:'#3a3a3a',text:'#2a2a2a',edge:'#3a3a3a',frame:'#fffdf7',frameText:'#3a3a3a',label:'#f7f4ec',code:'#efeadd',edgeText:'#3a3a3a',font:'caveat',accents:['#3a3a3a']}
+};
+const boardTheme=m=>m&&m.theme&&BOARD_THEMES[m.theme]&&m.theme!=='classic'?BOARD_THEMES[m.theme]:null;
+// The accent of a frame: top-level frames take the theme's colours in turn, and frames inside share their parent's.
+function themeAccent(m,gid){ const T=boardTheme(m); if(!T||!T.accents||!gid||!m.groups.has(gid)) return null; let g=m.groups.get(gid), k=0; while(g&&g.parent&&m.groups.has(g.parent)&&k++<50) g=m.groups.get(g.parent);
+  const tops=m.groupOrder.filter(id=>{ const x=m.groups.get(id); return x&&!(x.parent&&m.groups.has(x.parent))&&!x.dev; }); const i=tops.indexOf(g.id); return i<0?null:T.accents[i%T.accents.length]; }
 const LAYOUT_MARK=/^%%\s*layout\b/i;
-const POS_RE=/^\s*%%\s*@(pos|ink|arrow|route|image|comment|table|doc|device)\b/;
+const POS_RE=/^\s*%%\s*@(pos|ink|arrow|route|image|comment|table|doc|device|theme|rot)\b/;
 const ID_RE=/^[\p{L}\p{N}_]+(?:[-.][\p{L}\p{N}_]+)*/u;
 
 function decodeLabel(t){return String(t).replace(/<br\s*\/?>/gi,'\n').replace(/#quot;/g,'"').replace(/#amp;/g,'&').replace(/#lt;/g,'<').replace(/#gt;/g,'>').replace(/#35;/g,'#')}
@@ -135,6 +158,7 @@ function parseStyle(str){
     else if(key==='font-size'&&/^\d+(\.\d+)?(px)?$/.test(val)) st.fontSize=parseFloat(val);
     else if(key==='font-weight'&&/^(bold|[6-9]00)$/.test(val)) st.bold=true;
     else if(key==='font-style'&&val==='italic') st.italic=true;
+    else if(key==='font-family'&&fontKey(val)) st.font=fontKey(val);
     else if(key==='background') st.bg=val;
     else st.extra.push(p);
   }
@@ -158,6 +182,20 @@ function styleOf(m,id){
   const out={...c}; for(const [k,v] of Object.entries(own)){ if(k==='extra') continue; if(v!=null&&v!==false) out[k]=v; }
   out.extra=[...(c.extra||[]),...(own.extra||[])]; return out;
 }
+// Cells copied from Excel, Google Sheets or a CSV file: tab-separated, or comma or semicolon separated with the
+// same number of cells on every line. Null when the text is not a grid.
+function parseGrid(text){
+  const lines=String(text||'').replace(/\r/g,'').replace(/\n+$/,'').split('\n'); if(lines.length<2) return null;
+  const split=(l,sep)=>{ const out=[]; let cur='',q=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(q){ if(ch==='"'&&l[i+1]==='"'){ cur+='"'; i++; } else if(ch==='"') q=false; else cur+=ch; } else if(ch==='"'&&!cur.trim()) q=true; else if(ch===sep){ out.push(cur.trim()); cur=''; } else cur+=ch; } out.push(cur.trim()); return out; };
+  for(const sep of ['\t',';',',']){
+    const rows=lines.map(l=>split(l,sep)); const n=rows[0].length; if(n<2) continue;
+    if(sep!=='\t'&&!rows.every(r=>r.length===n)) continue;
+    if(sep==='\t'&&rows.filter(r=>r.length>1).length<Math.ceil(rows.length*0.6)) continue;
+    const nc=Math.min(12,Math.max(...rows.map(r=>r.length)));
+    return rows.slice(0,80).map(r=>{ const o=r.slice(0,nc).map(c=>c.slice(0,400)); while(o.length<nc) o.push(''); return o; });
+  }
+  return null;
+}
 // Tables: {rows:[[cell,…],…], colors:{"r,c":"g"|"a"|"r"}}. Row 0 is the header row.
 function cleanTable(d){
   let rows=Array.isArray(d&&d.rows)?d.rows.filter(Array.isArray).map(r=>r.slice(0,20).map(c=>String(c==null?'':c).slice(0,500))):[];
@@ -168,8 +206,13 @@ function cleanTable(d){
 }
 // Documents: {blocks:[{t:'h1'|'h2'|'h3'|'p'|'ul'|'ol', r:[{x:text, b?:1, i?:1}]}]}.
 function cleanDoc(d){
-  const T=new Set(['h1','h2','h3','p','ul','ol']);
-  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>({t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; const u=safeUrl(x.u); if(u) o.u=u; return o; })})):[];
+  // Blocks: headings, paragraphs, bulleted and numbered lists, checklists (c: ticked), code (lang), quotes and dividers.
+  const T=new Set(['h1','h2','h3','p','ul','ol','todo','code','quote','hr']);
+  let blocks=Array.isArray(d&&d.blocks)?d.blocks.filter(b=>b&&T.has(b.t)).map(b=>{
+    if(b.t==='hr') return {t:'hr',r:[]};
+    if(b.t==='code'){ const x=(Array.isArray(b.r)?b.r:[]).map(r=>r&&typeof r.x==='string'?r.x:'').join('').slice(0,20000); const o={t:'code',r:x?[{x}]:[]}; if(/^[\w+#.-]{1,20}$/.test(b.lang||'')) o.lang=b.lang; return o; }
+    const o={t:b.t,r:(Array.isArray(b.r)?b.r:[]).filter(x=>x&&typeof x.x==='string'&&x.x).map(x=>{ const o={x:x.x.slice(0,4000)}; if(x.b) o.b=1; if(x.i) o.i=1; const u=safeUrl(x.u); if(u) o.u=u; return o; })};
+    if(b.t==='todo'&&b.c) o.c=1; return o; }):[];
   if(!blocks.length) blocks=[{t:'p',r:[]}];
   const out={blocks:blocks.slice(0,400)};
   // A ticket: a work item type and its fields.
@@ -184,14 +227,22 @@ function mdToDoc(md){
       else if(/^https?:/.test(t)) out.push({x:t,u:t});
       else if(t.startsWith('**')) out.push({x:t.slice(2,-2),b:1}); else out.push({x:t.slice(1,-1),i:1}); last=m.index+t.length; }
     if(last<s.length) out.push({x:s.slice(last)}); return out.filter(r=>r.x); };
-  for(const raw of String(md||'').replace(/\r/g,'').split('\n')){ const l=raw.trimEnd(); if(!l.trim()){ continue; } let m;
+  const L=String(md||'').replace(/\r/g,'').split('\n');
+  for(let li=0;li<L.length;li++){ const raw=L[li]; const l=raw.trimEnd(); if(!l.trim()){ continue; } let m;
+    // A fenced code block keeps its lines exactly, blank ones too.
+    if((m=/^\s*```\s*([\w+#.-]*)\s*$/.exec(l))){ const body=[]; li++; while(li<L.length&&!/^\s*```\s*$/.test(L[li])) body.push(L[li++]); const x=body.join('\n'); const o={t:'code',r:x?[{x}]:[]}; if(m[1]) o.lang=m[1]; blocks.push(o); continue; }
+    if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)){ blocks.push({t:'hr',r:[]}); continue; }
+    if((m=/^\s*[-*]\s+\[([ xX])\]\s*(.*)$/.exec(l))){ const o={t:'todo',r:runs(m[2])}; if(m[1]!==' ') o.c=1; blocks.push(o); continue; }
+    if((m=/^\s*>\s?(.*)$/.exec(l))){ blocks.push({t:'quote',r:runs(m[1])}); continue; }
     if((m=/^(#{1,3})\s+(.*)$/.exec(l))) blocks.push({t:'h'+m[1].length,r:runs(m[2])});
     else if((m=/^\s*[-*•]\s*(.*)$/.exec(l))&&/^\s*[-*•](\s|$)/.test(l)) blocks.push({t:'ul',r:runs(m[1])});
     else if((m=/^\s*\d+[.)]\s*(.*)$/.exec(l))&&/^\s*\d+[.)](\s|$)/.test(l)) blocks.push({t:'ol',r:runs(m[1])});
     else blocks.push({t:'p',r:runs(l.trim())}); }
   return cleanDoc({blocks});
 }
-function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ const s=b.r.map(r=>{ let x=r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x; if(r.u) x=r.x===r.u?r.u:'['+x+']('+r.u+')'; return x; }).join(''); if(b.t==='ol') k++; else k=0; return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:s; }).join('\n'); }
+function docToMd(doc){ let k=0; return (doc&&doc.blocks||[]).map(b=>{ if(b.t==='code'){ k=0; return '```'+(b.lang||'')+'\n'+((b.r[0]&&b.r[0].x)||'')+'\n```'; } if(b.t==='hr'){ k=0; return '---'; }
+  const s=b.r.map(r=>{ let x=r.b?'**'+r.x+'**':r.i?'*'+r.x+'*':r.x; if(r.u) x=r.x===r.u?r.u:'['+x+']('+r.u+')'; return x; }).join(''); if(b.t==='ol') k++; else k=0;
+  return b.t[0]==='h'?'#'.repeat(+b.t[1])+' '+s:b.t==='ul'?'- '+s:b.t==='ol'?k+'. '+s:b.t==='todo'?'- ['+(b.c?'x':' ')+'] '+s:b.t==='quote'?'> '+s:s; }).join('\n'); }
 function newModel(){return {title:'',fmExtra:[],pre:[],dir:'LR',comments:[],nodes:new Map(),nodeOrder:[],groups:new Map(),groupOrder:[],edges:[],styles:new Map(),extras:[],pos:new Map(),inks:[],arrows:[],images:[],threads:[],cstyles:new Map()};}
 const r10=v=>Math.round(v*10)/10;
 function encodeInk(k){
@@ -233,7 +284,7 @@ function parseMermaid(src){
   }
   const removeNode=id=>{m.nodes.delete(id); m.nodeOrder=m.nodeOrder.filter(x=>x!==id);};
   const taken=id=>m.nodes.has(id)||m.groups.has(id);
-  let header=false; const stack=[]; const pendRoute=new Map(),pendLink=[],pendRich=new Map(),pendDev=new Map();
+  let header=false; const stack=[]; const pendRoute=new Map(),pendLink=[],pendRich=new Map(),pendDev=new Map(),pendRot=new Map();
   const cur=()=>stack.length?stack[stack.length-1]:null;
   function registerRef(ref){
     const id=ref.id;
@@ -245,7 +296,7 @@ function parseMermaid(src){
     else if(!n.group&&g) n.group=g.id;
     if(ref.def){ n.implicit=false; n.shape=ref.shape; n.icon=ref.icon||null; if(ref.label!=null) n.label=ref.label; }
     if(ref.cls) n.cls=ref.cls;
-    if(n.cls==='sticky'||n.cls==='table'||n.cls==='doc'||UI_KINDS[n.cls]){ n.shape=n.cls; n.cls=null; }
+    if(n.cls==='sticky'||n.cls==='table'||n.cls==='doc'||UI_KINDS[n.cls]||XSHAPES[n.cls]){ n.shape=n.cls; n.cls=null; }
     return id;
   }
   for(;li<lines.length;li++){
@@ -267,6 +318,10 @@ function parseMermaid(src){
       if(am){ const rr={r:am[2],a:am[3]&&am[3]!=='-'?am[3]:null,b:am[4]&&am[4]!=='-'?am[4]:null}; const ra=/ra=(\d+)/.exec(am[5]||''), rb=/rb=(\d+)/.exec(am[5]||''); if(ra) rr.ra=+ra[1]; if(rb) rr.rb=+rb[1]; pendRoute.set(+am[1],rr); continue; }
       am=/^%%\s*@(table|doc)\s+(\S+)\s+(\{.*\})\s*$/.exec(t);
       if(am){ try{ pendRich.set(am[2],{kind:am[1],data:JSON.parse(am[3])}); }catch(_){} continue; }
+      am=/^%%\s*@theme\s+([a-z]+)\s*$/.exec(t);
+      if(am){ if(BOARD_THEMES[am[1]]) m.theme=am[1]; continue; }
+      am=/^%%\s*@rot\s+(\S+)\s+(90|180|270)\s*$/.exec(t);
+      if(am){ pendRot.set(am[1],+am[2]); continue; }
       am=/^%%\s*@device\s+(\S+)\s+(mobile|tablet|desktop)\s*$/.exec(t);
       if(am){ pendDev.set(am[1],am[2]); continue; }
       if(LAYOUT_MARK.test(t)) continue;
@@ -325,6 +380,8 @@ function parseMermaid(src){
   for(const [i,r] of pendRoute){ const e=m.edges[i]; if(!e) continue; e.route=r.r; if(r.a) e.sa=r.a; if(r.b) e.sb=r.b; if(r.ra!=null) e.ra=r.ra; if(r.rb!=null) e.rb=r.rb; }
   for(const [id,x] of pendRich){ const n=m.nodes.get(id); if(!n) continue; if(x.kind==='table'){ n.shape='table'; n.table=cleanTable(x.data); } else { n.shape='doc'; n.doc=cleanDoc(x.data); } }
   for(const [gid,dv] of pendDev){ const g=m.groups.get(gid); if(g) g.dev=dv; }
+  // Text direction: 90, 180 or 270 degrees, for shapes, notes, text and frame titles.
+  for(const [id,r] of pendRot){ const x=m.nodes.get(id)||m.groups.get(id); if(x) x.rot=r; }
   for(const n of m.nodes.values()){ if(n.shape==='table'&&!n.table) n.table=cleanTable({}); if(n.shape==='doc'&&!n.doc) n.doc=cleanDoc({}); }
   for(const n of m.nodes.values()) if(n.group&&!m.groups.has(n.group)) n.group=null;
   applyClassDefs(m); m.curve=boardCurve(m);
@@ -350,6 +407,7 @@ function nodeDef(n){
   if(n.shape==='icon') return n.id+'@{ icon: "'+n.icon+'", label: "'+encodeQuoted(n.label)+'" }';
   if(n.shape==='text') return n.id+'@{ shape: text, label: "'+encodeQuoted(n.label)+'" }';
   if(n.shape==='sticky'||n.shape==='table'||n.shape==='doc'||isUi(n)) return n.id+'['+q(n.label)+']:::'+n.shape;
+  if(XSHAPES[n.shape]){ const b=BR_OUT[XSHAPES[n.shape]]; return n.id+b[0]+q(n.label)+b[1]+':::'+n.shape; }
   if(n.shape==='rect'&&n.label===n.id&&!n.cls) return n.id;
   const br=BR_OUT[n.shape]||BR_OUT.rect;
   return n.id+br[0]+q(n.label)+br[1]+(n.cls?':::'+n.cls:'');
@@ -361,18 +419,18 @@ function edgeDef(e){
 }
 function styleDef(id,st){
   const parts=[]; if(st.fill) parts.push('fill:'+st.fill); if(st.stroke) parts.push('stroke:'+st.stroke); if(st.color) parts.push('color:'+st.color);
-  if(st.fontSize) parts.push('font-size:'+Math.round(st.fontSize)+'px'); if(st.bold) parts.push('font-weight:bold'); if(st.italic) parts.push('font-style:italic'); if(st.bg) parts.push('background:'+st.bg);
+  if(st.fontSize) parts.push('font-size:'+Math.round(st.fontSize)+'px'); if(st.bold) parts.push('font-weight:bold'); if(st.italic) parts.push('font-style:italic'); if(st.font&&FONTS[st.font]) parts.push('font-family:'+(FONTS[st.font].token||FONTS[st.font].name)); if(st.bg) parts.push('background:'+st.bg);
   parts.push(...(st.extra||[]));
   return parts.length?'style '+id+' '+parts.join(','):null;
 }
 const r1=v=>Math.round(v);
 function layoutLines(m,boxes){
-  const L=[];
-  for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; L.push('%% @pos '+id+' '+r1(n.x)+' '+r1(n.y)+(n.sized?' '+r1(n.w)+' '+r1(n.h):'')); }
+  const L=[]; if(m.theme&&m.theme!=='classic'&&BOARD_THEMES[m.theme]) L.push('%% @theme '+m.theme);
+  for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; L.push('%% @pos '+id+' '+r1(n.x)+' '+r1(n.y)+(n.sized?' '+r1(n.w)+' '+r1(n.h):'')); if(n.rot) L.push('%% @rot '+id+' '+n.rot); }
   for(const gid of m.groupOrder){
     const p=m.pos.get(gid);
     if(p&&p.w) L.push('%% @pos '+gid+' '+r1(p.x)+' '+r1(p.y)+' '+r1(p.w)+' '+r1(p.h));
-    const g=m.groups.get(gid); if(g&&g.dev) L.push('%% @device '+gid+' '+g.dev);
+    const g=m.groups.get(gid); if(g&&g.dev) L.push('%% @device '+gid+' '+g.dev); if(g&&g.rot) L.push('%% @rot '+gid+' '+g.rot);
   }
   (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb, rw=e.ra!=null||e.rb!=null; if((e.route&&e.route!==(m.curve||'curved'))||sd||rw) L.push('%% @route '+i+' '+(e.route||m.curve||'curved')+(sd||rw?' '+(e.sa||'-')+' '+(e.sb||'-'):'')+(e.ra!=null?' ra='+e.ra:'')+(e.rb!=null?' rb='+e.rb:'')); });
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }

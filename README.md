@@ -22,7 +22,15 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Paste any text onto the board to turn it into connected boxes or sticky notes.
 
 **Board**
-- Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut.
+- Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut. Besides the flowchart shapes there are a cloud, speech bubble, triangle, star, block arrow, chevron and document.
+- Text in a shape or sticky note grows and shrinks with it (Auto size); pick a size in the toolbar to fix it. Six fonts (handwritten, marker, rounded, serif and code), kept in PNG and SVG exports.
+- **Style** recolours the whole board: Classic, Midnight (dark navy with coloured frames), Pastel, Blueprint or Sketch (handwritten).
+- **Templates** opens a picker like Miro's: use cases on the left, a search box, and a grid of coloured previews. Click a card to use it, or its yellow mark to use it and ask Claude the suggested next step: architecture, journey map, mind map, SWOT, retro, kanban, sprint plan and more.
+- Paste cells from Excel, Google Sheets or a CSV file to make a table, or into a selected table to fill it.
+- **Text direction** on shapes, notes, text and frame titles: four examples to pick from, horizontal or turned 90°, 180° or 270°. A turned frame title runs up the frame's left side.
+- **Duplicate** on a frame's toolbar (or Ctrl+D) copies the frame with everything in it and the lines between, next to it.
+- Mockups can show changes: start a column, menu item or piece's text with `+` (new, green), `~` (changed, amber) or `-` (removed, red). A table with the columns `Account name`, `City` and `+Industry` (one per line) draws the new column in green. **Mark** on a piece's toolbar cycles the marks. Lines to and from mockup screens are drawn above the screens' pieces.
+- Documents have checklists you can tick on the board, code blocks, quotes and dividers (type `[] `, ```` ``` ````, `> ` or `---` and a space).
 - Tables for comparisons: edit cells in place, Tab to the next cell (Tab in the last cell adds a row), Enter to go down, add and delete rows and columns, colour cells green, amber or red. The header row and first column are bold. Pasting cells from a spreadsheet fills the table.
 - Connectors can attach to one table row: hover a table for a dot at each end of every row, or drop a connector on a row. Rows keep their connectors when you add, move or delete other rows.
 - Simple UI mockups, drawn at half size so they sit well next to other shapes: the Mockup tool adds a phone, iPad or desktop screen, blank or as a login or main page, made of grey wireframe pieces (heading, text, button, input, image, top bar, bottom menu, side menu, table), each with an optional accent colour (blue, green, yellow, red, purple or black) from its toolbar. Each piece can be moved, edited and connected to anything on the board; screens connect to each other for a flow. Auto layout moves screens as a whole and leaves their pieces alone.
@@ -130,6 +138,7 @@ orim/
 │   ├── minimap.js          Overview while panning and zooming
 │   ├── boards.js           Home page, board list, saving, #b-<id> links
 │   ├── folder.js           Boards as .md files in a folder you choose (File System Access API)
+│   ├── board-style.js      Board styles (themes) menu
 │   └── main.js             Startup
 ├── assets/
 │   ├── icons.json          Icon pack (generated)
@@ -171,7 +180,9 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 %% @route <edgeIndex> curved|straight|elbow [<from> <to>] [ra=<row>] [rb=<row>]   connector routing; sides t r b l, or - for automatic; ra/rb attach an end to a table row
 %% @device <frameId> mobile|tablet|desktop          the frame is a mockup screen of that device
 %% @table <id> <json>                               table cells {rows:[[…]], colors:{"row,col":"g|a|r"}}; row 0 is the header
-%% @doc   <id> <json>                               document {blocks:[{t:h1|h2|h3|p|ul|ol, r:[{x:text, b:1, i:1, u:url}]}], kind?:epic|feature|story|bug|task, fields?:{…}}
+%% @doc   <id> <json>                               document {blocks:[{t:h1|h2|h3|p|ul|ol|todo|quote|hr|code, r:[{x:text, b:1, i:1, u:url}], c?:1 (ticked), lang?}], kind?:epic|feature|story|bug|task, fields?:{…}}
+%% @theme <name>                                    board style: midnight, pastel, blueprint or sketch
+%% @rot   <id> 90|180|270                           text direction of a shape or frame title
 %% @arrow <id> <kind> <x1> <y1> <x2> <y2> <w> <color> [from=<id>] [to=<id>]
 %% @ink   <id> pen|hl <color> <w> <x,y> <dx,dy> ...   pen and highlighter strokes
 %% @image <id> <x> <y> <w> <h> [front] [faded]       image placement; front = above shapes, faded = shown at 40% (pixels live in the board file)
@@ -186,7 +197,7 @@ Mockup pieces are nodes with classes such as `uiButton`, `uiInput` and `uiTabbar
 
 Tables and documents are nodes with the `table` and `doc` classes, so other Mermaid tools show them as a box with the title. Text mode leaves them, mockup screens and their connectors as they are.
 
-Sticky notes are nodes with the `sticky` class. Text styling uses standard `style` properties (`font-size`, `font-weight`, `font-style`, `color`), plus `background` for the highlight.
+Sticky notes are nodes with the `sticky` class. The extra shapes are the nearest classic shape plus a class, `cloud`, `bubble`, `tri`, `star`, `arrow`, `chevron` or `paper`, for example `idea("Big idea"):::cloud`, so other Mermaid tools show a box with the right text. Text styling uses standard `style` properties (`font-size`, `font-weight`, `font-style`, `color`, `font-family`), plus `background` for the highlight. Fonts are Caveat, Bangers, Fredoka, Georgia and monospace; tools without them use their default font.
 
 ## Text mode
 
@@ -247,8 +258,9 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 - Claude replies with one small command per line (add, connect, update, frame, delete, screen, table, cell, doc, layout, say). A doc with a type is a ticket; each is applied as it arrives.
 - Ask for a comparison ("compare Crystallize and Optimizely and link the parts to the table") and Claude builds a table, colours the stronger option, and connects shapes to the rows they belong to. Longer notes become a document card. "Mock up a login and home screen for mobile and desktop" makes screens from the presets and adjusts their pieces. "Map out the tickets for this" makes an epic with stories, bugs and tasks, connected to each other and to the screens and services they touch. New items are pushed clear of what is already on the board. Claude sees the tables and documents on the board, so you can ask about them or have them updated.
 - Every request is one undo step, with an Undo button on the reply.
-- **Photo to board**: attach, paste or drop a photo of a whiteboard, sticky notes or a sketch, or a screenshot of a diagram (the picture button under the request box, or **Make editable** on a picture already on the board). Claude recreates it beside the picture as sticky notes in matching colours, shapes, lines, frames, tables and icons, keeping the layout; the picture is faded afterwards so the editable copy stands out (Fade on the picture toolbar toggles it). Pictures are scaled to 1500 px and sent as JPEG. Inside Claude this needs the page to be allowed to send images.
-- **AI on the selection**: select sticky notes, shapes or a frame and press **AI** on the toolbar for Group by theme, Summarise into a doc, Sort by sentiment, Make a diagram or Turn into tickets (one item: Expand with ideas, Explain in a doc). It runs without leaving the canvas and says what it did in a note.
+- **Photo to board**: attach, paste or drop a photo of a whiteboard, sticky notes or a sketch, or a screenshot of a diagram (the + button under the request box, or **Make editable** on a picture already on the board). Claude measures every item on a grid over the picture and recreates it beside it, with the same positions, sizes and colours: frames for areas and layers, shapes, sticky notes, text and lines. A follow-up such as "the colours are off" sends the picture again so Claude can compare; the picture is faded afterwards so the editable copy stands out (Fade on the picture toolbar toggles it). Pictures are scaled to 1500 px and sent as JPEG. Inside Claude this needs the page to be allowed to send images.
+- Hover a reply to see who answered: with your own API key, the model, the tokens in and out, and the cost at list prices (read from the answer itself, no extra call). Inside Claude it shows the model tier; it uses your Claude plan, so there is no separate cost.
+- **AI on the selection**: select sticky notes, shapes, a picture or a frame and press the yellow AI button at the end of the toolbar. Several items: Group by theme, Summarise into a doc, Sort by sentiment, Make a diagram, Turn into tickets. One item: Generate ideas, Explain in a doc, Turn into tickets. Any text: Fix grammar and spelling, Rewrite shorter, Translate (English, Finnish, Swedish, German, French, Spanish). A picture: Make editable. It runs without leaving the canvas and says what it did in a note.
 - Selected shapes are sent along, so "these" means your selection. Open comments are sent too.
 - **Think harder** uses a slower, more capable model for bigger changes.
 - While Claude works, the board stays sharp in the middle and goes soft around the edges, where a sketch drifts and a Claude cursor moves between its pieces; a status note shows what it is doing, and the real changes appear as they arrive.

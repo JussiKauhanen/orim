@@ -13,25 +13,26 @@ const FONT_EXPORT="'Segoe UI','Instrument Sans',system-ui,-apple-system,Helvetic
 const FONT_ATTR="'Instrument Sans','Segoe UI',system-ui,-apple-system,sans-serif";
 const mctx=document.createElement('canvas').getContext('2d');
 const mcache=new Map();
-Core.measure=(t,size)=>{const k=size+'|'+t;let v=mcache.get(k);if(v==null){mctx.font='500 '+size+'px '+FONT_UI;v=mctx.measureText(String(t)).width;if(mcache.size>5000)mcache.clear();mcache.set(k,v);}return v;};
+Core.measure=(t,size,font)=>{const k=size+'|'+(font||'')+'|'+t;let v=mcache.get(k);if(v==null){mctx.font='500 '+size+'px '+(fontCss(font)||FONT_UI);v=mctx.measureText(String(t)).width;if(mcache.size>5000)mcache.clear();mcache.set(k,v);}return v;};
 
-const app=$('#app'),board=$('#board'),world=$('#world'),lGroups=$('#lGroups'),lEdges=$('#lEdges'),lNodes=$('#lNodes'),lInk=$('#lInk'),lOver=$('#lOver'),lImg=$('#lImg'),lImgTop=$('#lImgTop');
+const app=$('#app'),board=$('#board'),world=$('#world'),lGroups=$('#lGroups'),lEdges=$('#lEdges'),lNodes=$('#lNodes'),lInk=$('#lInk'),lOver=$('#lOver'),lEdgesTop=$('#lEdgesTop'),lImg=$('#lImg'),lImgTop=$('#lImgTop');
 const boardPane=$('#boardPane'),ta=$('#code'),hl=$('#hl'),gutterIn=$('#gutterIn'),ctxEl=$('#ctx'),popEl=$('#pop');
 
 const SHAPES=[
   {id:'rect',name:'Rectangle',def:'Process',key:'r'},{id:'round',name:'Rounded',def:'Step'},{id:'stadium',name:'Stadium',def:'Start'},
   {id:'circle',name:'Circle',def:'Event',key:'o'},{id:'diamond',name:'Decision',def:'Decision',key:'d'},{id:'hex',name:'Hexagon',def:'Prepare'},
-  {id:'cyl',name:'Database',def:'Database',key:'b'},{id:'para',name:'Input / output',def:'Input'},{id:'sub',name:'Subroutine',def:'Subprocess'},{id:'text',name:'Text',def:'Text',key:'t'},{id:'sticky',name:'Sticky note',def:''}];
+  {id:'cyl',name:'Database',def:'Database',key:'b'},{id:'para',name:'Input / output',def:'Input'},{id:'sub',name:'Subroutine',def:'Subprocess'},{id:'text',name:'Text',def:'Text',key:'t'},{id:'sticky',name:'Sticky note',def:''},
+  {id:'cloud',name:'Cloud',def:'Idea'},{id:'bubble',name:'Speech bubble',def:'Comment'},{id:'tri',name:'Triangle',def:'Triangle'},{id:'star',name:'Star',def:'Star'},{id:'arrow',name:'Arrow',def:'Next'},{id:'chevron',name:'Chevron',def:'Step'},{id:'paper',name:'Document',def:'Document'}];
 const ARROW_COLORS=['#1a1a1a','#808080','#f24726','#ff9d48','#0ca789','#2d9bf0','#9510ac'];
 const ARROW_KINDS=[['curved','arCurved','Curved arrow'],['straight','arStraight','Straight arrow'],['elbow','arElbow','Elbow arrow'],['line','arLine','Line'],['block','arBlock','Block arrow']];
 const STICKY_COLORS=['#fff9b1','#f5d128','#ff9d48','#d5f692','#c9df56','#93d275','#67c6c0','#a6ccf5','#6cd8fa','#9ea9ff','#ffcee0','#ea94bb','#f0939d','#c6a2d2','#e6e6e6'];
 const INK_COLORS={pen:['#1a1a1a','#f24726','#2d9bf0'],hl:['#f5d128','#ea94bb','#93d275']};
 const INK_W={pen:2.5,hl:16};
-const SHAPE_TOOLS=['rect','round','stadium','circle','diamond','hex','cyl','para','sub'];
+const SHAPE_TOOLS=['rect','round','stadium','circle','diamond','hex','cyl','para','sub','cloud','bubble','tri','star','arrow','chevron','paper'];
 const MIRO_COLORS=['#ffffff','#e6e6e6','#808080','#1a1a1a','#fff9b1','#f5d128','#ff9d48','#f24726','#d5f692','#c9df56','#93d275','#0ca789','#a6ccf5','#6cd8fa','#2d9bf0','#414bb2','#ffcee0','#ea94bb','#c6a2d2','#9510ac'];
 const SWATCHES=[null,...MIRO_COLORS.map(c=>({fill:c,stroke:null}))];
-const PAL_LIVE={nodeFill:'var(--node-fill)',nodeStroke:'var(--node-stroke)',nodeText:'var(--node-text)',edge:'var(--edge)',accent:'var(--accent)',labelBg:'var(--label-bg)',labelText:'var(--muted)',frameFill:'var(--frame-fill)',frameStroke:'var(--frame-stroke)',frameText:'var(--frame-text)',muted:'var(--faint)',font:FONT_ATTR,nodeSw:'var(--node-sw)',frameSw:'var(--frame-sw)',edgeSw:'var(--edge-sw)',edgeThick:'var(--edge-thick)',inkBlack:'var(--ink-black)',frameOut:false,devFill:'var(--dev-fill)',devStroke:'var(--dev-stroke)',wfFill:'var(--wf-fill)',wfLine:'var(--wf-line)',wfInk:'var(--wf-ink)',wfText:'var(--wf-text)'};
-const PAL_EXPORT={nodeFill:'#ffffff',nodeStroke:'#1a1a1a',nodeText:'#1a1a1a',edge:'#1a1a1a',accent:'#1a1a1a',labelBg:'#ffffff',labelText:'#596273',frameFill:'#ffffff',frameStroke:'#e3e3e3',frameText:'#1d2026',muted:'#8a92a1',font:FONT_EXPORT,nodeSw:2,frameSw:1.2,edgeSw:2,edgeThick:4,inkBlack:'#1a1a1a',frameOut:true,devFill:'#ffffff',devStroke:'#3b3f48',wfFill:'#eceef2',wfLine:'#c4c8d0',wfInk:'#5f6470',wfText:'#4b5160'};
+const PAL_LIVE={nodeFill:'var(--node-fill)',nodeStroke:'var(--node-stroke)',nodeText:'var(--node-text)',edge:'var(--edge)',accent:'var(--accent)',labelBg:'var(--label-bg)',labelText:'var(--muted)',frameFill:'var(--frame-fill)',frameStroke:'var(--frame-stroke)',frameText:'var(--frame-text)',muted:'var(--faint)',font:FONT_ATTR,nodeSw:'var(--node-sw)',frameSw:'var(--frame-sw)',edgeSw:'var(--edge-sw)',edgeThick:'var(--edge-thick)',inkBlack:'var(--ink-black)',frameOut:false,devFill:'var(--dev-fill)',devStroke:'var(--dev-stroke)',wfFill:'var(--wf-fill)',wfLine:'var(--wf-line)',wfInk:'var(--wf-ink)',wfText:'var(--wf-text)',codeBg:'var(--code-bg)',edgeText:'var(--edge-text)'};
+const PAL_EXPORT={nodeFill:'#ffffff',nodeStroke:'#1a1a1a',nodeText:'#1a1a1a',edge:'#1a1a1a',accent:'#1a1a1a',labelBg:'#ffffff',labelText:'#596273',frameFill:'#ffffff',frameStroke:'#e3e3e3',frameText:'#1d2026',muted:'#8a92a1',font:FONT_EXPORT,nodeSw:2,frameSw:1.2,edgeSw:2,edgeThick:4,inkBlack:'#1a1a1a',frameOut:true,devFill:'#ffffff',devStroke:'#3b3f48',wfFill:'#eceef2',wfLine:'#c4c8d0',wfInk:'#5f6470',wfText:'#4b5160',codeBg:'#f4f5f7'};
 
 const I={
   select:'<path d="M5.5 3.5l13 7.2-5.8 1.6-2.6 5.6z"/>',
@@ -79,6 +80,20 @@ const I={
   arBlock:'<path d="M3.5 9.5h9.5V5.5L20.5 12 13 18.5v-4H3.5z"/>',
   layerUp:'<path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4" opacity=".45"/><path d="M4 16l8 4 8-4" opacity=".45"/>',
   layerDown:'<path d="M12 12l8 4-8 4-8-4z"/><path d="M4 8l8 4 8-4" opacity=".45"/><path d="M4 4l8 4 8-4" opacity=".45"/>',
+  globe:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.5 5.3 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.3-3.5-8.5s1.1-6.1 3.5-8.5z"/>',
+  spell:'<path d="M4 16l4-10 4 10M5.5 12.5h5"/><path d="M13.5 15.5l2.5 2.5 5-6"/>',
+  cloud:'<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 9.3 4.6 4.6 0 0 0 7 18.5z"/>',
+  bubble:'<path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-4 3.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>',
+  tri:'<path d="M12 4.5l8.5 15h-17z"/>',
+  star:'<path d="M12 3.8l2.5 5.3 5.7.7-4.2 3.9 1.1 5.7L12 16.6 6.9 19.4 8 13.7 3.8 9.8l5.7-.7z"/>',
+  arrow:'<path d="M3.5 9h10V5.5L20.5 12l-7 6.5V15h-10z"/>',
+  chevron:'<path d="M3.5 6h12l5 6-5 6h-12l5-6z"/>',
+  paper:'<path d="M5 4.5h14v13c-2.3-1.6-4.6-1.6-7 0s-4.7 1.6-7 0z"/>',
+  todo:'<rect x="4" y="5" width="6" height="6" rx="1.5"/><path d="M5.5 8l1.2 1.2L9 6.8M13 8h7M4 15.5h6v.01M13 16h7"/><rect x="4" y="13" width="6" height="6" rx="1.5"/>',
+  code:'<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5M13.5 5l-3 14"/>',
+  quote:'<path d="M5 7v10M9 9h10M9 13h10M9 17h6"/>',
+  hr:'<path d="M3.5 12h17M7 7h10M7 17h10" stroke-dasharray="0"/>',
+  textDir:'<path d="M3.5 17l4-10 4 10M5 13.5h5"/><path d="M17 4.5v15M14.5 17l2.5 2.5 2.5-2.5"/>',
   close:'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   picture:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5L5 19.5"/>',
   chevD:'<path d="M8 10l4 4 4-4"/>',

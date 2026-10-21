@@ -173,27 +173,30 @@ const Boards=(()=>{
     const ns=' vector-effect="non-scaling-stroke"';
     const bar=(x,y,w,h,fill,op)=>'<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+Math.max(4,w).toFixed(1)+'" height="'+h.toFixed(1)+'" rx="'+(h/2).toFixed(1)+'" style="fill:'+fill+';opacity:'+op+'"/>';
     const lines=(n,cx,cy,maxW,lh,fill,op)=>{ const ls=(n.lines&&n.lines.filter(Boolean))||[]; const k=Math.min(3,Math.max(1,ls.length)); let o=''; const th=k*lh*1.7; for(let i=0;i<k;i++){ const lw=ls[i]?Math.min(maxW,Core.measure(ls[i],labelSize(n))):maxW*0.6; o+=bar(cx-lw/2,cy-th/2+i*lh*1.7+lh*0.35,lw,lh,fill,op); } return o; };
-    let o='';
+    // A themed board shows its own colours in the thumbnail.
+    const T=boardTheme(m);
+    let o=T?'<rect x="'+(b.x-pad*3)+'" y="'+(b.y-pad*3)+'" width="'+(vw+pad*4)+'" height="'+(vh+pad*4)+'" style="fill:'+T.bg+'"/>':'';
     const boxes=groupBoxes(m);
-    for(const gid of [...m.groupOrder].sort((a,c)=>groupDepth(m,a)-groupDepth(m,c))){ const g=boxes.get(gid); if(!g) continue; const st=styleOf(m,gid);
-      o+='<rect x="'+g.x+'" y="'+g.y+'" width="'+g.w+'" height="'+g.h+'" rx="8" style="fill:'+((st&&st.fill)||'var(--th-frame)')+';stroke:var(--th-line);stroke-width:1"'+ns+'/>';
+    for(const gid of [...m.groupOrder].sort((a,c)=>groupDepth(m,a)-groupDepth(m,c))){ const g=boxes.get(gid); if(!g) continue; const st=styleOf(m,gid); const acc=themeAccent(m,gid);
+      const ff=(st&&st.fill)||(T?(acc&&T.tint?'color-mix(in srgb,'+acc+' 16%,'+T.bg+')':T.frame):'var(--th-frame)');
+      o+='<rect x="'+g.x+'" y="'+g.y+'" width="'+g.w+'" height="'+g.h+'" rx="8" style="fill:'+ff+';stroke:'+(acc||(T?T.stroke:'var(--th-line)'))+';stroke-width:'+(acc?1.6:1)+'"'+ns+'/>';
       o+=bar(g.x+16,g.y+14,Math.min(g.w*0.4,Core.measure(m.groups.get(gid).label,13)),9,'var(--th-edge)',.55); }
     for(const im of m.images) o+='<rect x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" rx="4" style="fill:var(--th-image)"/>';
     for(const e of m.edges){ const a=m.nodes.get(e.from)||boxes.get(e.from),c=m.nodes.get(e.to)||boxes.get(e.to); if(!a||!c||a.x==null||c.x==null||e.line==='invis') continue;
-      const g=edgeGeom(a,c,0,routeOf(m,e),edgeSides(e)); o+='<path d="'+g.d+'" style="fill:none;stroke:'+(e.color||'var(--th-edge)')+';stroke-width:'+(e.line==='thick'?2.4:1.4)+(e.line==='dotted'?';stroke-dasharray:3 3':'')+'"'+ns+'/>'; }
+      const g=edgeGeom(a,c,0,routeOf(m,e),edgeSides(e)); o+='<path d="'+g.d+'" style="fill:none;stroke:'+(e.color||(T?T.edge:'var(--th-edge)'))+';stroke-width:'+(e.line==='thick'?2.4:1.4)+(e.line==='dotted'?';stroke-dasharray:3 3':'')+'"'+ns+'/>'; }
     for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=styleOf(m,id)||{};
       if(n.shape==='sticky'){ o+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="2" style="fill:'+(st.fill||'#fff9b1')+'"/>'+lines(n,n.x+n.w/2,n.y+n.h/2,n.w*0.66,n.h*0.06,'#1a1a1a',.28); }
       else if(n.shape==='icon'){ const s=iconSize(n); const ic=iconFor(n.icon); const x=n.x+(n.w-s)/2;
         o+=ic?'<image href="'+ic.uri+'" x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'"/>':'<rect x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'" rx="'+(s*0.22)+'" style="fill:'+(PACK_TINT[String(n.icon||'').split(':')[0]]||'#808080')+'"/>';
         o+=bar(n.x+n.w/2-Math.min(n.w*0.8,Core.measure(n.label,12))/2,n.y+s+9,Math.min(n.w*0.8,Core.measure(n.label,12)),7,'var(--th-edge)',.6); }
       else if(n.shape==='text') o+=lines(n,n.x+n.w/2,n.y+n.h/2,n.w*0.8,Math.max(6,labelSize(n)*0.55),'var(--th-stroke)',.55);
-      else { const fill=st.fill||'var(--th-node)'; const sty='fill:'+fill+';stroke:'+(st.stroke||'var(--th-stroke)')+';stroke-width:1.4';
+      else { const fill=st.fill||(T?T.node:'var(--th-node)'); const sty='fill:'+fill+';stroke:'+(st.stroke||(n.group&&themeAccent(m,n.group))||(T?T.stroke:'var(--th-stroke)'))+';stroke-width:1.4';
         if(n.shape==='circle') o+='<ellipse cx="'+(n.x+n.w/2)+'" cy="'+(n.y+n.h/2)+'" rx="'+(n.w/2)+'" ry="'+(n.h/2)+'" style="'+sty+'"'+ns+'/>';
         else if(n.shape==='diamond') o+='<path d="M'+(n.x+n.w/2)+' '+n.y+'L'+(n.x+n.w)+' '+(n.y+n.h/2)+'L'+(n.x+n.w/2)+' '+(n.y+n.h)+'L'+n.x+' '+(n.y+n.h/2)+'Z" style="'+sty+'"'+ns+'/>';
         else if(n.shape==='cyl'){ const ry=Math.min(9,n.h/6); o+='<path d="M'+n.x+' '+(n.y+ry)+'A'+(n.w/2)+' '+ry+' 0 0 1 '+(n.x+n.w)+' '+(n.y+ry)+'V'+(n.y+n.h-ry)+'A'+(n.w/2)+' '+ry+' 0 0 1 '+n.x+' '+(n.y+n.h-ry)+'Z" style="'+sty+'"'+ns+'/><path d="M'+n.x+' '+(n.y+ry)+'A'+(n.w/2)+' '+ry+' 0 0 0 '+(n.x+n.w)+' '+(n.y+ry)+'" style="fill:none;stroke:var(--th-stroke);stroke-width:1.4"'+ns+'/>'; }
         else o+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="'+(n.shape==='round'||n.shape==='stadium'?Math.min(n.h/2,14):4)+'" style="'+sty+'"'+ns+'/>';
         const dark=/^#?(1a1a1a|000|000000|21|2)/i.test(String(st.fill||''))||st.color==='#ffffff';
-        o+=lines(n,n.x+n.w/2,n.y+n.h/2+(n.shape==='cyl'?4:0),n.w*(n.shape==='diamond'?0.45:0.62),Math.max(6,labelSize(n)*0.5),dark?'#ffffff':'var(--th-stroke)',dark?.85:.45); } }
+        o+=lines(n,n.x+n.w/2,n.y+n.h/2+(n.shape==='cyl'?4:0),n.w*(n.shape==='diamond'?0.45:0.62),Math.max(6,labelSize(n)*0.5),dark?'#ffffff':(T&&!st.fill?T.text:'var(--th-stroke)'),dark?.85:.45); } }
     for(const k of m.inks) o+='<polyline points="'+k.pts.map(q=>q.join(',')).join(' ')+'" style="fill:none;stroke:'+(k.color==='#1a1a1a'?'var(--th-stroke)':k.color)+';stroke-width:'+(k.tool==='hl'?4:1.6)+';stroke-linecap:round;stroke-linejoin:round;opacity:'+(k.tool==='hl'?.55:1)+'"'+ns+'/>';
     for(const a0 of m.arrows){ const a=resolveArrow(m,a0); o+='<line x1="'+a.x1+'" y1="'+a.y1+'" x2="'+a.x2+'" y2="'+a.y2+'" style="stroke:'+(a.color==='#1a1a1a'?'var(--th-stroke)':a.color)+';stroke-width:'+(a.kind==='block'?5:1.6)+';stroke-linecap:round"'+ns+'/>'; }
     return '<svg viewBox="'+vb+'" preserveAspectRatio="xMidYMid '+(slice?'slice':'meet')+'" aria-hidden="true">'+o+'</svg>';
@@ -209,9 +212,26 @@ const Boards=(()=>{
     $('#homeTpl').innerHTML=TPL_CARDS().map(t=>'<button type="button" class="tpl" data-tpl-id="'+t.id+'"'+(t.tint?' style="--tint:'+t.tint+'"':'')+'><span class="th">'+tplThumb(t)+'</span><b>'+esc(t.name)+'</b><small>'+esc(t.desc||'')+'</small></button>').join('');
     const cards=$('#homeTpl').children.length; $('#homeTpl').style.setProperty('--n',Math.ceil(cards/2)); requestAnimationFrame(updTplNav);
     for(const b of document.querySelectorAll('#homeView [data-view]')) b.setAttribute('aria-pressed',String(b.dataset.view===view));
-    const hero=$('#heroBoard'); if(hero){ const t=TEMPLATES.find(x=>x.id==='pp')||TEMPLATES[0]; hero.innerHTML=heroSVG(t.code); }
+    heroScene(heroAt);
     const hc=$('#heroCode'); if(hc&&!hc.dataset.done){ hc.dataset.done='1'; hc.innerHTML=hlQuick(HERO_TEXT); }
     const ri=$('#heroIcons'); if(ri&&Icons.ready) ri.innerHTML=['pp:power-apps','pp:dataverse','pp:power-automate','pp:copilot-studio','azure:function-apps','azure:key-vaults'].map(k=>{ const ic=iconFor(k); return ic?'<img src="'+ic.uri+'" alt="'+esc(ic.title)+'" title="'+esc(ic.title)+'">':''; }).join('')+'<span>+'+(Icons.byKey.size-6)+' more</span>';
+  }
+  // The landing shows three short examples in turn: a request, Claude's reply and the board it drew, each in its own style.
+  const HERO_SCENES=[
+    {tpl:'pp',me:'Map a Power Platform app for employees, with Dataverse, a flow to the on-prem ERP and reports',bot:'Added 9 services and 9 connections in a Power Platform frame, with Entra ID for sign-in.',chips:['9 added','9 connected'],next:'Now plan it out with tickets',typing:'Writing an epic, four stories and a bug'},
+    {tpl:'journey',me:'Map the customer journey for buying a bike online: what they do, think and feel',bot:'Five stages with doing, thinking and feeling, plus the pain points and ideas for each.',chips:['30 added','4 connected'],next:'Turn the best ideas into tickets',typing:'Writing five user stories'},
+    {tpl:'mind',me:'Mind map our product launch in the Midnight style',bot:'A launch plan with three coloured branches and three ideas on each.',chips:['13 added','12 connected'],next:'Add a branch for sales',typing:'Adding three ideas for sales'}];
+  let heroAt=0, heroT=0;
+  function heroScene(k){
+    const sc=HERO_SCENES[k], t=TEMPLATES.find(x=>x.id===sc.tpl); const board=$('#heroBoard'), chat=$('#heroChat'); if(!board||!chat||!t) return; heroAt=k;
+    board.classList.remove('in'); void board.offsetWidth;
+    board.innerHTML=typeof tplPreview==='function'?tplPreview(t.code,true):heroSVG(t.code); board.classList.add('in');
+    let bg=''; try{ const th=parseMermaid(t.code).model.theme; bg=th&&BOARD_THEMES[th]&&BOARD_THEMES[th].bg||''; }catch(_){}
+    board.style.backgroundColor=bg; board.classList.toggle('themed',!!bg);
+    $('#heroName').textContent=t.name;
+    chat.innerHTML='<div class="sc-msg me">'+esc(sc.me)+'</div><div class="sc-msg bot">'+esc(sc.bot)+'<div class="sc-chips">'+sc.chips.map(c=>'<i>'+esc(c)+'</i>').join('')+'</div></div><div class="sc-msg me">'+esc(sc.next)+'</div><div class="sc-msg bot typing"><span class="sc-dots"><b></b><b></b><b></b></span>'+esc(sc.typing)+'</div><div class="sc-input">Tell Claude what to change…</div>';
+    $('#heroDots').innerHTML=HERO_SCENES.map((s,i)=>'<button type="button" role="tab" aria-selected="'+(i===k)+'" aria-label="Example '+(i+1)+'" data-hero="'+i+'"></button>').join('');
+    clearTimeout(heroT); heroT=setTimeout(()=>{ if(isHome()&&$('#home').classList.contains('landing')&&!$('#heroShot').matches(':hover')) heroScene((heroAt+1)%HERO_SCENES.length); else heroScene(heroAt); },7000);
   }
   const HERO_TEXT='Power Platform environment {\n  Canvas app\n  Partner portal\n  Help agent\n  Dataverse\n  Cloud flows\n  Reports\n}\n\nEmployees -> Canvas app\nEmployees -> Help agent\nEmployees -> Entra ID: sign in\nCanvas app -> Dataverse\nHelp agent -> Dataverse\nDataverse -> Cloud flows: row changed\nCloud flows -> Data gateway\nData gateway -> On-prem ERP\nDataverse => Reports';
   function heroSVG(code){
@@ -319,6 +339,8 @@ const Boards=(()=>{
   }
   $('#tplNav').addEventListener('click',e=>{ const b=e.target.closest('[data-tpl-dir]'); if(!b) return; const r=$('#homeTpl'); r.scrollBy({left:+b.dataset.tplDir*r.clientWidth*0.8,behavior:'smooth'}); });
   $('#homeTpl').addEventListener('scroll',updTplNav,{passive:true});
+  $('#heroDots').addEventListener('click',e=>{ const b=e.target.closest('[data-hero]'); if(b) heroScene(+b.dataset.hero); });
+  $('#homeAllTpl').addEventListener('click',()=>openTemplates());
   window.addEventListener('resize',updTplNav);
   $('#homeTpl').addEventListener('click',e=>{
     const b=e.target.closest('[data-tpl-id]'); if(!b) return; const id=b.dataset.tplId;

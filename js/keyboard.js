@@ -20,7 +20,7 @@ document.addEventListener('keydown',e=>{
   if(mod&&key==='c'){ if(copySel()){ e.preventDefault(); state.clipWritten=false; try{ const pr=navigator.clipboard&&navigator.clipboard.writeText(CLIP_MARK+' '+Date.now()); if(pr) pr.then(()=>{state.clipWritten=true;},()=>{}); }catch(_){} toast('Copied'); } return; }
   if(mod&&key==='x'){ if(copySel()){ e.preventDefault(); deleteSel(); } return; }
   if(mod&&key==='v'){ if(state.clip&&!state.clipWritten){ e.preventDefault(); pasteClip(); } return; }
-  if(mod&&key==='d'){ e.preventDefault(); if(copySel()){ state.pasteN=0; pasteClip(); } return; }
+  if(mod&&key==='d'){ e.preventDefault(); const gs=[...state.sel].filter(k=>k[0]==='g'); if(gs.length===1&&state.sel.size===1){ dupFrame(gs[0].slice(2)); return; } if(copySel()){ state.pasteN=0; pasteClip(); } return; }
   if(mod&&key==='g'){ e.preventDefault(); e.shiftKey?ungroupSel():groupSel(); return; }
   if(mod&&(key==='='||key==='+')){ e.preventDefault(); const r=boardRect(); zoomAt(1.2,r.width/2,r.height/2); return; }
   if(mod&&key==='-'){ e.preventDefault(); const r=boardRect(); zoomAt(1/1.2,r.width/2,r.height/2); return; }
@@ -60,6 +60,12 @@ document.addEventListener('paste',e=>{
   if(text.startsWith(CLIP_MARK)||(!text.trim()&&state.clip)){ if(state.clip){ e.preventDefault(); pasteClip(); } return; }
   if(!text.trim()) return;
   e.preventDefault();
+  // Cells from Excel or a CSV become a table, or fill the selected table.
+  const grid=!looksMermaid(text)&&parseGrid(text);
+  if(grid&&!state.fatal){ const sel=[...state.sel].filter(k=>k[0]==='n').map(k=>state.model.nodes.get(k.slice(2)));
+    if(sel.length===1&&sel[0]&&sel[0].shape==='table'){ const id=sel[0].id; mutate(mm=>{ const n=mm.nodes.get(id); n.table={rows:grid,colors:{}}; n.sized=false; sizeNode(n); }); toast('Table filled from the clipboard'); return; }
+    const r=boardRect(); const c=toWorld({clientX:r.left+r.width/2,clientY:r.top+r.height/2});
+    const id=createNode({shape:'table',label:'Table',idBase:'table',cx:c.x,cy:c.y,table:{rows:grid,colors:{}}}); if(id){ state.sel=new Set(['n:'+id]); selChanged(); } toast('Pasted as a table: '+grid.length+' rows, '+grid[0].length+' columns'); return; }
   if(looksMermaid(text)) importText(text,'clipboard');
   else quickToBoard(text,false,true);
 });

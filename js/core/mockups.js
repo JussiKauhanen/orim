@@ -32,6 +32,10 @@ function uiScale(m,n){ const g=n.group&&m.groups.get(n.group); if(g&&g.dev) retu
   const r=['uiText','uiImage','uiSidebar','uiTable'].includes(n.shape)?n.w/k.w:n.h/k.h; return Math.max(0.3,Math.min(2,r||MOCK)); }
 const SCREEN_PRESETS=[['blank','Blank'],['login','Login'],['main','Main page']];
 const isUi=n=>!!(n&&UI_KINDS[n.shape]);
+// Changes on a mockup: an item or label starting with + is new, ~ is changed and - is removed.
+// Plain text in the Mermaid ("+Industry"), so it reads well anywhere; orim draws it in colour.
+const UI_MARKS={'+':{k:'new',name:'New',color:'#0ca789'},'~':{k:'chg',name:'Changed',color:'#d98e04'},'-':{k:'del',name:'Removed',color:'#e5484d'}};
+function uiMark(t){ const s=String(t||''); const c=s[0]; if(UI_MARKS[c]&&(c!=='-'||/^-[^\s\d-]/.test(s))) return {t:s.slice(1).trim(),m:UI_MARKS[c]}; return {t:s,m:null}; }
 const uiItems=label=>String(label||'').split(/\n|\|/).map(s=>s.trim()).filter(Boolean);
 // The pieces of a preset screen, with positions relative to the device's top left corner.
 function screenPieces(dev,preset,s){

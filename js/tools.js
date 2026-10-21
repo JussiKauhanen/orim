@@ -36,7 +36,9 @@ function renderFly(){
   // Miro-style lists: icon, name and shortcut on each row.
   const head=title=>'<div class="fly-head"><span>'+title+'</span><button type="button" class="ibtn fly-close" data-fly-close title="Close panel (Esc)" aria-label="Close panel"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div>';
   const row=(attr,on,icon,name,key)=>'<button type="button" class="fly-row" '+attr+' aria-pressed="'+on+'">'+ico(icon)+'<span>'+name+'</span>'+(key?'<kbd>'+key+'</kbd>':'')+'</button>';
-  if(kind==='shapes') h=head('Shapes')+SHAPE_TOOLS.map(id=>{ const sh=SHAPES.find(x=>x.id===id); return row('data-fly-tool="'+id+'"',t===id,id,sh.name,sh.key?sh.key.toUpperCase():''); }).join('');
+  // Shapes as a grid of tiles, like Miro: flowchart shapes first, then the rest.
+  const tile=id=>{ const sh=SHAPES.find(x=>x.id===id); return '<button type="button" class="fly-tile" data-fly-tool="'+id+'" aria-pressed="'+(t===id)+'" title="'+sh.name+(sh.key?' ('+sh.key.toUpperCase()+')':'')+'" aria-label="'+sh.name+'">'+ico(id)+'</button>'; };
+  if(kind==='shapes') h=head('Shapes')+'<div class="fly-sub">Flowchart</div><div class="fly-grid">'+SHAPE_TOOLS.slice(0,9).map(tile).join('')+'</div><div class="fly-sub">More shapes</div><div class="fly-grid">'+SHAPE_TOOLS.slice(9).map(tile).join('')+'</div>';
   if(kind==='ink'){
     h=head('Draw')+[['pen','pen','Pen','P'],['hl','hl','Highlighter','Shift+P'],['eraser','eraser','Eraser','E']].map(([id,ic,nm,k])=>row('data-fly-tool="'+id+'"',t===id,ic,nm,k)).join('');
     if(t!=='eraser'){
@@ -79,10 +81,9 @@ $('#flyout').addEventListener('click',e=>{
 });
 state.uiPreset=LS.get('orim.uiPreset','blank'); state.uiPick={dev:'mobile'};
 function toolFamily(t){ return SHAPE_TOOLS.includes(t)?'shapes':INK_TOOLS.includes(t)?'ink':t==='sticky'?'sticky':t==='connector'?'connector':t==='ui'?'ui':null; }
-// The AI mark: dark sparkles on a warm yellow tile. Plain sparkles (no tile) for use on a yellow background.
-function aiSpark(plain){ return '<svg class="i ai-mark" viewBox="0 0 24 24" style="stroke:none">'+(plain?'':'<rect x="1" y="1" width="22" height="22" rx="6" fill="#ffd23f"/>')+
-  '<path d="M11 6.2l1.25 3.35a2.2 2.2 0 0 0 1.3 1.3L16.9 12l-3.35 1.25a2.2 2.2 0 0 0-1.3 1.3L11 17.9l-1.25-3.35a2.2 2.2 0 0 0-1.3-1.3L5.1 12l3.35-1.25a2.2 2.2 0 0 0 1.3-1.3z" fill="#1a1a1a"/>'+
-  '<path d="M16.6 4.6l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5z" fill="#1a1a1a"/><path d="M7 15.6l.45 1.15 1.15.45-1.15.45L7 18.8l-.45-1.15-1.15-.45 1.15-.45z" fill="#1a1a1a"/></svg>'; }
+// The AI mark, the same everywhere: dark sparkles on a warm yellow rounded tile. Size it with CSS (.aim).
+function aiSpark(){ return '<svg class="aim" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="6.5" fill="#ffd23f"/>'+
+  '<path d="M10.25 8.15Q11.5 12.5 15.85 13.75Q11.5 15 10.25 19.35Q9 15 4.65 13.75Q9 12.5 10.25 8.15Z" fill="#1a1a1a"/><path d="M16.6 4.8Q17.2 6.8 19.2 7.4Q17.2 8 16.6 10Q16 8 14 7.4Q16 6.8 16.6 4.8Z" fill="#1a1a1a"/></svg>'; }
 function openAITab(){ setMode('split'); setEmode('ai'); setTimeout(()=>{ const i=$('#aiIn'); if(i&&!i.disabled) i.focus(); },60); }
 function setTool(t,fromBar){
   if(t==='ai'){ openAITab(); return; }
@@ -109,4 +110,4 @@ $('#leftbar').addEventListener('pointerdown',e=>e.stopPropagation());
 
 $('#aiFab').innerHTML=aiSpark();
 $('#aiFab').addEventListener('click',()=>{ if(state.mode==='split'&&state.emode==='ai'){ const i=$('#aiIn'); if(i) i.focus(); return; } openAITab(); });
-{ const t=document.querySelector('#modeSeg .ai-tab-mark'); if(t) t.innerHTML=aiSpark(true); for(const el of document.querySelectorAll('.ai-mk')) el.innerHTML=aiSpark(); }
+{ const t=document.querySelector('#modeSeg .ai-tab-mark'); if(t) t.innerHTML=aiSpark(); for(const el of document.querySelectorAll('.ai-mk')) el.innerHTML=aiSpark(); }

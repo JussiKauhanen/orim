@@ -2,7 +2,7 @@
  * Pure geometry: text wrap, node sizing, auto layout, frames, connector and arrow shapes.
  */
 'use strict';
-function wrapText(text,maxW,size){
+function wrapText(text,maxW,size,font){
   const out=[];
   for(const para of String(text).split('\n')){
     const words=para.split(/\s+/).filter(Boolean);
@@ -10,13 +10,13 @@ function wrapText(text,maxW,size){
     let line=words[0];
     for(let k=1;k<words.length;k++){
       const t=line+' '+words[k];
-      if(Core.measure(t,size)>maxW){ out.push(line); line=words[k]; } else line=t;
+      if(Core.measure(t,size,font)>maxW){ out.push(line); line=words[k]; } else line=t;
     }
     out.push(line);
   }
   return out;
 }
-function labelSize(n){ if(n.fsSet) return n.fsSet; return n.shape==='icon'?12:n.shape==='sticky'?(n.fs||15):13; }
+function labelSize(n){ if(n.fsSet) return n.fsSet; return n.shape==='icon'?12:n.shape==='sticky'?(n.fs||15):(n.fsAuto||13); }
 function lineH(n){ const f=labelSize(n); return n.shape==='icon'&&!n.fsSet?15:Math.round(f*1.3); }
 function iconSize(n){
   if(!n.sized) return ICON;
@@ -38,14 +38,21 @@ function tableLayout(n){
 // The band of one table row, for connectors that attach to a row.
 function rowRect(n,row){ const L=n._tl||tableLayout(n); const r=Math.max(0,Math.min(L.rows.length-1,row|0)); let y=n.y+L.top; for(let i=0;i<r;i++) y+=L.rows[i]; return {x:n.x,y,w:n.w,h:L.rows[r]}; }
 function rowAt(n,y){ const L=n._tl||tableLayout(n); let yy=n.y+L.top; for(let i=0;i<L.rows.length;i++){ if(y<yy+L.rows[i]) return i; yy+=L.rows[i]; } return L.rows.length-1; }
-const DOCF={h1:[19,700,10],h2:[16,700,8],h3:[14,700,6],p:[13,400,4],ul:[13,400,2],ol:[13,400,2]};
+const DOCF={h1:[19,700,10],h2:[16,700,8],h3:[14,700,6],p:[13,400,4],ul:[13,400,2],ol:[13,400,2],todo:[13,400,4],code:[12,400,8],quote:[13,400,6],hr:[13,400,6]};
 function docLayout(n){
   const tk=n.doc&&TICKET_TYPES[n.doc.kind];
   const W=n.w||380, PADX=22, PADT=tk?(ticketLine(n)?84:68):n.label&&n.label.trim()?44:20; const out=[]; let y=PADT, k=0;
   for(const b of (n.doc&&n.doc.blocks)||[]){
-    const [fs,wt,gap]=DOCF[b.t]||DOCF.p; const lh=Math.round(fs*1.45); const ind=b.t==='ul'||b.t==='ol'?18:0;
+    const [fs,wt,gap]=DOCF[b.t]||DOCF.p; const lh=Math.round(fs*(b.t==='code'?1.5:1.45)); const ind=b.t==='ul'||b.t==='ol'?18:b.t==='todo'?24:b.t==='quote'?14:b.t==='code'?12:0;
     if(b.t==='ol') k++; else k=0;
     y+=out.length?gap:0;
+    if(b.t==='hr'){ out.push({t:'hr',fs,wt,lh,ind,num:0,y,lines:[]}); y+=12; continue; }
+    if(b.t==='code'){ // monospace, lines kept as written and wrapped only when too long
+      const cw=W-PADX*2-ind*2, lines=[]; y+=8;
+      for(const raw of String((b.r[0]&&b.r[0].x)||'').split('\n')){ let rest=raw; if(!rest){ lines.push([{x:''}]); continue; }
+        while(rest.length){ let n2=rest.length; while(n2>1&&Core.measure(rest.slice(0,n2),fs,'mono')>cw) n2=Math.floor(n2*0.9); lines.push([{x:rest.slice(0,n2)}]); rest=rest.slice(n2); } }
+      if(!lines.length) lines.push([{x:''}]);
+      out.push({t:'code',fs,wt,lh,ind,num:0,y,lines,lang:b.lang||''}); y+=lines.length*lh+8; continue; }
     // words with their style, wrapped greedily
     const words=[]; for(const r of b.r) for(const part of r.x.split(/(\s+|\n)/)){ if(!part) continue; if(part==='\n'){ words.push({nl:1}); continue; } if(/^\s+$/.test(part)){ words.push({sp:1,b:r.b,i:r.i,u:r.u}); continue; } words.push({x:part,b:r.b,i:r.i,u:r.u}); }
     const maxW=W-PADX*2-ind; const lines=[[]]; let lw=0;
@@ -53,28 +60,46 @@ function docLayout(n){
     for(const w of words){ if(w.nl){ lines.push([]); lw=0; continue; } if(w.sp){ if(lines[lines.length-1].length){ lines[lines.length-1].push({x:' ',b:w.b,i:w.i,u:w.u}); lw+=fs*0.3; } continue; }
       const ww=width(w); if(lw+ww>maxW&&lines[lines.length-1].length){ const L=lines[lines.length-1]; while(L.length&&L[L.length-1].x===' ') L.pop(); lines.push([]); lw=0; } lines[lines.length-1].push(w); lw+=ww; }
     if(!lines[lines.length-1].length&&lines.length>1) lines.pop();
-    out.push({t:b.t,fs,wt,lh,ind,num:k,y,lines}); y+=lines.length*lh;
+    out.push({t:b.t,fs,wt,lh,ind,num:k,y,lines,c:b.c?1:0}); y+=lines.length*lh;
   }
   return {blocks:out,h:Math.max(PADT+40,y+22),padx:PADX};
 }
+// Room for text inside a shape, and the size a shape takes for its text at 13 px.
+function innerW(n,fs){ return Math.max(20,(n.shape==='diamond'?n.w*0.6:n.shape==='circle'||n.shape==='cloud'||n.shape==='star'?n.w*0.7:n.shape==='tri'?n.w*0.55:n.w-24)/(n.bold?1.07:1)); }
+function innerH(n){ return n.shape==='diamond'?n.h*0.55:n.shape==='circle'||n.shape==='cloud'?n.h*0.7:n.shape==='star'?n.h*0.45:n.shape==='tri'?n.h*0.45:n.shape==='cyl'?n.h-44:n.shape==='bubble'?n.h*0.75-16:n.h-20; }
+function naturalSize(n){ const c={...n,sized:false,fsSet:null,fsAuto:null,w:0,h:0}; sizeNode(c); return {w:c.w||120,h:c.h||52}; }
+// Turned text (90 or 270 degrees) is laid out across the shape's height: swap the sides, lay out, swap back.
+const canTurn=n=>!!n.rot&&!['icon','table','doc'].includes(n.shape)&&!isUi(n);
 function sizeNode(n){
+  if(canTurn(n)&&n.rot%180){ const sw=n.w!=null; if(sw) [n.w,n.h]=[n.h,n.w]; sizeNode0(n); [n.w,n.h]=[n.h,n.w]; return; }
+  sizeNode0(n);
+}
+function sizeNode0(n){
   if(isUi(n)){ const k=UI_KINDS[n.shape]; if(!n.sized||!n.w){ n.w=k.w*MOCK; n.h=k.h*MOCK; } n.lines=[]; return; }
   if(n.shape==='table'){ if(!n.table) n.table={rows:[['','Option A','Option B'],['','',''],['','','']],colors:{}}; const L=tableLayout(n); n.w=Math.round(L.w); n.h=Math.ceil(L.h); n._tl=L; n.lines=[]; return; }
   if(n.shape==='doc'){ if(!n.doc) n.doc={blocks:[{t:'p',r:[]}]}; if(!n.sized||!n.w) n.w=380; const L=docLayout(n); n.h=Math.min(1600,Math.ceil(L.h)); n._dl=L; n.lines=[]; return; }
   if(n.shape==='sticky'){
     if(!n.sized){ n.w=160; n.h=160; }
-    if(n.fsSet){ n.fs=n.fsSet; n.lines=wrapText(n.label,Math.max(20,n.w-28),n.fsSet); return; }
-    let fs=15,lines;
-    for(;fs>=8;fs--){ lines=wrapText(n.label,Math.max(20,n.w-28),fs); if(lines.length*Math.round(fs*1.3)<=n.h-28) break; }
+    if(n.fsSet){ n.fs=n.fsSet; n.lines=wrapText(n.label,Math.max(20,n.w-28),n.fsSet,n.font); return; }
+    // Auto size: 15 px on a standard note, growing with a bigger note and shrinking until the text fits.
+    let fs=Math.max(8,Math.min(72,Math.round(15*Math.sqrt(n.w*n.h)/160))),lines;
+    for(;fs>=8;fs--){ lines=wrapText(n.label,Math.max(20,n.w-28),fs,n.font); if(lines.length*Math.round(fs*1.3)<=n.h-28&&Math.max(0,...lines.map(l=>Core.measure(l,fs,n.font)))<=n.w-24) break; }
     n.fs=Math.max(8,fs); n.lines=lines; return;
   }
+  // Auto text size in a resized shape: scale with the shape against its natural size, then shrink to fit.
+  n.fsAuto=null;
+  if(n.sized&&!n.fsSet&&n.shape!=='icon'&&n.shape!=='text'&&String(n.label||'').trim()){
+    const nat=naturalSize(n); let f=Math.max(13,Math.min(44,Math.round(13*Math.min(n.w/nat.w,n.h/nat.h)*2)/2));
+    for(;f>8;f-=0.5){ const iw=innerW(n,f), ls=wrapText(n.label,iw,f,n.font); if(ls.length*Math.round(f*1.3)<=innerH(n)&&Math.max(0,...ls.map(l=>Core.measure(l,f,n.font)))<=iw+1) break; }
+    if(Math.abs(f-13)>=0.5) n.fsAuto=f;
+  }
   const fs=labelSize(n); const k=fs/13;
-  const maxW=n.sized?Math.max(20,n.shape==='icon'?n.w-6:n.shape==='diamond'?n.w*0.6:n.shape==='text'?n.w-12:n.w-24):(n.shape==='icon'?150*k:n.shape==='text'?320*k:200*k);
-  const lines=wrapText(n.label,maxW/(n.bold?1.07:1),fs); n.lines=lines;
+  const maxW=n.sized?Math.max(20,n.shape==='icon'?n.w-6:n.shape==='text'?n.w-12:innerW(n,fs)*(n.bold?1.07:1)):(n.shape==='icon'?150*k:n.shape==='text'?320*k:200*k);
+  const lines=wrapText(n.label,maxW/(n.bold?1.07:1),fs,n.font); n.lines=lines;
   if(n.sized){
     const th=lines.length*lineH(n);
     if(n.shape==='text') n.h=Math.max(Math.round(fs*1.3)+10,th+12);
-    else if(n.shape!=='icon'){ const need=n.shape==='diamond'?th*1.7+40:n.shape==='circle'?th+32:n.shape==='cyl'?th+44:th+24; if(need>n.h) n.h=Math.ceil(need/GRID)*GRID; }
+    else if(n.shape!=='icon'){ const need=n.shape==='diamond'?th*1.7+40:n.shape==='circle'||n.shape==='cloud'?th*1.4+32:n.shape==='star'||n.shape==='tri'?th*2.2+30:n.shape==='cyl'?th+44:n.shape==='bubble'?th+40:th+24; if(need>n.h) n.h=Math.ceil(need/GRID)*GRID; }
     return; }
   const tw=Math.max(0,...lines.map(l=>measureN(n,l,fs)));
   const th=lines.length*lineH(n);
@@ -83,6 +108,13 @@ function sizeNode(n){
     case 'text': n.w=Math.max(40,tw+16); n.h=Math.max(28,th+12); break;
     case 'circle':{ const d=Math.max(72,tw+32,th+32); n.w=n.h=d; break; }
     case 'diamond': n.w=Math.max(120,tw*1.6+40); n.h=Math.max(80,th*1.7+40); break;
+    case 'cloud': n.w=Math.max(150,tw*1.5+48); n.h=Math.max(96,th*1.6+44); break;
+    case 'star': { const d=Math.max(120,tw*1.8+24,th*2.6+40); n.w=n.h=d; break; }
+    case 'tri': n.w=Math.max(130,tw*2+24); n.h=Math.max(104,th*2.3+40); break;
+    case 'bubble': n.w=Math.max(130,tw+40); n.h=Math.max(72,th+44); break;
+    case 'arrow': n.w=Math.max(140,tw+80); n.h=Math.max(64,th+32); break;
+    case 'chevron': n.w=Math.max(140,tw+72); n.h=Math.max(56,th+28); break;
+    case 'paper': n.w=Math.max(120,tw+36); n.h=Math.max(64,th+40); break;
     default:
       n.w=Math.max(120,tw+(n.shape==='hex'||n.shape==='para'?56:36)); n.h=Math.max(52,th+28);
       if(n.shape==='cyl') n.h=Math.max(68,th+44);
@@ -195,7 +227,7 @@ function resolveGeometry(m,cache){
   const placed=new Set(),unplaced=[];
   for(const id of m.nodeOrder){
     const n=m.nodes.get(id); const p=m.pos.get(id); const c=cache&&cache.get(id);
-    const st=styleOf(m,id); n.fsSet=st&&st.fontSize?st.fontSize:null; n.bold=!!(st&&st.bold);
+    const st=styleOf(m,id); n.fsSet=st&&st.fontSize?st.fontSize:null; n.bold=!!(st&&st.bold); n.font=st&&st.font||(boardTheme(m)&&boardTheme(m).font)||null;
     if(p&&p.w&&p.h){ n.w=p.w; n.h=p.h; n.sized=true; } else n.sized=false;
     sizeNode(n);
     const src=p||c;
@@ -222,7 +254,9 @@ function groupBoxes(m,exclude){
       const b=boxes.get(g.id); if(!b) continue;
       any=true; x0=Math.min(x0,b.x); y0=Math.min(y0,b.y); x1=Math.max(x1,b.x+b.w); y1=Math.max(y1,b.y+b.h);
     }
-    const cb=any?{x:x0-PAD,y:y0-PAD_TOP,w:x1-x0+PAD*2,h:y1-y0+PAD_TOP+PAD}:null;
+    // A turned title runs along the left side (or the bottom), so the room for it moves there.
+    const gr=m.groups.get(gid).rot||0, sideP=gr===90||gr===270?22:0, topP=gr?PAD:PAD_TOP, botP=gr===180?PAD_TOP:PAD;
+    const cb=any?{x:x0-PAD-sideP,y:y0-topP,w:x1-x0+PAD*2+sideP,h:y1-y0+topP+botP}:null;
     const p=m.pos.get(gid); const fixed=p&&p.w?{x:p.x,y:p.y,w:p.w,h:p.h}:null;
     // A device frame keeps its size; what is dragged past its edge is cut off from view, not added.
     const dv=m.groups.get(gid).dev&&DEVICES[m.groups.get(gid).dev];

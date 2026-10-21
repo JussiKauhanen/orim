@@ -91,17 +91,21 @@ const AI=(()=>{
   keyBtn.addEventListener('click',()=>{ showKeys=!showKeys; paint(); });
   // The key form: a link to the Console to make a key, the key, the model, and where it is kept.
   function keyPanel(){
-    const has=!!AIKey.get(), m=AIKey.model();
-    return '<div class="ai-empty ai-keyset"><span class="ai-hi">'+aiSpark()+'</span><b>'+(has?'Your Claude API key':'Use Claude with your API key')+'</b>'+
-      '<p>'+(has?'orim calls Claude directly from this browser with your key. Usage is billed to your Claude API account.':'Inside Claude this tab uses your Claude account with no setup. Here, add an API key from the Claude Console and orim calls Claude directly from this browser. Usage is billed to your Claude API account.')+'</p>'+
-      '<a class="ai-keylink" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">'+ico('link')+'Create a key in the Claude Console</a>'+
-      '<label class="ai-field"><span>API key</span><input type="password" id="aiKeyIn" placeholder="'+(has?'Saved. Paste a new key to replace it':'sk-ant-…')+'" autocomplete="off" spellcheck="false"></label>'+
-      '<label class="ai-field'+(needWs?' need':'')+'"><span>Workspace ID <i>only if the API says your key needs one</i></span><input id="aiWsIn" placeholder="wrkspc_…" autocomplete="off" spellcheck="false" value="'+esc(AIKey.workspace())+'"></label>'+
-      (needWs?'<p class="ai-keywarn">This key works across workspaces, so the API needs to know which one to use. Copy the ID (it starts with wrkspc_) from a workspace in the Console, or create a key inside one workspace instead. <a href="'+AIKey.WS_URL+'" target="_blank" rel="noopener noreferrer">Open Workspaces</a></p>':'')+
-      '<label class="ai-field"><span>Model</span><select id="aiModel">'+AIKey.MODELS.map(([id,nm,d])=>'<option value="'+id+'"'+(id===m?' selected':'')+'>'+nm+', '+d+'</option>').join('')+'</select></label>'+
+    const has=!!AIKey.get(), m=AIKey.model(), ws=AIKey.workspace();
+    const ext='<svg class="i" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8M17 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4"/></svg>';
+    return '<div class="ai-keyset">'+
+      '<div class="ak-head">'+aiSpark()+'<div><b>'+(has?'Claude API key':'Connect Claude')+'</b><span>'+(has?'Saved in this browser · '+esc(AIKey.modelName()):'Use your own Claude API key here')+'</span></div></div>'+
+      (has?'':'<p class="ak-intro">Inside Claude this tab needs no setup. On this page, orim calls Claude straight from your browser with an API key, and usage is billed to your Claude API account.</p>')+
+      '<div class="ak-step"><i>1</i><div><b>'+(has?'Manage your keys':'Create a key')+'</b><span>In the Claude Console, under API keys.</span></div><a class="btn" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">Open Console'+ext+'</a></div>'+
+      '<div class="ak-step col"><div class="ak-row"><i>2</i><div><b>'+(has?'Replace the key':'Paste it here')+'</b><span>It starts with sk-ant-.</span></div></div>'+
+        '<input type="password" id="aiKeyIn" class="ak-in" placeholder="'+(has?'•••••••• saved. Paste a new key to replace it':'sk-ant-…')+'" autocomplete="off" spellcheck="false" aria-label="API key"></div>'+
+      '<label class="ai-field"><span>Model</span><select id="aiModel">'+AIKey.MODELS.map(([id,nm,d])=>'<option value="'+id+'"'+(id===m?' selected':'')+'>'+nm+' · '+d+'</option>').join('')+'</select></label>'+
+      '<details class="ak-more"'+(needWs||ws?' open':'')+'><summary>Workspace ID</summary>'+
+        (needWs?'<p class="ai-keywarn">This key works across workspaces, so the API needs to know which one to use. Copy the ID (it starts with wrkspc_) from a workspace in the Console, or create a key inside one workspace instead. <a href="'+AIKey.WS_URL+'" target="_blank" rel="noopener noreferrer">Open Workspaces</a></p>':'<p class="ak-note">Only needed if the API says your key needs one.</p>')+
+        '<label class="ai-field'+(needWs?' need':'')+'"><input id="aiWsIn" placeholder="wrkspc_…" autocomplete="off" spellcheck="false" value="'+esc(ws)+'" aria-label="Workspace ID"></label></details>'+
       '<label class="toggle"><input type="checkbox" id="aiKeyRemember" checked><span>Remember on this device</span></label>'+
-      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Use this key')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Cancel</button>':'')+'</div>'+
-      '<p class="ai-keynote">The key stays in this browser and is only sent to api.anthropic.com. Avoid saving it on a shared computer. Think harder uses Opus 5.5. No key? Export, then Ask an AI, copies a prompt for any AI chat.</p></div>';
+      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Connect')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Close</button>':'')+'</div>'+
+      '<p class="ak-note"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>The key stays in this browser and is only sent to api.anthropic.com. Avoid saving it on a shared computer. Think harder uses Opus 5.5.</p></div>';
   }
 
   /* ---------- what Claude is told ---------- */
@@ -109,9 +113,9 @@ const AI=(()=>{
 
 Commands:
 {"op":"add","id":"cache","label":"Redis cache","shape":"rect","icon":"azure:cache-redis","in":"frameId","near":"api","fill":"#hex"}
-  shape: rect, round, stadium, cyl (database), circle, diamond (decision), hex, para, sub, sticky (sticky note), text (no box). An icon replaces the shape.
+  shape: rect, round, stadium, cyl (database), circle, diamond (decision), hex, para, sub, sticky (sticky note), text (no box), cloud, bubble (speech bubble), tri (triangle), star, arrow (block arrow pointing right), chevron (process step), paper (document). An icon replaces the shape.
   "near": an existing id the new shape relates to, so it appears next to it. "in": the frame to put it in. Both optional.
-{"op":"update","id":"api","label":"…","shape":"…","icon":"…","in":"frameId or null","fill":"#hex","color":"#hex"}   only the fields to change
+{"op":"update","id":"api","label":"…","shape":"…","icon":"…","in":"frameId or null","fill":"#hex","color":"#hex","stroke":"#hex","font":"caveat|bangers|fredoka|georgia|mono|default","rot":0}   only the fields to change; rot turns the text 90, 180 or 270 degrees (also on add and frame, where it turns the frame title)
 {"op":"delete","id":"api"}   a shape, or a frame together with everything in it
 {"op":"connect","from":"api","to":"cache","label":"reads","line":"solid|dotted|thick","ends":"one|both|none","fromRow":2,"toRow":"Pricing"}   from/to can be shapes, frames or tables; fromRow/toRow attach the line to one table row (number, 0 is the header, or the row's first cell text)
 {"op":"screen","id":"login","device":"mobile|tablet|desktop","preset":"blank|login|main","label":"Login","near":"id"}   a UI mockup screen: a device frame filled with grey wireframe pieces (blank has only a top bar)
@@ -129,6 +133,7 @@ Commands:
 {"op":"unframe","id":"sec"}   remove a frame but keep what is in it
 {"op":"layout"}   rearrange the whole board; only when asked, or after a big restructure
 {"op":"direction","dir":"TB"}   flow direction: TB (top to bottom, vertical), LR (left to right, horizontal), BT or RL; rearranges the board to match. Add "in":"frameId" to change one frame only
+{"op":"theme","name":"classic|midnight|pastel|blueprint|sketch"}   the board's colour style: midnight (dark navy, coloured frames), pastel (soft tinted frames), blueprint, sketch (handwritten); only when asked
 {"op":"say","text":"…"}   a short message to the person
 
 Rules:
@@ -136,6 +141,7 @@ Rules:
 - Do only what was asked. Keep labels short; use \\n for a line break.
 - Use an icon for a cloud or Microsoft service when one fits (ids listed below); otherwise a plain shape.
 - Mockups: keep them simple and grey, a few pieces per screen. New screens: phone ${DEVICES.mobile.w*MOCK}x${DEVICES.mobile.h*MOCK} (content from y ${DEVICES.mobile.top*MOCK}), iPad ${DEVICES.tablet.w*MOCK}x${DEVICES.tablet.h*MOCK} (from y ${DEVICES.tablet.top*MOCK}), desktop ${DEVICES.desktop.w*MOCK}x${DEVICES.desktop.h*MOCK} (from y ${DEVICES.desktop.top*MOCK}); the board lists each screen's real size. Start from a preset, then add, update or delete pieces. Connect screens to each other for a flow, or pieces to the screen they open.
+- Showing changes on a mockup (a proposal, a ticket, "add two fields"): start an item or a piece's label with + for new, ~ for changed or - for removed. A uiTable label "Account name\nCity\n+Industry\n+Annual revenue" draws the two new columns in green; "+Industry" on a uiInput marks that field as new. Then add a short sticky or doc next to the screen saying what changes and why, connected to the piece.
 - Database tables: a table titled with the table name, header row Column | Type | Key | Notes and one row per column; link foreign keys row to row with fromRow and toRow.
 - Comparisons: one table, with a row per criterion and a column per option; colour cells to show which option is stronger. To link a diagram to a comparison, connect shapes to the table rows they relate to.
 - Longer explanations, notes or summaries: a doc, not a sticky note.
@@ -144,14 +150,21 @@ Rules:
 - A question about the board: answer with say lines only, no changes.
 - Something unclear or impossible: one say line asking or explaining, no changes.
 - Always end with one say line of at most 15 words saying what you did.`;
-  const PHOTO=id=>`The person attached a picture: a photo of a whiteboard, sticky notes, a paper sketch, or a screenshot of a diagram. Recreate what it shows as editable items on the board.
-- Sticky notes become sticky shapes in the nearest sticky colour. Boxes become shapes (rounded corners round, cylinders cyl, diamonds diamond, circles circle). Lines and arrows become connect, keeping any words written on them and dotted or thick lines. A box, column or swimlane drawn around items becomes a frame (frame op with items), with its heading as the label. Headings and loose words become text shapes. A recognised product or cloud service gets its icon.
-- A grid or table becomes a table op; a block of written notes becomes a doc.
-- Copy the words exactly as written, fixing only obvious slips. Write [?] for a word you cannot read. Add nothing that is not in the picture.
-- Give every add, table and doc an "xy":[x,y]: its top left corner on a grid over the picture, 0 to 1000 across and the same scale downwards, so the layout matches the picture.
-- Add things in reading order: frames' contents first, then the frame op, then the connections.
-- End with one say line saying what you recreated and anything you could not read.
-The picture itself is already on the board (image ${id}); leave it alone.`;
+  const PHOTO=(id,ratio)=>`The person attached a picture: a photo of a whiteboard, sticky notes or a paper sketch, or a screenshot of a diagram, infographic or slide. Recreate it on the board as editable items that look like the picture.
+Measure everything on a grid laid over the picture: x runs from 0 at the left edge to 1000 at the right edge, y uses the same units from the top edge (this picture is about ${Math.round(1000*ratio)} units tall).
+- Give EVERY frame, add, table and doc an "xy":[left,top] and a "wh":[width,height] measured on the picture, so positions and sizes match it. Large areas are large, small boxes small. Leave the same gaps as the picture.
+- Areas that hold other things (layers, bands, columns, swimlanes, groups, boxes around boxes) are frames: {"op":"frame","id":"svc","label":"Service layer","xy":[20,120],"wh":[700,400],"fill":"#cfe8ff"} with the area's colour. Send outer frames first; a frame inside another has "in". Then add the items inside with "in".
+- Boxes: a shape with the box's own colour as "fill" (and "color":"#ffffff" for light text on a dark box). Rounded corners: round; pills: stadium; cylinders: cyl; diamonds: diamond; circles: circle.
+- Sticky notes: sticky in the nearest sticky colour.
+- Pictures, illustrations or logos inside circles or boxes: a circle (or the matching icon for a cloud or Microsoft service) with a one- or two-word label of what it shows.
+- Text written sideways (for example a layer name running up the side): "rot":270 when it reads bottom to top, 90 when it reads top to bottom; on a frame it turns the frame's title.
+- Headings, step numbers, captions and paragraphs: text shapes whose wh covers the text block; "size":"xl" for the main title, "l" for headings, "s" for small print.
+- Arrows and lines: connect, with "line":"dotted" for dotted ones and any words written on them.
+- Copy ALL the words exactly as written, including long descriptions, with \n where lines break. Write [?] for a word you cannot read.
+- Add nothing that is not in the picture. Do not send layout or direction.
+- End with one say line: what you recreated and anything you could not read.
+The picture itself is on the board already (image ${id}); leave it alone.`;
+  const PHOTO_AGAIN=id=>`The same picture is attached again (image ${id} on the board). The items listed under "Recreation on the picture grid" are your earlier recreation of it, with positions on the same 0 to 1000 grid. Compare them with the picture and do what the person asks; send update ops with "xy" and "wh" to move or resize, and add what is missing.`;
   function brief(){
     const m=state.model; if(!m) return 'The board is empty.';
     const L=['Direction: '+(m.dir||'LR')+(m.title?'\nTitle: '+m.title:'')];
@@ -168,6 +181,11 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').map(k=>k.slice(2)); if(sel.length) L.push('Selected now: '+sel.join(', ')+' ("these", "this" and "selected" mean these).');
     const cm=(m.threads||[]).filter(c=>!c.done&&c.msgs.length); if(cm.length){ L.push('Open comments:'); for(const c of cm) L.push('- on '+(c.on||'the board')+': '+c.msgs.map(q=>(q.a?q.a+': ':'')+q.t.replace(/\n/g,' ')).join(' / ').slice(0,300)); }
     if(!m.nodes.size&&!m.groups.size) L.push('The board is empty.');
+    // After a picture: where the recreation sits on the picture's grid.
+    if(photo&&photo.again){ const g=v=>Math.round(v/photo.s); const P2=(x,y,w,h)=>[g(x-photo.x),g(y-photo.y),g(w),g(h)].join(','); const R=[];
+      for(const id of m.groupOrder){ const b=state.boxes&&state.boxes.get(id); if(b&&b.x>=photo.x-20) R.push('- '+id+' (frame) '+P2(b.x,b.y,b.w,b.h)); }
+      for(const n of m.nodes.values()) if(n.x!=null&&n.x>=photo.x-20&&n.y>=photo.y-40) R.push('- '+n.id+' '+P2(n.x,n.y,n.w,n.h));
+      if(R.length) L.push('Recreation on the picture grid (id x,y,w,h):\n'+R.slice(0,300).join('\n')); }
     return L.join('\n');
   }
   function input(text){
@@ -180,7 +198,7 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
   }
 
   /* ---------- applying commands ---------- */
-  const SHAPES=new Set(['rect','round','stadium','cyl','circle','diamond','hex','para','sub','sticky','text']);
+  const SHAPES=new Set(['rect','round','stadium','cyl','circle','diamond','hex','para','sub','sticky','text','cloud','bubble','tri','star','arrow','chevron','paper']);
   const taken=id=>state.model.nodes.has(id)||state.model.groups.has(id);
   const cleanId=(raw,label)=>{ let id=String(raw||'').replace(/[^\p{L}\p{N}_]/gu,''); if(!id||/^\d/.test(id)||RESERVED.has(id)) id=idFrom(label||'node',taken); return id; };
   const hex=v=>typeof v==='string'&&/^#[0-9a-fA-F]{3,8}$/.test(v.trim())?v.trim():null;
@@ -248,28 +266,39 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
     const m=state.model; if(!m||!op||typeof op!=='object') return;
     const k=String(op.op||'').toLowerCase();
     if(k==='say'){ if(op.text) done.say.push(String(op.text)); return; }
+    if(k==='theme'){ const t=String(op.name||'').toLowerCase(); if(BOARD_THEMES[t]){ if(t==='classic') delete m.theme; else m.theme=t; done.changed++; } return; }
     if(k==='add'){
-      const lb=label(op.label||op.id||'New');
+      const lb=label(op.label!=null?op.label:op.id||'New');
       let id=cleanId(op.id,lb); if(taken(id)){ if(m.nodes.has(id)) return apply({...op,op:'update'},done); id=idFrom(lb,taken); }
       let icon=op.icon&&iconFor(op.icon)?String(op.icon).trim():null;
       let shape=icon?'icon':SHAPES.has(op.shape)||UI_KINDS[op.shape]?op.shape:guessShape(lb);
       const group=op.in&&m.groups.has(op.in)?op.in:null;
       const n={id,label:UI_KINDS[shape]&&op.label==null?UI_KINDS[shape].def:lb,shape,icon,group,cls:null}; sizeNode(n);
       m.nodes.set(id,n); m.nodeOrder.push(id);
+      if(photo&&Array.isArray(op.wh)&&shape!=='icon'){ n.w=Math.max(16,SNAP(+op.wh[0]*photo.s||n.w)); n.h=Math.max(16,SNAP(+op.wh[1]*photo.s||n.h)); n.sized=true; sizeNode(n); }
       if(group&&m.groups.get(group).dev) placePiece(m,n,op); else if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near);
+      if(photo&&shape==='text'&&Array.isArray(op.wh)){ // text from a picture: the largest size (up to its kind) that fits its box
+        const cap={s:13,m:16,l:22,xl:44}[op.size]||18, BH=Math.max(16,(+op.wh[1]||0)*photo.s); let f=cap; for(;f>7;f-=0.5){ const ls=wrapText(n.label,n.w-12,f,n.font); if(ls.length*Math.round(f*1.3)+10<=BH&&Math.max(0,...ls.map(l=>Core.measure(l,f,n.font)))<=n.w-8) break; }
+        setStyle(m,id,{fontSize:f}); n.fsSet=f; sizeNode(n); }
+      else if(op.size){ const fs={s:11,m:13,l:19,xl:30}[op.size]||(+op.size>5&&+op.size<120?+op.size:null); if(fs) setStyle(m,id,{fontSize:fs}); }
+      if(hex(op.color)) setStyle(m,id,{color:hex(op.color)}); if(hex(op.stroke)) setStyle(m,id,{stroke:hex(op.stroke)});
+      if([90,180,270].includes(+op.rot)){ n.rot=+op.rot; sizeNode(n); }
       if(shape==='sticky') setStyle(m,id,{fill:hex(op.fill)||STICKY_COLORS[0]}); else if(hex(op.fill)) setStyle(m,id,{fill:hex(op.fill)});
       done.added++; done.fresh.push(id); return;
     }
     if(k==='update'){
       const n=m.nodes.get(op.id), g=m.groups.get(op.id);
-      if(g){ if(op.label!=null) g.label=label(op.label); if('in' in op) g.parent=op.in&&m.groups.has(op.in)&&op.in!==g.id?op.in:null; if(hex(op.fill)) setStyle(m,g.id,{fill:hex(op.fill)}); done.changed++; return; }
+      if(g){ if(op.label!=null) g.label=label(op.label); if('in' in op) g.parent=op.in&&m.groups.has(op.in)&&op.in!==g.id?op.in:null; if(hex(op.fill)) setStyle(m,g.id,{fill:hex(op.fill)}); if(op.rot!==undefined){ if([90,180,270].includes(+op.rot)) g.rot=+op.rot; else delete g.rot; } done.changed++; return; }
       if(!n) return;
       if(op.label!=null) n.label=label(op.label);
       if(op.icon!==undefined){ if(op.icon&&iconFor(op.icon)){ n.icon=String(op.icon).trim(); n.shape='icon'; } else if(!op.icon&&n.shape==='icon'){ n.icon=null; n.shape='round'; } }
       if(op.shape&&SHAPES.has(op.shape)&&!(op.icon&&n.shape==='icon')){ n.shape=op.shape; n.icon=null; }
       if('in' in op){ const ng=op.in&&m.groups.has(op.in)?op.in:null; if(ng!==n.group){ n.group=ng; if(ng){ const sib=[...m.nodes.values()].find(o=>o!==n&&o.group===ng&&o.x!=null); if(sib) place(m,n,null); } } }
-      const patch={}; if(hex(op.fill)) patch.fill=hex(op.fill); if(hex(op.color)) patch.color=hex(op.color); if(Object.keys(patch).length) setStyle(m,n.id,patch);
-      if(op.at||op.size) placePiece(m,n,op,true);
+      const patch={}; if(hex(op.fill)) patch.fill=hex(op.fill); if(hex(op.color)) patch.color=hex(op.color); if(hex(op.stroke)) patch.stroke=hex(op.stroke); if(op.font) patch.font=fontKey(op.font)||null; if(Object.keys(patch).length) setStyle(m,n.id,patch);
+      if(op.at||(op.size&&Array.isArray(op.size))) placePiece(m,n,op,true);
+      if(photo&&Array.isArray(op.wh)&&n.shape!=='icon'){ n.w=Math.max(16,SNAP(+op.wh[0]*photo.s||n.w)); n.h=Math.max(16,SNAP(+op.wh[1]*photo.s||n.h)); n.sized=true; }
+      if(photo&&Array.isArray(op.xy)) atXY(n,op.xy);
+      if(op.rot!==undefined){ if([90,180,270].includes(+op.rot)) n.rot=+op.rot; else delete n.rot; }
       sizeNode(n); done.changed++; done.fresh.push(n.id); return;
     }
     if(k==='screen'){
@@ -310,7 +339,7 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
         const fields={...((n.doc&&n.doc.fields)||{}),...(op.fields&&typeof op.fields==='object'?op.fields:{})};
         n.doc=cleanDoc({blocks,kind,fields});
       }
-      const cx=n.x; sizeNode(n); if(fresh||cx==null){ if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near); }
+      const cx=n.x; if(photo&&fresh&&Array.isArray(op.wh)){ n.w=Math.max(120,SNAP(+op.wh[0]*photo.s||380)); n.sized=true; } sizeNode(n); if(fresh||cx==null){ if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near); }
       if(hex(op.fill)) setStyle(m,n.id,{fill:hex(op.fill)});
       if(fresh) done.added++; else done.changed++; done.fresh.push(n.id); return;
     }
@@ -328,6 +357,11 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
       if(!id){ const lb=label(op.label||'Frame'); id=cleanId(op.id,lb); if(taken(id)) id=idFrom(lb,taken); m.groups.set(id,{id,label:lb.replace(/\n/g,' '),parent:op.in&&m.groups.has(op.in)?op.in:null,dir:null}); m.groupOrder.push(id); done.added++; done.fresh.push(id); }
       else if(op.label) m.groups.get(id).label=label(op.label).replace(/\n/g,' ');
       for(const it of Array.isArray(op.items)?op.items:[]){ const n=m.nodes.get(it), g=m.groups.get(it); if(n) n.group=id; else if(g&&g.id!==id&&!isDesc(m,id,g.id)) g.parent=id; }
+      if(op.in!==undefined&&m.groups.get(id)){ const gg=m.groups.get(id); gg.parent=op.in&&m.groups.has(op.in)&&op.in!==id&&!isDesc(m,op.in,id)?op.in:gg.parent; }
+      // From a picture: the frame keeps the area's place and size.
+      if(photo&&Array.isArray(op.xy)&&Array.isArray(op.wh)){ const v=(a,k)=>Math.max(-50,Math.min(4000,+a[k]||0)); m.pos.set(id,{x:SNAP(photo.x+v(op.xy,0)*photo.s),y:SNAP(photo.y+v(op.xy,1)*photo.s),w:Math.max(80,SNAP(v(op.wh,0)*photo.s)),h:Math.max(60,SNAP(v(op.wh,1)*photo.s))}); }
+      if(op.rot!==undefined&&m.groups.get(id)){ const gg=m.groups.get(id); if([90,180,270].includes(+op.rot)) gg.rot=+op.rot; else delete gg.rot; }
+      { const patch={}; if(hex(op.fill)) patch.fill=hex(op.fill); if(hex(op.stroke)) patch.stroke=hex(op.stroke); if(hex(op.color)) patch.color=hex(op.color); if(Object.keys(patch).length) setStyle(m,id,patch); }
       done.changed++; return;
     }
     if(k==='unframe'){ const g=m.groups.get(op.id); if(!g) return; for(const n of m.nodes.values()) if(n.group===g.id) n.group=g.parent||null; for(const o of m.groups.values()) if(o.parent===g.id) o.parent=g.parent||null;
@@ -347,6 +381,11 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
   function live(){ state.code=serializeMermaid(state.model); reparse(); render(); }
 
   /* ---------- the conversation ---------- */
+  const kTok=v=>v>=10000?Math.round(v/1000)+'k':v>=1000?(v/1000).toFixed(1)+'k':String(v||0);
+  function metaText(x){
+    if(x.tier) return 'Claude, '+({quick:'fast',default:'standard',complex:'most capable'}[x.tier]||x.tier)+' model · uses your Claude plan';
+    const u=x.usage||{}, inp=(u.input_tokens||0)+(u.cache_creation_input_tokens||0)+(u.cache_read_input_tokens||0);
+    return AIKey.nameOf(x.model)+' · '+kTok(inp)+' in · '+kTok(u.output_tokens)+' out'+(x.cost!=null?' · about $'+(x.cost<0.01?x.cost.toFixed(4):x.cost.toFixed(3)):''); }
   function paint(){
     const list=chat(); let h='';
     if(!list.length){
@@ -364,8 +403,8 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
       if(t.role==='user') h+='<div class="ai-msg me">'+(t.pic?'<img class="ai-msgpic" alt="" src="'+t.pic+'">':'')+esc(t.content)+'</div>';
       else if(t.failed) h+='<div class="ai-msg err">'+esc(t.view||'Something went wrong.')+'</div>';
       else { const w=t.work||{}; const chips=[]; if(w.added) chips.push('<i>'+w.added+' added</i>'); if(w.linked) chips.push('<i>'+w.linked+' connected</i>'); if(w.changed) chips.push('<i>'+w.changed+' changed</i>'); if(w.removed) chips.push('<i>'+w.removed+' removed</i>'); if(w.layout) chips.push('<i>laid out</i>');
-        h+='<div class="ai-msg bot"><div class="ai-text">'+(t.pending&&!t.view?'<span class="ai-dots"><b></b><b></b><b></b>&nbsp;'+(t.phase||'Thinking')+'</span>':esc(t.view||''))+'</div>'+
-          (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+'</div>'; }
+        h+='<div class="ai-msg bot"'+(t.meta?' title="'+esc(metaText(t.meta))+'"':'')+'><div class="ai-text">'+(t.pending&&!t.view?'<span class="ai-dots"><b></b><b></b><b></b>&nbsp;'+(t.phase||'Thinking')+'</span>':esc(t.view||''))+'</div>'+
+          (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+(t.meta?'<div class="ai-meta">'+esc(metaText(t.meta))+'</div>':'')+'</div>'; }
     }
     if((showKeys&&keyMode&&sample)||(keyMode&&known&&!sample&&list.length)) h=keyPanel()+h;
     log.innerHTML=h; if(!showKeys) log.scrollTop=log.scrollHeight;
@@ -375,27 +414,37 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
   }
   async function send(text){
     text=String(text||'').trim(); if(busy) return;
-    const p=pic; if(!text&&p) text='Turn this picture into an editable board'; if(!text) return;
+    let p=pic; if(!text&&p) text='Turn this picture into an editable board'; if(!text) return;
+    // A follow-up right after a picture sends the picture again, so Claude can compare its work with it.
+    let again=null; if(!p){ const all=chat(); for(let i=all.length-1;i>=Math.max(0,all.length-6);i--){ const t=all[i]; if(t.role==='user'&&t.photo){ if(state.model&&state.model.images.some(x=>x.id===t.photo.imgId)) again=t.photo; break; } } if(again) p=again.pic; }
     if(!sample){ toast(known?'Open orim inside Claude to use this':'Connecting to Claude…'); return; }
     if(!state.model||state.fatal){ toast('Fix the code errors first'); return; }
     flushEditorHist(); histPush(state.code);
     const list=chat(); const turn={role:'assistant',content:'',view:'',pending:true,phase:'Thinking',work:{added:0,linked:0,changed:0,removed:0,layout:false},undoAt:null};
-    let req=input(text); list.push({role:'user',content:text,pic:p?p.url:null}); list.push(turn); inp.value=''; busy=true; pic=null; updPic(); paint(); Ghost.start();
+    photo=again?{...again.grid,again:true}:null; const req=input(text); const uturn={role:'user',content:text,pic:p&&!again?p.url:null}; list.push(uturn); list.push(turn); inp.value=''; busy=true; pic=null; updPic(); paint(); Ghost.start();
     const before=state.code, prevIds=nodeIds(); const done={say:[],added:0,linked:0,changed:0,removed:0,layout:false,fresh:[]};
     // The picture goes on the board first (unless it is already there); the recreation lands to its right.
     let im=null; photo=null;
-    if(p){ const m=state.model; im=p.imgId&&m.images.find(x=>x.id===p.imgId);
-      if(!im){ const id=nextImageId(m), w=Math.min(420,p.w), h=Math.round(w*p.h/p.w); IMG[id]=p.url; const r=freeSpot(m,w,h); im={id,x:r.x,y:r.y,w,h,front:false}; m.images.push(im); live(); }
-      photo={x:im.x+im.w+96,y:im.y,s:Math.max(1.1,Math.min(1.8,1300/1000))};
-      const last=req[req.length-1]; last.content+='\n\n'+PHOTO(im.id); }
+    if(again){ im=state.model.images.find(x=>x.id===again.imgId); photo={...again.grid,again:true}; }
+    else if(p){ const m=state.model; im=p.imgId&&m.images.find(x=>x.id===p.imgId);
+      // The grid's scale follows the picture's own size, so text in the recreation reads at about the same size.
+      // The picture is shown at the same size as the recreation beside it, so the two are easy to compare.
+      const s=Math.max(0.9,Math.min(2.2,p.w*1.3/1000)), W=Math.round(1000*s), Hh=Math.round(W*p.h/p.w);
+      if(!im){ const id=nextImageId(m); IMG[id]=p.url; const r=freeSpot(m,W,Hh); im={id,x:r.x,y:r.y,w:W,h:Hh,front:false}; m.images.push(im); live(); im=state.model.images.find(x=>x.id===id); }
+      else { im.w=W; im.h=Hh; live(); im=state.model.images.find(x=>x.id===p.imgId); }
+      const spot=freeSpot(state.model,W,Hh,null); photo={x:Math.max(spot.x,im.x+im.w+120),y:im.y,s};
+      uturn.photo={pic:p,imgId:im.id,grid:{x:photo.x,y:photo.y,s}}; }
+    if(photo){ const last=req[req.length-1]; last.content+='\n\n'+(again?PHOTO_AGAIN(im.id):PHOTO(im.id,p.h/p.w)); }
     let pending='', applied=0;
     const eat=line=>{ line=line.trim().replace(/^```\w*$/,''); if(!line) return; let op; try{ op=JSON.parse(line); }catch(_){ return; }
       try{ apply(op,done); applied++; if(op.op!=='say') live(); }catch(err){ console.error(err); }
       turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; Ghost.phase(op&&op.op==='say'?null:'Changing the board'); paint(); };
     ctl=new AbortController();
     try{
-      await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick', ...(p?{images:[p.blob]}:{}),
+      const res=await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked||photo?'default':'quick', ...(p&&photo?{images:[p.blob]}:{}),
         onText:({delta})=>{ const parts=(pending+delta).split('\n'); pending=parts.pop(); for(const p of parts) eat(p); } });
+      // Who answered and what it cost: from the API stream with a key, the tier inside Claude.
+      if(res){ if(keyMode&&res.usage) turn.meta={model:res.model,usage:res.usage,cost:AIKey.cost(res.model,res.usage)}; else if(res.modelTierApplied) turn.meta={tier:res.modelTierApplied}; }
       if(pending) eat(pending);
       if(!applied){ turn.view='Claude did not send any changes. Try saying it another way.'; }
     }catch(e){
@@ -407,10 +456,10 @@ The picture itself is already on the board (image ${id}); leave it alone.`;
       if(c==='needs_workspace'){ showKeys=true; needWs=true; setTimeout(()=>{ const w=$('#aiWsIn'); if(w) w.focus(); },50); }
     }
     // One undo step for the whole request. A recreated picture is faded so the editable copy stands out.
-    turn.pending=false; busy=false; ctl=null; Ghost.stop(); photo=null;
+    turn.pending=false; busy=false; ctl=null; Ghost.stop(); const fromPic=!!photo; photo=null;
     if(im&&done.added&&state.model){ const cur=state.model.images.find(x=>x.id===im.id); if(cur&&!cur.faded){ cur.faded=true; live(); } }
     // Whatever Claude added or moved is pushed clear of everything else, so nothing ends up on top of something.
-    if(state.code!==before&&state.model&&done.fresh.length&&!done.layout){ const m=state.model; const top=id=>{ let cur=m.nodes.get(id)?m.nodes.get(id).group:id, last=id, k=0; while(cur&&m.groups.has(cur)&&k++<60){ last=cur; cur=m.groups.get(cur).parent; } return last; };
+    if(state.code!==before&&state.model&&done.fresh.length&&!done.layout&&!fromPic){ const m=state.model; const top=id=>{ let cur=m.nodes.get(id)?m.nodes.get(id).group:id, last=id, k=0; while(cur&&m.groups.has(cur)&&k++<60){ last=cur; cur=m.groups.get(cur).parent; } return last; };
       const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov,null,true)) live(); }catch(err){ console.error(err); } }
     if(state.code!==before){ histPush(state.code); turn.undoAt=H.i-1; setEditorFromCode(); syncTitle(); saveLocal(); revealNew(prevIds);
       setTimeout(()=>{ for(const id of done.fresh.filter(id=>prevIds.has(id)).slice(-12)){ const el=R.nodeEls.get(id); if(!el) continue; el.classList.remove('flash'); void el.getBoundingClientRect(); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } },60); }

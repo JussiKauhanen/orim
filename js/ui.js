@@ -2,9 +2,9 @@
  * Menus, help panel, toasts and dialogs.
  */
 'use strict';
-function closeMenus(){ $('#tplMenu').hidden=true; $('#exportMenu').hidden=true; const t=$('#tidyMenu'); if(t) t.hidden=true; }
+function closeMenus(){ $('#tplMenu').hidden=true; $('#exportMenu').hidden=true; const sm=$('#styleMenu'); if(sm) sm.hidden=true; const t=$('#tidyMenu'); if(t) t.hidden=true; }
 function toggleMenu(id){ const el=$(id); const open=el.hidden; closeMenus(); el.hidden=!open; }
-$('#tplBtn').addEventListener('click',e=>{ e.stopPropagation(); toggleMenu('#tplMenu'); });
+$('#tplBtn').addEventListener('click',e=>{ e.stopPropagation(); closeMenus(); openTemplates(); });
 $('#exportBtn').addEventListener('click',e=>{ e.stopPropagation(); toggleMenu('#exportMenu'); });
 document.addEventListener('click',e=>{ if(!e.target.closest('.menu-wrap')) closeMenus(); if(!e.target.closest('#help')&&!e.target.closest('#helpBtn')) $('#help').hidden=true; });
 $('#helpBtn').addEventListener('click',()=>{ $('#help').hidden=!$('#help').hidden; });

@@ -237,6 +237,58 @@ test('board files: the mermaid block is replaced, notes around it are kept', () 
   assert.equal(run('Folder.supported'), false);
 });
 
+test('extra shapes, fonts and board themes stay plain Mermaid', () => {
+  const r = roundTrip('flowchart LR\n  a("Big idea"):::cloud\n  b["Risk"]:::tri\n  c["Note"]:::sticky\n  a --> b\n  style c font-family:Caveat\n  style b font-family:monospace\n%% @theme midnight\n');
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.nodes.get('a').shape, 'cloud');
+  assert.equal(r.model.nodes.get('b').shape, 'tri');
+  assert.match(r.s1, /a\("?Big idea"?\):::cloud/);
+  assert.match(r.s1, /b\["?Risk"?\]:::tri/);
+  assert.match(r.s1, /style c font-family:Caveat/);
+  assert.match(r.s1, /style b font-family:monospace/);
+  assert.match(r.s1, /%% @theme midnight/);
+  assert.equal(r.model.theme, 'midnight');
+  // Mermaid 11 shape names read as the same shapes.
+  const v = roundTrip('flowchart LR\n  x@{ shape: cloud, label: "Sky" }\n  y@{ shape: doc, label: "Spec" }\n');
+  assert.equal(v.model.nodes.get('x').shape, 'cloud');
+  assert.equal(v.model.nodes.get('y').shape, 'paper');
+});
+
+test('docs: checklists, code, quotes and dividers in Markdown and back', () => {
+  ctx.__md = '# Plan\n- [x] Tests written\n- [ ] Ship it\n> Keep it simple\n---\n```json\n{\n  "a": 1\n}\n```\nDone';
+  const d = run('mdToDoc(__md)');
+  assert.deepEqual(Array.from(d.blocks, (b) => b.t).join(','), 'h1,todo,todo,quote,hr,code,p');
+  assert.equal(d.blocks[1].c, 1);
+  assert.equal(d.blocks[2].c, undefined);
+  assert.equal(d.blocks[5].lang, 'json');
+  assert.equal(d.blocks[5].r[0].x, '{\n  "a": 1\n}');
+  assert.equal(run('docToMd(mdToDoc(__md))'), ctx.__md);
+  assert.match(run('blocksHtml(mdToDoc(__md).blocks)'), /<li>☑ Tests written<\/li>.*<blockquote>.*<hr><pre><code>/s);
+});
+
+test('cells pasted from Excel or CSV become table rows', () => {
+  ctx.__t = 'Name\tPrice\nWidget\t10\nGadget\t25\n';
+  assert.equal(JSON.stringify(run('parseGrid(__t)')), JSON.stringify([['Name', 'Price'], ['Widget', '10'], ['Gadget', '25']]));
+  ctx.__t = 'a;b;c\n1;"two; three";3';
+  assert.equal(JSON.stringify(run('parseGrid(__t)')), JSON.stringify([['a', 'b', 'c'], ['1', 'two; three', '3']]));
+  ctx.__t = 'Browser -> API\nAPI -> Database';
+  assert.equal(run('parseGrid(__t)'), null);
+});
+
+test('text direction and marked mockup items', () => {
+  const r = roundTrip('flowchart LR\n  subgraph lay [Service layer]\n    a[Side note]\n  end\n%% @pos a 40 40 60 200\n%% @rot a 270\n%% @rot lay 90\n');
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.nodes.get('a').rot, 270);
+  assert.equal(r.model.groups.get('lay').rot, 90);
+  assert.equal(run('uiMark("+Industry").m.k'), 'new');
+  assert.equal(run('uiMark("~Owner").m.k'), 'chg');
+  assert.equal(run('uiMark("-City").m.k'), 'del');
+  assert.equal(run('uiMark("-5% off").m'), null);
+  assert.equal(run('uiMark("+Industry").t'), 'Industry');
+});
+
 test('reports errors with line numbers', () => {
   const r = roundTrip('flowchart LR\n  A -->\n  subgraph x [X]\n    B\n');
   assert.ok(r.errors.some((e) => e.line === 1));

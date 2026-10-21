@@ -126,7 +126,7 @@ const Rich=(()=>{
   }
   // Pasting rows from a spreadsheet fills cells from the caret and adds rows or columns as needed.
   function pasteCells(r,c,t){
-    const lines=t.replace(/\r/g,'').replace(/\n$/,'').split('\n'); const grid=lines.map(l=>l.split('\t'));
+    const lines=t.replace(/\r/g,'').replace(/\n$/,'').split('\n'); const grid=parseGrid(t)||lines.map(l=>l.split('\t'));
     if(grid.length===1&&grid[0].length===1){ document.execCommand('insertText',false,t); return; }
     const needC=c+Math.max(...grid.map(g=>g.length)); while(cur.rows[0].length<needC) cur.rows.forEach(x=>x.push(''));
     while(cur.rows.length<r+grid.length){ cur.rows.push(Array(cur.rows[0].length).fill('')); cur.rowMap.push(null); }
@@ -134,15 +134,21 @@ const Rich=(()=>{
   }
 
   /* ---------- documents ---------- */
-  const BLK={h1:'h1',h2:'h2',h3:'h3',p:'p'};
+  const BLK={h1:'h1',h2:'h2',h3:'h3',p:'p',quote:'blockquote'};
+  // In the editor: lists are UL/OL, checklists UL.todo with data-c on ticked items, code is PRE, quotes BLOCKQUOTE, dividers HR.
+  const listKind=el=>el.tagName==='OL'?'ol':el.classList.contains('todo')?'todo':'ul';
   function docHtml(doc){
     let h='', list=null;
     const runs=rs=>rs.map(r=>{ let s=escH(r.x).replace(/\n/g,'<br>'); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; if(r.u) s='<a href="'+escH(r.u)+'">'+s+'</a>'; return s; }).join('')||'<br>';
+    const open=t=>t==='ol'?'<ol>':t==='todo'?'<ul class="todo">':'<ul>', shut=t=>t==='ol'?'</ol>':'</ul>';
     for(const b of doc.blocks){
-      if(b.t==='ul'||b.t==='ol'){ if(list!==b.t){ if(list) h+='</'+list+'>'; h+='<'+b.t+'>'; list=b.t; } h+='<li>'+runs(b.r)+'</li>'; continue; }
-      if(list){ h+='</'+list+'>'; list=null; } h+='<'+BLK[b.t]+'>'+runs(b.r)+'</'+BLK[b.t]+'>';
+      if(b.t==='ul'||b.t==='ol'||b.t==='todo'){ if(list!==b.t){ if(list) h+=shut(list); h+=open(b.t); list=b.t; } h+='<li'+(b.t==='todo'&&b.c?' data-c="1"':'')+'>'+runs(b.r)+'</li>'; continue; }
+      if(list){ h+=shut(list); list=null; }
+      if(b.t==='hr'){ h+='<hr contenteditable="false">'; continue; }
+      if(b.t==='code'){ h+='<pre'+(b.lang?' data-lang="'+escH(b.lang)+'"':'')+'>'+(escH((b.r[0]&&b.r[0].x)||'')||'<br>')+'</pre>'; continue; }
+      h+='<'+BLK[b.t]+'>'+runs(b.r)+'</'+BLK[b.t]+'>';
     }
-    if(list) h+='</'+list+'>';
+    if(list) h+=shut(list);
     return h||'<p><br></p>';
   }
   function readDocFrom(body){
@@ -165,7 +171,10 @@ const Rich=(()=>{
       if(nd.nodeType!==1) continue; const t=nd.tagName;
       if(t==='H1'||t==='H2'||t==='H3') add(t.toLowerCase(),nd);
       else if(t==='H4'||t==='H5'||t==='H6') add('h3',nd);
-      else if(t==='UL'||t==='OL'){ for(const li of nd.children) if(li.tagName==='LI'){ add(t==='UL'?'ul':'ol',li); for(const sub of li.querySelectorAll('ul,ol')) for(const l2 of sub.children) add(sub.tagName==='UL'?'ul':'ol',l2); } }
+      else if(t==='HR') blocks.push({t:'hr',r:[]});
+      else if(t==='PRE'){ const x=nd.innerText.replace(/\u00a0/g,' ').replace(/\n$/,''); const o={t:'code',r:x?[{x}]:[]}; if(nd.dataset.lang) o.lang=nd.dataset.lang; blocks.push(o); }
+      else if(t==='BLOCKQUOTE') add('quote',nd);
+      else if(t==='UL'||t==='OL'){ const k=listKind(nd); for(const li of nd.children) if(li.tagName==='LI'){ add(k,li); if(k==='todo'&&li.dataset.c) blocks[blocks.length-1].c=1; for(const sub of li.querySelectorAll('ul,ol')) for(const l2 of sub.children) add(listKind(sub),l2); } }
       else add('p',nd);
     }
     if(loose) add('p',loose);
@@ -185,7 +194,7 @@ const Rich=(()=>{
     cur.body=cur.box.querySelector('.rd-body'); cur.body.innerHTML=docHtml(n.doc||{blocks:[]});
     cur.box.style.width=(n.w||380)+'px';
     cur.bar.innerHTML=btn('h1','Heading 1','h1')+btn('h2','Heading 2','h2')+btn('h3','Heading 3','h3')+btn('p','Text','para')+'<span class="vsep"></span>'+
-      btn('b','Bold (Ctrl+B)','bold')+btn('i','Italic (Ctrl+I)','italic')+'<span class="vsep"></span>'+btn('ul','Bulleted list','list')+btn('ol','Numbered list','olist')+'<span class="vsep"></span>'+
+      btn('b','Bold (Ctrl+B)','bold')+btn('i','Italic (Ctrl+I)','italic')+'<span class="vsep"></span>'+btn('ul','Bulleted list','list')+btn('ol','Numbered list','olist')+btn('todo','Checklist','todo')+'<span class="vsep"></span>'+btn('code','Code block','code')+btn('quote','Quote','quote')+btn('hr','Divider','hr')+'<span class="vsep"></span>'+
       btn('link','Link (Ctrl+K)','link')+'<span class="vsep"></span>'+btn('copy','Copy as text, for Azure DevOps or any editor','copyDoc')+btn('expand','Expand','expand')+btn('done','Done')+
       '<span class="rd-linkbox" hidden><input type="url" placeholder="Paste a link" aria-label="Link address"><button type="button" class="btn" data-link-ok>Add</button></span>';
     cur.linkBox=cur.bar.querySelector('.rd-linkbox');
@@ -201,10 +210,13 @@ const Rich=(()=>{
     cur.body.addEventListener('input',()=>{ live(); place(); markDoc(); });
     cur.body.addEventListener('keydown',docKey);
     cur.body.addEventListener('keyup',markDoc); cur.body.addEventListener('mouseup',markDoc);
+    cur.body.addEventListener('mousedown',e=>{ const li=e.target.closest&&e.target.closest('ul.todo>li'); if(!li) return; const r=li.getBoundingClientRect(); if(e.clientX-r.left>22) return;
+      e.preventDefault(); if(li.dataset.c) delete li.dataset.c; else li.dataset.c='1'; live(); });
     cur.body.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href]'); if(a&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); openLink(a.getAttribute('href')); } });
     cur.body.addEventListener('paste',e=>{ const t=(e.clipboardData||window.clipboardData).getData('text/plain'); if(!t) return; e.preventDefault();
       const u=safeUrl(t.trim()); if(u&&!/\s/.test(t.trim())){ const sel=getSelection(); if(sel.rangeCount&&!sel.isCollapsed) document.execCommand('createLink',false,u); else document.execCommand('insertHTML',false,'<a href="'+escH(u)+'">'+escH(u)+'</a>&nbsp;'); live(); return; }
-      if(/^\s*(#{1,3}\s|[-*]\s|\d+\.\s)/m.test(t)&&t.includes('\n')){ document.execCommand('insertHTML',false,docHtml(mdToDoc(t))); } else document.execCommand('insertText',false,t); });
+      const inCode=(()=>{ const b=curBlock(); return b&&b.tagName==='PRE'; })();
+      if(!inCode&&/^\s*(#{1,3}\s|[-*]\s|\d+\.\s|>\s|```)/m.test(t)&&t.includes('\n')){ document.execCommand('insertHTML',false,docHtml(mdToDoc(t))); } else document.execCommand('insertText',false,t); });
     const empty=!(n.doc&&n.doc.blocks.some(b=>b.r.length));
     setTimeout(()=>{ if(!cur) return; if(!n.label&&empty) cur.title.focus(); else caretEnd(cur.body,false); markDoc(); },0);
   }
@@ -212,38 +224,48 @@ const Rich=(()=>{
   function curBlock(){ const s=getSelection(); if(!s.rangeCount) return null; let nd=s.anchorNode; if(!cur.body.contains(nd)) return null;
     // Loose text right in the editor gets a paragraph first.
     if(nd.parentNode===cur.body&&nd.nodeType===3){ const off=s.anchorOffset; const p=document.createElement('p'); cur.body.insertBefore(p,nd); p.appendChild(nd); setCaret(p,off); return p; }
-    while(nd&&nd!==cur.body&&!(nd.nodeType===1&&/^(P|H1|H2|H3|LI|DIV)$/.test(nd.tagName))) nd=nd.parentNode; return nd&&nd!==cur.body?nd:null; }
+    while(nd&&nd!==cur.body&&!(nd.nodeType===1&&/^(P|H1|H2|H3|LI|DIV|PRE|BLOCKQUOTE)$/.test(nd.tagName))) nd=nd.parentNode; return nd&&nd!==cur.body?nd:null; }
   function caretOffset(block){ const s=getSelection(); if(!s.rangeCount) return 0; const t=textBefore(block,s.anchorNode,s.anchorOffset); return t==null?0:t.length; }
   function setCaret(el,off){ const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT); let n, left=off; const r=document.createRange();
     while((n=w.nextNode())){ if(left<=n.nodeValue.length){ r.setStart(n,left); r.collapse(true); const s=getSelection(); s.removeAllRanges(); s.addRange(r); return; } left-=n.nodeValue.length; }
     r.selectNodeContents(el); r.collapse(false); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
   const fill=el=>{ if(!el.textContent&&!el.querySelector('br')) el.appendChild(document.createElement('br')); return el; };
   // Turn the block with the caret into another kind: a heading, a paragraph or a list item.
+  const isList=t=>t==='ul'||t==='ol'||t==='todo';
+  const mkList=t=>{ const el=document.createElement(t==='ol'?'ol':'ul'); if(t==='todo') el.className='todo'; return el; };
+  const TAG={code:'pre',quote:'blockquote'};
   function setBlock(type){
+    if(type==='hr'){ const b=curBlock(); const hr=document.createElement('hr'); hr.contentEditable='false'; const p=fill(document.createElement('p'));
+      const at=b&&b.tagName==='LI'?b.parentNode:b; if(at){ at.after(hr); hr.after(p); } else { cur.body.appendChild(hr); cur.body.appendChild(p); } setCaret(p,0); return; }
     const b=curBlock(); if(!b){ return; } const off=caretOffset(b);
-    const isLi=b.tagName==='LI', list=isLi?b.parentNode:null, lt=list?list.tagName.toLowerCase():null;
+    const isLi=b.tagName==='LI', list=isLi?b.parentNode:null, lt=list?listKind(list):null;
     let out;
-    if(type==='ul'||type==='ol'){
+    if(isList(type)){
       if(isLi&&lt===type) type='p';
-      else if(isLi){ const nl=document.createElement(type); while(list.firstChild) nl.appendChild(list.firstChild); list.replaceWith(nl); setCaret(b,off); return; }
+      else if(isLi){ const nl=mkList(type); while(list.firstChild) nl.appendChild(list.firstChild); list.replaceWith(nl); setCaret(b,off); return; }
     }
+    if((type==='code'&&b.tagName==='PRE')||(type==='quote'&&b.tagName==='BLOCKQUOTE')) type='p';
     const kids=[...b.childNodes].filter(c=>!(c.nodeType===1&&/^(UL|OL)$/.test(c.tagName)));
-    if(type==='ul'||type==='ol'){
+    if(isList(type)){
       out=document.createElement('li'); kids.forEach(k=>out.appendChild(k));
       const prev=b.previousElementSibling, next=b.nextElementSibling; let host;
-      if(prev&&prev.tagName===type.toUpperCase()){ host=prev; host.appendChild(out); b.remove(); }
-      else { host=document.createElement(type); host.appendChild(out); b.replaceWith(host); }
-      if(next&&next.tagName===type.toUpperCase()&&next!==host){ while(next.firstChild) host.appendChild(next.firstChild); next.remove(); }
+      const same=el=>el&&/^(UL|OL)$/.test(el.tagName)&&listKind(el)===type;
+      if(same(prev)){ host=prev; host.appendChild(out); b.remove(); }
+      else { host=mkList(type); host.appendChild(out); b.replaceWith(host); }
+      if(same(next)&&next!==host){ while(next.firstChild) host.appendChild(next.firstChild); next.remove(); }
     } else {
-      out=document.createElement(type); kids.forEach(k=>out.appendChild(k));
+      out=document.createElement(TAG[type]||type);
+      if(type==='code'){ out.textContent=b.innerText.replace(/\n$/,''); } else kids.forEach(k=>out.appendChild(k));
       if(isLi){ const after=[]; let x=b.nextElementSibling; while(x){ after.push(x); x=x.nextElementSibling; }
-        list.after(out); if(after.length){ const tail=document.createElement(lt); after.forEach(li=>tail.appendChild(li)); out.after(tail); } b.remove(); if(!list.children.length) list.remove(); }
+        list.after(out); if(after.length){ const tail=mkList(lt); after.forEach(li=>tail.appendChild(li)); out.after(tail); } b.remove(); if(!list.children.length) list.remove(); }
       else b.replaceWith(out);
+      // A code block always has a paragraph after it, so there is somewhere to keep writing.
+      if(type==='code'&&!out.nextElementSibling) out.after(fill(document.createElement('p')));
     }
     fill(out); setCaret(out,off);
   }
-  function markDoc(){ if(!cur||cur.kind!=='doc') return; const b=curBlock(); const t=b?(b.tagName==='LI'?(b.parentNode.tagName==='OL'?'ol':'ul'):b.tagName.toLowerCase()):'p';
-    for(const k of ['h1','h2','h3','p','ul','ol']){ const el=cur.bar.querySelector('[data-act="'+k+'"]'); if(el) el.setAttribute('aria-pressed',String(t===k||(k==='p'&&t==='div'))); }
+  function markDoc(){ if(!cur||cur.kind!=='doc') return; const b=curBlock(); const t=b?(b.tagName==='LI'?listKind(b.parentNode):b.tagName==='PRE'?'code':b.tagName==='BLOCKQUOTE'?'quote':b.tagName.toLowerCase()):'p';
+    for(const k of ['h1','h2','h3','p','ul','ol','todo','code','quote']){ const el=cur.bar.querySelector('[data-act="'+k+'"]'); if(el) el.setAttribute('aria-pressed',String(t===k||(k==='p'&&t==='div'))); }
     for(const k of ['b','i']){ const el=cur.bar.querySelector('[data-act="'+k+'"]'); let on=false; try{ on=document.queryCommandState(k==='b'?'bold':'italic'); }catch(_){} if(el) el.setAttribute('aria-pressed',String(on)); } }
   function docAct(a){
     if(a==='done'){ close(true); return; }
@@ -262,14 +284,17 @@ const Rich=(()=>{
     if(e.key===' '){
       const s=getSelection(); if(!s.rangeCount||!s.isCollapsed) return; const b=curBlock(); const nd=s.anchorNode;
       const pre=b?textBefore(b,nd,s.anchorOffset):(nd&&nd.nodeType===3?nd.nodeValue.slice(0,s.anchorOffset):'');
-      const mm=/^(#{1,3}|[-*]|1[.)])$/.exec(pre); if(!mm) return;
-      if(b&&b.tagName==='LI') return;
+      const mm=/^(#{1,3}|[-*]|1[.)]|\[\s?\]|>|```|---)$/.exec(pre); if(!mm) return;
+      if(b&&(b.tagName==='LI'||b.tagName==='PRE')) return;
       e.preventDefault();
       const blk=b||curBlock(); if(!blk) return;
       const r=document.createRange(); r.setStart(blk,0); r.setEnd(nd,s.anchorOffset); r.deleteContents(); fill(blk); setCaret(blk,0);
-      const k=mm[1]; setBlock(k[0]==='#'?'h'+k.length:(k==='-'||k==='*')?'ul':'ol');
+      const k=mm[1]; setBlock(k[0]==='#'?'h'+k.length:(k==='-'||k==='*')?'ul':k[0]==='['?'todo':k==='>'?'quote':k==='```'?'code':k==='---'?'hr':'ol');
       live(); place(); markDoc(); return;
     }
+    if(e.key==='Enter'&&!e.shiftKey){ const b=curBlock();
+      if(b&&b.tagName==='PRE'){ e.preventDefault(); document.execCommand('insertText',false,'\n'); live(); place(); return; }
+      if(b&&b.tagName==='LI'&&b.dataset.c) setTimeout(()=>{ const nb=curBlock(); if(nb&&nb!==b&&nb.tagName==='LI') delete nb.dataset.c; live(); },0); }
     if(e.key==='Backspace'){ const b=curBlock(); const s=getSelection(); if(b&&s.isCollapsed&&/^H[1-3]$/.test(b.tagName)&&textBefore(b,s.anchorNode,s.anchorOffset)===''){ e.preventDefault(); setBlock('p'); live(); markDoc(); } }
   }
   /* ---------- tickets and links ---------- */

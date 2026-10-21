@@ -40,9 +40,12 @@ function blocksHtml(blocks){
   const runs=rs=>rs.map(r=>{ let s=he(r.x); if(r.i) s='<i>'+s+'</i>'; if(r.b) s='<b>'+s+'</b>'; if(r.u) s='<a href="'+he(r.u)+'">'+s+'</a>'; return s; }).join('');
   let h='', list=null;
   for(const b of blocks){
-    if(b.t==='ul'||b.t==='ol'){ if(list!==b.t){ if(list) h+='</'+list+'>'; h+='<'+b.t+'>'; list=b.t; } h+='<li>'+runs(b.r)+'</li>'; continue; }
+    if(b.t==='ul'||b.t==='ol'||b.t==='todo'){ const lt=b.t==='ol'?'ol':'ul'; if(list!==lt){ if(list) h+='</'+list+'>'; h+='<'+lt+'>'; list=lt; } h+='<li>'+(b.t==='todo'?(b.c?'☑ ':'☐ '):'')+runs(b.r)+'</li>'; continue; }
     if(list){ h+='</'+list+'>'; list=null; }
+    if(b.t==='hr'){ h+='<hr>'; continue; }
+    if(b.t==='code'){ h+='<pre><code>'+String((b.r[0]&&b.r[0].x)||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code></pre>'; continue; }
     if(!b.r.length) continue;
+    if(b.t==='quote'){ h+='<blockquote>'+runs(b.r)+'</blockquote>'; continue; }
     h+='<'+(b.t==='p'?'p':b.t)+'>'+runs(b.r)+'</'+(b.t==='p'?'p':b.t)+'>';
   }
   if(list) h+='</'+list+'>';
