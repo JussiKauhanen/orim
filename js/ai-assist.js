@@ -3,7 +3,7 @@
  *
  * Works where orim runs inside Claude (the copy shared from Claude), using the
  * viewer's own Claude account through the `sample` capability. Elsewhere, such
- * as GitHub Pages, the tab explains that and points to Export → Ask an AI.
+ * as GitHub Pages, it uses an Anthropic API key the person saves in this browser (ai-key.js).
  *
  * Claude replies with one small JSON command per line (add, connect, update,
  * frame, …). Each line is applied the moment it arrives, so the board changes
@@ -37,13 +37,31 @@ const Ghost=(()=>{
 const AI=(()=>{
   const log=$('#aiLog'), inp=$('#aiIn'), sendBtn=$('#aiSend'), stopBtn=$('#aiStop'), deep=$('#aiDeep'), selEl=$('#aiSel');
   const chats=new Map();            // board id -> [{role:'user'|'assistant', content, view}]
-  let sample=null, known=false, busy=false, ctl=null;
+  let sample=null, known=false, busy=false, ctl=null, keyMode=false, showKeys=false;
   try{ deep.checked=!!LS.get('orim.aiDeep',false); }catch(_){}
   deep.addEventListener('change',()=>LS.set('orim.aiDeep',deep.checked));
   const chat=()=>{ const id=(typeof Boards!=='undefined'&&Boards.current())||'_'; if(!chats.has(id)) chats.set(id,[]); return chats.get(id); };
 
   const ready=(window.claude&&typeof window.claude.use==='function')?window.claude.use('sample').catch(()=>null):Promise.resolve(null);
-  ready.then(s=>{ sample=s; known=true; paint(); });
+  // Inside Claude the viewer's own account answers. Elsewhere, an Anthropic API key saved in this browser.
+  ready.then(s=>{ keyMode=!s; sample=s||(AIKey.get()?AIKey.sample:null); known=true; updKeyBtn(); paint(); });
+  const keyBtn=document.createElement('button'); keyBtn.type='button'; keyBtn.className='ai-keybtn'; keyBtn.id='aiKeyBtn'; keyBtn.hidden=true; keyBtn.title='API key and model'; keyBtn.setAttribute('aria-label','API key and model');
+  keyBtn.innerHTML='<svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2.5 2.5M14 9l2 2"/></svg>';
+  selEl.before(keyBtn);
+  function updKeyBtn(){ keyBtn.hidden=!(keyMode&&sample); }
+  keyBtn.addEventListener('click',()=>{ showKeys=!showKeys; paint(); });
+  // The key form: a link to the Console to make a key, the key, the model, and where it is kept.
+  function keyPanel(){
+    const has=!!AIKey.get(), m=AIKey.model();
+    return '<div class="ai-empty ai-keyset"><span class="ai-hi">'+aiSpark()+'</span><b>'+(has?'Your Claude API key':'Use Claude with your API key')+'</b>'+
+      '<p>'+(has?'orim calls Claude directly from this browser with your key. Usage is billed to your Claude API account.':'Inside Claude this tab uses your Claude account with no setup. Here, add an API key from the Claude Console and orim calls Claude directly from this browser. Usage is billed to your Claude API account.')+'</p>'+
+      '<a class="ai-keylink" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">'+ico('link')+'Create a key in the Claude Console</a>'+
+      '<label class="ai-field"><span>API key</span><input type="password" id="aiKeyIn" placeholder="'+(has?'Saved. Paste a new key to replace it':'sk-ant-…')+'" autocomplete="off" spellcheck="false"></label>'+
+      '<label class="ai-field"><span>Model</span><select id="aiModel">'+AIKey.MODELS.map(([id,nm,d])=>'<option value="'+id+'"'+(id===m?' selected':'')+'>'+nm+', '+d+'</option>').join('')+'</select></label>'+
+      '<label class="toggle"><input type="checkbox" id="aiKeyRemember" checked><span>Remember on this device</span></label>'+
+      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Use this key')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Done</button>':'')+'</div>'+
+      '<p class="ai-keynote">The key stays in this browser and is only sent to api.anthropic.com. Avoid saving it on a shared computer. Think harder uses Opus 5.5. No key? Export, then Ask an AI, copies a prompt for any AI chat.</p></div>';
+  }
 
   /* ---------- what Claude is told ---------- */
   const RULES=`You edit a whiteboard diagram in orim (Mermaid flowchart underneath). Reply ONLY with lines of JSON, exactly one object per line, no code fences, no other text. Each line is applied to the board the moment it arrives, in order.
@@ -104,7 +122,9 @@ Rules:
     return L.join('\n');
   }
   function input(text){
-    const past=chat().filter(t=>!t.failed).slice(-6).map(t=>({role:t.role,content:t.role==='assistant'?t.summary||t.content||'(no reply)':t.content}));
+    // Earlier turns, leaving out requests that failed (and the question that went with them).
+    const all=chat(); const ok=all.filter((t,i)=>!t.failed&&!(t.role==='user'&&all[i+1]&&all[i+1].failed));
+    const past=ok.filter(t=>!t.pending).slice(-6).map(t=>({role:t.role,content:t.role==='assistant'?t.summary||t.content||'(no reply)':t.content}));
     const head={role:'user',content:RULES+'\n\nIcons ('+'pack:id'+'):\n'+aiIconList(false)};
     const now={role:'user',content:'The board now:\n'+brief()+'\n\nRequest: '+text};
     return past.length?[head,{role:'assistant',content:'{"op":"say","text":"Ready."}'},...past,now]:[{role:'user',content:head.content+'\n\n'+now.content}];
@@ -276,7 +296,8 @@ Rules:
   function paint(){
     const list=chat(); let h='';
     if(!list.length){
-      if(known&&!sample) h='<div class="ai-empty"><b>Claude works here when orim is opened inside Claude</b>Open the copy of orim shared from Claude to use this tab: it uses your own Claude account and needs no setup. Here, use Export, then Ask an AI, to copy a prompt for any AI chat.</div>';
+      if(known&&!sample&&keyMode) h=keyPanel();
+      else if(known&&!sample) h='<div class="ai-empty"><b>Claude is not available here</b>Use Export, then Ask an AI, to copy a prompt for any AI chat.</div>';
       else { const blank=!state.model||(!state.model.nodes.size&&!state.model.groups.size);
         // Starters, like Miro's: a short label, a coloured icon, and the full request it fills in.
         const T=blank?[['shapes','#4262ff','Draw a web shop on Azure','Create a simple web shop on Azure: front end, API, database and sign-in'],['phone','#9510ac','Mock up mobile screens','Mock up a login, a product list and a profile screen for mobile'],['table','#0ca789','Compare two products','Compare Crystallize and Optimizely in a table, and link the parts to a diagram'],['ticket','#f24726','Plan a project with tickets','Plan a customer portal: a short spec doc, the database tables and the first tickets']]
@@ -291,7 +312,8 @@ Rules:
         h+='<div class="ai-msg bot"><div class="ai-text">'+(t.pending&&!t.view?'<span class="ai-dots"><b></b><b></b><b></b>&nbsp;'+(t.phase||'Thinking')+'</span>':esc(t.view||''))+'</div>'+
           (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+'</div>'; }
     }
-    log.innerHTML=h; log.scrollTop=log.scrollHeight;
+    if(showKeys&&keyMode&&sample) h=keyPanel()+h;
+    log.innerHTML=h; if(!showKeys) log.scrollTop=log.scrollHeight;
     inp.placeholder=!state.model||(!state.model.nodes.size&&!state.model.groups.size)?'Where shall we start?':'What should change?';
     sendBtn.disabled=busy||(known&&!sample); sendBtn.hidden=busy; inp.disabled=known&&!sample; stopBtn.hidden=!busy;
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').length; selEl.textContent=sel?sel+' selected':'';
@@ -316,9 +338,10 @@ Rules:
       if(!applied){ turn.view='Claude did not send any changes. Try saying it another way.'; }
     }catch(e){
       if(pending) eat(pending);
-      const c=e&&e.code; const msg={cancelled:'Stopped.',not_granted:'Claude is not allowed for this page. You can allow it from the page’s permissions.',rate_limited:'Claude is busy or your usage limit is reached. Try again in a moment.',sampling_disabled:'Claude is not available for this account.',prompt_too_large:'The board is too large to send in one go.',refused:'Claude declined this request.'}[c]||'Claude could not finish. Try again.';
-      turn.view=(done.say.join('\n')?done.say.join('\n')+'\n':'')+msg;
+      const c=e&&e.code; const msg={cancelled:'Stopped.',not_granted:'Claude is not allowed for this page. You can allow it from the page’s permissions.',rate_limited:'Claude is busy or your usage limit is reached. Try again in a moment.',sampling_disabled:'Claude is not available for this account.',bad_key:'The API key was not accepted. Check it with the key button below.',no_key:'Add an API key first.',overloaded:'Claude is overloaded right now. Try again in a moment.',network:'Could not reach the Claude API. Check your connection.',api_error:'The Claude API returned an error'+(e&&e.message&&e.message!=='api_error'?': '+e.message:'.'),prompt_too_large:'The board is too large to send in one go.',refused:'Claude declined this request.'}[c]||'Claude could not finish. Try again.';
+      turn.view=(done.say.join('\n')?done.say.join('\n')+'\n':'')+msg; if(!applied&&c!=='cancelled') turn.failed=true;
       if(c==='not_granted'||c==='sampling_disabled'){ sample=null; }
+      if(c==='bad_key'){ showKeys=true; }
     }
     // One undo step for the whole request.
     turn.pending=false; busy=false; ctl=null; Ghost.stop();
@@ -331,9 +354,16 @@ Rules:
     paint();
   }
   $('#aiForm').addEventListener('submit',e=>{ e.preventDefault(); send(inp.value); });
+  log.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&e.target.id==='aiKeyIn'){ e.preventDefault(); $('#aiKeySave').click(); } });
   inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(inp.value); } });
   stopBtn.addEventListener('click',()=>{ if(ctl) ctl.abort(); });
   log.addEventListener('click',e=>{
+    if(e.target.closest('#aiKeySave')){ const v=$('#aiKeyIn').value.trim(), md=$('#aiModel').value; AIKey.setModel(md);
+      if(v){ if(!AIKey.looksValid(v)){ toast('That does not look like a Claude API key (sk-ant-…)'); $('#aiKeyIn').focus(); return; } AIKey.set(v,$('#aiKeyRemember').checked); }
+      else if(!AIKey.get()){ toast('Paste your API key first'); $('#aiKeyIn').focus(); return; }
+      sample=AIKey.sample; showKeys=false; updKeyBtn(); paint(); toast(v?'Key saved. Claude is ready':'Saved'); setTimeout(()=>inp.focus(),0); return; }
+    if(e.target.closest('#aiKeyForget')){ AIKey.clear(); sample=null; showKeys=false; updKeyBtn(); paint(); toast('Key removed from this browser'); return; }
+    if(e.target.closest('#aiKeyDone')){ const md=$('#aiModel'); if(md) AIKey.setModel(md.value); showKeys=false; paint(); return; }
     const t=e.target.closest('[data-try]'); if(t){ inp.value=t.dataset.try; inp.focus(); return; }
     const u=e.target.closest('[data-undo]'); if(u&&!busy){ const at=+u.dataset.undo;
       if(H.i===at+1){ undo(); toast('Undone'); for(const t of chat()) if(t.undoAt===at) t.undoAt=null; paint(); }

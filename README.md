@@ -119,7 +119,8 @@ orim/
 │   ├── export.js           Other exports
 │   ├── share-qr.js         QR code and shared links (#m=…)
 │   ├── ai-guide.js         Ask an AI: prompt, format guide, paste back
-│   ├── ai-assist.js        AI tab: Claude edits the board live (inside Claude)
+│   ├── ai-key.js           Claude API with your own key, streamed, for copies outside Claude
+│   ├── ai-assist.js        AI tab: Claude edits the board live (inside Claude, or with your key)
 │   ├── theme.js            Theme switching
 │   ├── tooltips.js         Tooltips
 │   ├── me.js               Your name and avatar for comments
@@ -144,7 +145,7 @@ The scripts are plain browser scripts loaded in order, not modules, so the app r
 
 ## Where boards are stored
 
-Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. `orim.me` is your comment name. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
+Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. `orim.me` is your comment name. `orim.anthropicKey` and `orim.anthropicModel` hold your Claude API key and model if you saved one in the AI tab. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
 
 ## File format
 
@@ -235,7 +236,7 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 - **Think harder** uses a slower, more capable model for bigger changes.
 - While Claude works, the board stays sharp in the middle and goes soft around the edges, where a sketch drifts and a Claude cursor moves between its pieces; a status note shows what it is doing, and the real changes appear as they arrive.
 - "Make it vertical" or "left to right" changes the flow direction and lays the board out again; pinned connection points turn with it.
-- On GitHub Pages or a local copy the tab explains that it needs Claude; use Export → Ask an AI there.
+- On GitHub Pages or a local copy, the tab asks for your own Claude API key instead. **Create a key in the Claude Console** opens [platform.claude.com/settings/keys](https://platform.claude.com/settings/keys); paste the key, pick a model (Sonnet 5.5 by default, Haiku 5.5 or Opus 5.5) and orim calls the Claude API straight from your browser, streaming changes onto the board the same way. Think harder uses Opus 5.5. The key is kept only in this browser (localStorage, or for this tab only if you untick Remember) and is sent only to api.anthropic.com; usage is billed to your API account. The key button next to Think harder changes the model or forgets the key. Without a key, Export → Ask an AI still works with any AI chat.
 
 ## Move a board to another device
 

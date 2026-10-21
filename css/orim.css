@@ -688,3 +688,17 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .mode-seg button[data-emode="ai"][aria-pressed="true"]{background:#ffd23f;color:#1a1a1a}
 .mode-seg .ai-tab-mark svg.i{width:13px;height:13px}
 @media (max-width:760px){ .ai-fab{left:8px;bottom:8px;width:42px;height:42px} .ai-fab svg.i{width:32px;height:32px} .leftbar{max-height:calc(100% - 80px)} }
+/* AI tab with your own API key */
+.ai-keyset{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.ai-keyset p{margin:0}
+.ai-keylink{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-weight:600;font-size:13px;text-decoration:none}
+.ai-keylink:hover{text-decoration:underline}
+.ai-keylink svg.i{width:15px;height:15px}
+.ai-field{display:flex;flex-direction:column;gap:4px;width:100%;font-size:12px;color:var(--muted)}
+.ai-field input,.ai-field select{height:34px;border:1px solid var(--line-strong);border-radius:8px;padding:0 10px;font:13px var(--font-ui);background:var(--panel);color:var(--fg);width:100%}
+.ai-field input:focus,.ai-field select:focus{outline:none;border-color:var(--accent)}
+.ai-keyrow{display:flex;gap:8px;margin-top:2px}
+.ai-keynote{font-size:12px;color:var(--faint)}
+.ai-keybtn{border:0;background:none;color:var(--muted);width:26px;height:26px;border-radius:6px;display:grid;place-items:center;cursor:pointer;padding:0}
+.ai-keybtn:hover{background:var(--panel-2);color:var(--fg)}
+.ai-keybtn svg.i{width:15px;height:15px}
