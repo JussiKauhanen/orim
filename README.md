@@ -252,6 +252,7 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 | Key | Action |
 | --- | --- |
 | V, H or Space | Select, hand |
+| Right or middle mouse button drag | Move around the board |
 | N, T, S, A, P, Shift+P, E, F | Sticky, text, shapes, arrows, pen, highlighter, eraser, frame |
 | R, O, D, B | Rectangle, circle, decision, database |
 | I | Icon library |

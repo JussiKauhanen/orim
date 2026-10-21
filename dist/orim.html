@@ -9718,7 +9718,8 @@ function onDown(e){
   const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
   // Links in documents: Ctrl or Cmd+click opens them.
   const lk=e.target.closest&&e.target.closest('.doc-link'); if(lk&&(e.ctrlKey||e.metaKey)&&e.button===0){ e.preventDefault(); openLink(lk.dataset.href); return; }
-  if(e.button===1||state.tool==='hand'||spaceDown){ startPan(e); return; }
+  // Middle or right mouse button drags the board around; so do the Hand tool and Space.
+  if(e.button===1||e.button===2||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;
   if(kind==='phandle'){ const im=state.model.images.find(x=>x.id===tgt.dataset.id); if(im){ state.drag={mode:'presize',id:im.id,corner:tgt.dataset.corner,start:p,orig:{...im},moved:false}; } return; }
   if(kind==='ahandle'){ const a=state.model.arrows.find(x=>x.id===tgt.dataset.id); const end=+tgt.dataset.end; state.drag={mode:'aend',id:tgt.dataset.id,end,moved:false,orig:a?(end?a.to:a.from):null}; return; }
