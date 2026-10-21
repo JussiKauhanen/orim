@@ -20,12 +20,13 @@ function onDown(e){
   const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
   // Links in documents: Ctrl or Cmd+click opens them.
   const lk=e.target.closest&&e.target.closest('.doc-link'); if(lk&&(e.ctrlKey||e.metaKey)&&e.button===0){ e.preventDefault(); openLink(lk.dataset.href); return; }
-  if(e.button===1||state.tool==='hand'||spaceDown){ startPan(e); return; }
+  // Middle or right mouse button drags the board around; so do the Hand tool and Space.
+  if(e.button===1||e.button===2||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;
   if(kind==='phandle'){ const im=state.model.images.find(x=>x.id===tgt.dataset.id); if(im){ state.drag={mode:'presize',id:im.id,corner:tgt.dataset.corner,start:p,orig:{...im},moved:false}; } return; }
   if(kind==='ahandle'){ const a=state.model.arrows.find(x=>x.id===tgt.dataset.id); const end=+tgt.dataset.end; state.drag={mode:'aend',id:tgt.dataset.id,end,moved:false,orig:a?(end?a.to:a.from):null}; return; }
   if(kind==='ehandle'){ state.drag={mode:'eend',idx:+tgt.dataset.idx,end:+tgt.dataset.end,cur:p,target:null,moved:false}; return; }
-  if(kind==='handle'&&tgt.dataset.gid){ const gid=tgt.dataset.gid; const b=state.boxes.get(gid); if(!b) return; state.drag={mode:'gresize',gid,corner:tgt.dataset.corner,start:p,orig:{...b},min:state.boxes.content.get(gid)||null,moved:false}; return; }
+  if(kind==='handle'&&tgt.dataset.gid){ const gid=tgt.dataset.gid; const b=state.boxes.get(gid); if(!b) return; state.drag={mode:'gresize',gid,corner:tgt.dataset.corner,start:p,orig:{...b},min:state.boxes.content.get(gid)||null,inside:frameInside(gid),moved:false}; return; }
   if(kind==='handle'){ const n=state.model.nodes.get(tgt.dataset.id); state.drag={mode:'resize',id:n.id,corner:tgt.dataset.corner,start:p,orig:{x:n.x,y:n.y,w:n.w,h:n.h},ofs:labelSize(n),moved:false,styled:false}; return; }
   const tl=state.tool;
   // Drawing closes the pen menu, so it is out of the way.
@@ -207,7 +208,10 @@ function onMove(e){
     if(!e.altKey){ x0=SNAP(x0); y0=SNAP(y0); x1=SNAP(x1); y1=SNAP(y1); }
     if(x1-x0<120){ if(d.corner.includes('w')) x0=x1-120; else x1=x0+120; }
     if(y1-y0<80){ if(d.corner.includes('n')) y0=y1-80; else y1=y0+80; }
-    const mn=d.min; if(mn){ x0=Math.min(x0,mn.x); y0=Math.min(y0,mn.y); x1=Math.max(x1,mn.x+mn.w); y1=Math.max(y1,mn.y+mn.h); }
+    // Smaller than its contents: the contents move closer together to fit, keeping their arrangement.
+    const mn=d.min; if(mn&&d.inside) squeezeInto(d,{x:x0,y:y0,w:x1-x0,h:y1-y0});
+    else if(mn){ x0=Math.min(x0,mn.x); y0=Math.min(y0,mn.y); x1=Math.max(x1,mn.x+mn.w); y1=Math.max(y1,mn.y+mn.h); }
+    if(d.inside&&d.inside.minW){ if(x1-x0<d.inside.minW){ if(d.corner.includes('w')) x0=x1-d.inside.minW; else x1=x0+d.inside.minW; } if(y1-y0<d.inside.minH){ if(d.corner.includes('n')) y0=y1-d.inside.minH; else y1=y0+d.inside.minH; } if(mn) squeezeInto(d,{x:x0,y:y0,w:x1-x0,h:y1-y0}); }
     m.pos.set(d.gid,{x:x0,y:y0,w:x1-x0,h:y1-y0}); d.moved=true;
     render(); liveLayoutSync(); return;
   }
@@ -317,7 +321,7 @@ function onUp(e){
     if(!state.sel.size&&!d.base.size&&r.w*z>=90&&r.h*z>=60) showFrameOffer({x:SNAP(r.x),y:SNAP(r.y),w:SNAP(r.w),h:SNAP(r.h)});
     return;
   }
-  if(d.mode==='gresize'){ if(d.moved){ mutate(()=>{}, {structural:false}); toast('Frame size locked. Use "Fit to contents" to undo.'); } else render(); return; }
+  if(d.mode==='gresize'){ if(d.moved){ mutate(()=>{}, {structural:false}); toast(d.inside&&(d.orig.w>m.pos.get(d.gid).w||d.orig.h>m.pos.get(d.gid).h)?'Frame resized. Its contents moved closer together':'Frame size locked. Use "Fit to contents" to undo.'); } else render(); return; }
   if(d.mode==='resize'){ if(d.moved) mutate(()=>{}, {structural:!!d.styled}); else render(); return; }
   const snap=state.snapTarget; state.snapTarget=null;
   if(d.mode==='aend'){
@@ -432,6 +436,29 @@ function onUp(e){
   }
 }
 function openLink(u){ const s=safeUrl(u); if(!s) return; try{ const w=window.open(s,'_blank','noopener'); if(!w) copyText(s,'Link copied: the browser blocked opening it'); }catch(_){ copyText(s,'Link copied'); } }
+// What a frame holds, for squeezing it: shapes (not in mockup screens) and screens, with where they were.
+function frameInside(gid){
+  const m=state.model; const inG=new Set([gid]); let grew=true; while(grew){ grew=false; for(const g of m.groups.values()) if(!inG.has(g.id)&&g.parent&&inG.has(g.parent)){ inG.add(g.id); grew=true; } }
+  const devs=[...inG].filter(id=>id!==gid&&m.groups.get(id).dev), inDev=new Set(); for(const dv of devs) for(const id of inG) if(id===dv||isDesc(m,id,dv)) inDev.add(id);
+  const items=[];
+  for(const n of m.nodes.values()) if(n.group&&inG.has(n.group)&&!inDev.has(n.group)&&n.x!=null) items.push({n,x:n.x,y:n.y,w:n.w,h:n.h});
+  for(const dv of devs){ const b=state.boxes.get(dv); if(b) items.push({dev:dv,x:b.x,y:b.y,w:b.w,h:b.h,kids:[...m.nodes.values()].filter(n=>n.group&&(n.group===dv||isDesc(m,n.group,dv))).map(n=>({n,x:n.x,y:n.y}))}); }
+  if(!items.length) return null;
+  const x0=Math.min(...items.map(i=>i.x)), y0=Math.min(...items.map(i=>i.y)), x1=Math.max(...items.map(i=>i.x+i.w)), y1=Math.max(...items.map(i=>i.y+i.h));
+  const nested=[...inG].some(id=>id!==gid&&!m.groups.get(id).dev&&!inDev.has(id));
+  return {items,box:{x:x0,y:y0,w:x1-x0,h:y1-y0},minW:Math.max(...items.map(i=>i.w))+PAD*2+(nested?PAD*2:0),minH:Math.max(...items.map(i=>i.h))+PAD+PAD_TOP+(nested?PAD+PAD_TOP:0)};
+}
+function squeezeInto(d,r){
+  const I=d.inside, c=I.box, m=state.model;
+  const tx=r.x+PAD, ty=r.y+PAD_TOP, tw=Math.max(1,r.w-PAD*2), th=Math.max(1,r.h-PAD_TOP-PAD);
+  // Each axis scales gap sizes only, so the farthest item still fits: s = (room - its size) / (span - its size).
+  const scale=(room,span,key,size)=>{ if(room>=span) return 1; let s=1; for(const i of I.items){ const lead=i[key]-c[key]; if(lead>0) s=Math.min(s,Math.max(0,(room-i[size])/lead)); } return s; };
+  const sx=scale(tw,c.w,'x','w'), sy=scale(th,c.h,'y','h');
+  const ox=tw>=c.w?c.x:tx, oy=th>=c.h?c.y:ty;
+  for(const i of I.items){ const nx=ox+(i.x-c.x)*sx, ny=oy+(i.y-c.y)*sy;
+    if(i.n){ i.n.x=nx; i.n.y=ny; state.cache.set(i.n.id,{x:nx,y:ny}); }
+    else { const p=m.pos.get(i.dev); if(p) m.pos.set(i.dev,{...p,x:nx,y:ny}); for(const k of i.kids){ k.n.x=k.x+(nx-i.x); k.n.y=k.y+(ny-i.y); state.cache.set(k.n.id,{x:k.n.x,y:k.n.y}); } } }
+}
 function queueEdit(id,caretEnd,kind){ state.pendingEdit={id,caretEnd,kind:kind||'node'}; clearTimeout(state.pendingEditT); state.pendingEditT=setTimeout(runPendingEdit,120); }
 function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model) return; if(pe.kind==='edge'){ if(!state.model.edges[pe.id]) return; openEditor('edge',pe.id); } else { if(!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); } if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
 board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
@@ -546,8 +573,12 @@ function createNode(o){
 }
 board.addEventListener('dblclick',e=>{
   if(!state.model||state.fatal||state.richId) return;
-  const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind;
+  let tgt=e.target.closest&&e.target.closest('[data-kind]'); let kind=tgt&&tgt.dataset.kind;
+  // The shape may have been redrawn between the two clicks, so the event lands on the board itself:
+  // look up what is under the pointer instead, and never drop a new shape on top of an existing one.
+  if(!kind||kind==='group'){ const hit=nodeAt(toWorld(e)); if(hit){ kind='node'; tgt={dataset:{id:hit}}; } }
   if(kind==='node'){ if(state.editing&&state.editing.kind==='node'&&state.editing.id===tgt.dataset.id) return; state.pendingEdit=null; openEditor('node',tgt.dataset.id,toWorld(e)); return; }
+  if(state.editing) return;
   if(kind==='edge'){ if(state.editing&&state.editing.kind==='edge'&&state.editing.id===+tgt.dataset.idx) return; state.pendingEdit=null; openEditor('edge',+tgt.dataset.idx); return; }
   if(kind==='group'&&tgt.dataset.part!=='body'){ openEditor('group',tgt.dataset.id); return; }
   if(kind&&kind!=='group') return;

@@ -18,6 +18,7 @@
       <a class="wordmark" href="#" aria-label="orim home"><svg class="mark" style="width:26px;height:26px" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 8.5h3M4.5 12h2M4.5 15.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="14" y="3.5" width="7.5" height="6" rx="1.6" fill="#4262ff"/><rect x="14" y="14.5" width="7.5" height="6" rx="3" fill="none" stroke="#4262ff" stroke-width="1.6"/><path d="M17.75 9.5v5" stroke="#4262ff" stroke-width="1.6"/></svg><span>orim</span></a>
       <span class="grow"></span>
       <button type="button" class="ibtn" id="homeTheme" aria-label="Theme"></button>
+      <button type="button" class="btn folder-btn" id="homeFolder" hidden></button>
       <button type="button" class="btn" id="homeImport">Import</button>
       <button type="button" class="btn primary" id="homeNew"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
       <button type="button" class="me-btn" data-me hidden></button>
@@ -60,6 +61,11 @@
           </div>
         </div>
       </section>
+      <section class="teams" aria-labelledby="hTeams">
+        <h2 id="hTeams">Which team are you on?</h2>
+        <div class="team-tabs" id="teamTabs" role="tablist"></div>
+        <div class="team-card" id="teamCard" role="tabpanel"></div>
+      </section>
       <section class="features" aria-label="What orim does">
         <div class="feat"><b>Ask the AI</b><p>Inside Claude, type what you want and it builds on the board as it answers, one undo step per request. Anywhere else, copy a ready prompt for any AI chat.</p></div>
         <div class="feat"><b>Write or draw</b><p>Type Mermaid or plain lines like <code>App -&gt; Dataverse</code>, or drag things around. Both stay in sync, and export to PNG, SVG, draw.io or Markdown.</p></div>
@@ -77,13 +83,14 @@
         </div>
         <div class="recents" id="homeRecents"></div>
       </section>
-      <p class="home-foot">Boards are saved in this browser only. To move a board to another device, open it and use Export, Board file.</p>
+      <p class="home-foot" id="homeFoot">Boards are saved in this browser only. To move a board to another device, open it and use Export, Board file.</p>
     </main>
     <div class="menu home-menu" id="homeMenu" hidden>
       <button type="button" data-hm="open"><b>Open</b></button>
       <button type="button" data-hm="rename"><b>Rename</b></button>
       <button type="button" data-hm="duplicate"><b>Duplicate</b></button>
       <button type="button" data-hm="export"><b>Export board file</b></button>
+      <button type="button" data-hm="move" hidden><b>Save to folder</b></button>
       <hr>
       <button type="button" data-hm="remove"><b style="color:var(--danger)">Delete</b></button>
     </div>
@@ -93,6 +100,7 @@
     <div class="brand">
       <button type="button" class="home-btn" id="homeBtn" title="All boards" aria-label="All boards"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 8.5h3M4.5 12h2M4.5 15.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="14" y="3.5" width="7.5" height="6" rx="1.6" fill="#2f5bea"/><rect x="14" y="14.5" width="7.5" height="6" rx="3" fill="none" stroke="#2f5bea" stroke-width="1.6"/><path d="M17.75 9.5v5" stroke="#2f5bea" stroke-width="1.6"/></svg></button>
       <input id="docTitle" class="title-input" placeholder="Untitled board" aria-label="Diagram title" spellcheck="false">
+      <button type="button" class="file-state" id="fileState" hidden></button>
     </div>
     <div class="seg" id="viewSeg" aria-label="Panels">
       <button type="button" data-mode="split" title="Split view (Alt+1)">Split</button>
@@ -156,8 +164,11 @@
       <div class="ai-pane" id="aiPane" hidden>
         <div class="ai-log" id="aiLog" aria-live="polite"></div>
         <form class="ai-input" id="aiForm"><div class="ai-box">
+          <div class="ai-pic" id="aiPic" hidden></div>
           <textarea id="aiIn" rows="2" placeholder="Where shall we start?" aria-label="Request for Claude"></textarea>
           <div class="ai-bar">
+            <button type="button" class="ai-keybtn ai-attach" id="aiAttach" hidden title="Add a photo or screenshot. Claude turns it into stickies, shapes and lines you can edit" aria-label="Add a picture"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5L5 19.5"/></svg></button>
+            <input type="file" id="aiPicIn" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
             <label class="toggle" title="Slower, for bigger changes and questions that need thought"><input type="checkbox" id="aiDeep"><span>Think harder</span></label>
             <span class="ai-sel" id="aiSel"></span><span class="grow"></span>
             <button type="button" class="ai-round stop" id="aiStop" hidden title="Stop" aria-label="Stop"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" style="fill:currentColor;stroke:none"/></svg></button>
@@ -307,7 +318,8 @@ User <- Email -- Logic App
   <script src="js/me.js"></script>
   <script src="js/comments.js"></script>
   <script src="js/minimap.js"></script>
-  <script src="js/boards.js"></script>
+<script src="js/folder.js"></script>
+<script src="js/boards.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

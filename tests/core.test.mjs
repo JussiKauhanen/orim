@@ -213,6 +213,30 @@ test('tickets: type, fields, links and the Azure DevOps CSV', () => {
   assert.equal(run('ticketLine(parseMermaid(__src).model.nodes.get("story"))'), '3 pts · P2 · auth, web');
 });
 
+test('pictures: faded flag, and kept clear of new blocks', () => {
+  const r = roundTrip('flowchart LR\n  a["Note"]:::sticky\n%% @pos a 40 40\n%% @image img1 0 0 300 200 faded\n');
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.images[0].faded, true);
+  assert.match(r.s1, /@image img1 0 0 300 200 faded/);
+  const moved = run(`(() => { const m = parseMermaid(__src).model; resolveGeometry(m, new Map()); const n = m.nodes.get('a');
+    const kept = separateBlocks(m, new Set(['a'])); const before = n.x + ',' + n.y;
+    separateBlocks(m, new Set(['a']), null, true); const im = m.images[0];
+    return { kept, clear: n.x >= im.x + im.w || n.y >= im.y + im.h || n.x + n.w <= im.x || n.y + n.h <= im.y, before }; })()`);
+  assert.equal(moved.kept, 0);
+  assert.ok(moved.clear);
+});
+
+test('board files: the mermaid block is replaced, notes around it are kept', () => {
+  vm.runInContext(readFileSync(join(root, 'js/folder.js'), 'utf8'), ctx, { filename: 'js/folder.js' });
+  ctx.__md = '# Plan\n\nNotes above.\n\n```mermaid\nflowchart LR\nA --> B\n```\n\nNotes below.\n';
+  assert.equal(run('Folder.codeOf(__md)'), 'flowchart LR\nA --> B\n');
+  const out = run('Folder.fileText(__md, "Plan", "flowchart LR\\nA --> C\\n")');
+  assert.match(out, /^# Plan\n\nNotes above\.\n\n```mermaid\nflowchart LR\nA --> C\n```\n\nNotes below\.\n$/);
+  assert.equal(run('Folder.fileText(null, "New board", "flowchart LR\\n")'), '# New board\n\n```mermaid\nflowchart LR\n```\n');
+  assert.equal(run('Folder.supported'), false);
+});
+
 test('reports errors with line numbers', () => {
   const r = roundTrip('flowchart LR\n  A -->\n  subgraph x [X]\n    B\n');
   assert.ok(r.errors.some((e) => e.line === 1));

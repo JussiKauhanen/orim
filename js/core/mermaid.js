@@ -257,8 +257,8 @@ function parseMermaid(src){
       let am=/^%%\s*@arrow\s+(\S+)\s+(straight|elbow|curved|block|line)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+(#[0-9a-fA-F]{3,8})((?:\s+(?:from|to)=\S+)*)\s*$/.exec(t);
       if(am){ const a={id:am[1],kind:am[2],x1:+am[3],y1:+am[4],x2:+am[5],y2:+am[6],w:+am[7],color:am[8],from:null,to:null};
         (am[9]||'').trim().split(/\s+/).forEach(tok=>{ const q=/^(from|to)=(.+)$/.exec(tok); if(q) a[q[1]]=q[2]; }); m.arrows.push(a); continue; }
-      am=/^%%\s*@image\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)(\s+front)?\s*$/.exec(t);
-      if(am){ m.images.push({id:am[1],x:+am[2],y:+am[3],w:+am[4],h:+am[5],front:!!am[6]}); continue; }
+      am=/^%%\s*@image\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)(\s+front)?(\s+faded)?\s*$/.exec(t);
+      if(am){ const im={id:am[1],x:+am[2],y:+am[3],w:+am[4],h:+am[5],front:!!am[6]}; if(am[7]) im.faded=true; m.images.push(im); continue; }
       am=/^%%\s*@comment\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)((?:\s+(?:on=\S+|done))*)\s+(\[.*\])\s*$/.exec(t);
       if(am){ let msgs=[]; try{ msgs=JSON.parse(am[5]).filter(x=>x&&typeof x.t==='string').map(x=>{ const q={t:x.t,d:+x.d||0}; if(typeof x.a==='string'&&x.a) q.a=x.a; return q; }); }catch(_){}
         const fl=am[4]||''; const on=/on=(\S+)/.exec(fl);
@@ -376,7 +376,7 @@ function layoutLines(m,boxes){
   }
   (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb, rw=e.ra!=null||e.rb!=null; if((e.route&&e.route!==(m.curve||'curved'))||sd||rw) L.push('%% @route '+i+' '+(e.route||m.curve||'curved')+(sd||rw?' '+(e.sa||'-')+' '+(e.sb||'-'):'')+(e.ra!=null?' ra='+e.ra:'')+(e.rb!=null?' rb='+e.rb:'')); });
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }
-  for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
+  for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':'')+(im.faded?' faded':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
   for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n) continue; if(n.shape==='table'&&n.table) L.push('%% @table '+id+' '+JSON.stringify(n.table)); if(n.shape==='doc'&&n.doc) L.push('%% @doc '+id+' '+JSON.stringify(n.doc)); }
   for(const c of (m.threads||[])){

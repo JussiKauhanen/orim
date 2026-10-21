@@ -11,6 +11,8 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Rename, duplicate, export or delete boards from the ⋯ menu.
 - Paste text, Mermaid or an image anywhere on the home page to start a new board from it.
 - Every board has its own link (`#b-<id>`), so the browser's back button and bookmarks work.
+- **Save to a folder** (Chrome and Edge on a computer): each board becomes a Markdown file in a folder you choose (see Boards in a folder).
+- New visitors see **Which team are you on?**: a starting board for cloud architects, Power Platform makers, agile teams or product and design, with an AI request to try next.
 
 **Two editors, one board**
 - Split and Canvas views, with a draggable splitter. Going to Canvas fits the board to the larger view. On a phone, Split stacks the code above the board.
@@ -29,7 +31,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Document cards, like Miro docs: headings, paragraphs, bulleted and numbered lists, bold and italic, from the toolbar or by typing `# `, `## `, `### `, `- ` or `1. ` at the start of a line. Expand opens a larger view for reading and writing.
 - Connectors that stay attached, plus free arrows: curved, straight, elbow, line and block, with thickness and color. Frames connect too: hover a frame's border or title for its blue dots, or start the Arrow tool there.
 - Arrow ends snap to shapes; pull hard to detach.
-- Items pop out of a frame when flicked out fast; slow drags grow the frame instead.
+- Items pop out of a frame when flicked out fast; slow drags grow the frame instead. Dragging a frame's handles smaller than its contents moves the contents closer together, keeping their arrangement (undo restores them).
 - Connectors keep their connection points: the side you drag out from and the side you drop on. Drag a connector's end to another side of the same shape to move it, or drop it in the middle of the shape to let orim choose.
 - Elbow connectors are routed around shapes with right angles, like Miro. Tidy up → Connectors sets Curved, Straight or Elbow for the whole board; it is saved as Mermaid's own `curve` setting (`basis`, `linear`, `step`), so other Mermaid tools draw it the same way.
 - Dragging something to the edge of the view scrolls the board and, if you keep pushing, zooms out a little.
@@ -127,6 +129,7 @@ orim/
 │   ├── comments.js         Comment pins and threads
 │   ├── minimap.js          Overview while panning and zooming
 │   ├── boards.js           Home page, board list, saving, #b-<id> links
+│   ├── folder.js           Boards as .md files in a folder you choose (File System Access API)
 │   └── main.js             Startup
 ├── assets/
 │   ├── icons.json          Icon pack (generated)
@@ -145,7 +148,19 @@ The scripts are plain browser scripts loaded in order, not modules, so the app r
 
 ## Where boards are stored
 
-Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. `orim.me` is your comment name. `orim.anthropicKey` and `orim.anthropicModel` hold your Claude API key and model if you saved one in the AI tab. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
+### Boards in a folder
+
+In Chrome or Edge on a computer, **Save to a folder** on the home page asks for a folder. From then on:
+
+- Every new board is saved there as `<Board name>.md`, a moment after each change: a `# Title` line and a ` ```mermaid ` block holding the whole board (positions and orim's other data ride along in `%%` lines). GitHub, Azure DevOps and VS Code show the file as a diagram. Text you add around the block is kept.
+- Pictures are saved next to it in `<Board name>.images/`.
+- Renaming a board renames its file. Deleting a board deletes its file. Delete all only touches boards kept in the browser.
+- Boards already in the folder (any `.md` with a Mermaid flowchart) show up in Jump back in. Older boards in the browser can be added with **Save to folder** in their ⋯ menu.
+- If the file changes outside orim (Git pull, an editor, an AI assistant) while the board is open, orim loads the new version. If you changed the board too, it asks which version to keep.
+- The file name next to the board title shows where it is saved. When the browser needs permission again (after a restart), the home button and the title chip say **Reconnect**; changes made meanwhile are kept in the browser and written out once you reconnect.
+- The browser keeps its own copy of every board too. Folder saving is not available inside Claude or in browsers without the File System Access API (Firefox, Safari); boards are then kept in the browser as before.
+
+Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. `orim.me` is your comment name. `orim.anthropicKey`, `orim.anthropicWorkspace` and `orim.anthropicModel` hold your Claude API key, workspace ID and model if you saved them in the AI tab. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
 
 ## File format
 
@@ -159,7 +174,7 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 %% @doc   <id> <json>                               document {blocks:[{t:h1|h2|h3|p|ul|ol, r:[{x:text, b:1, i:1, u:url}]}], kind?:epic|feature|story|bug|task, fields?:{…}}
 %% @arrow <id> <kind> <x1> <y1> <x2> <y2> <w> <color> [from=<id>] [to=<id>]
 %% @ink   <id> pen|hl <color> <w> <x,y> <dx,dy> ...   pen and highlighter strokes
-%% @image <id> <x> <y> <w> <h> [front]               image placement; front = above shapes (pixels live in the board file)
+%% @image <id> <x> <y> <w> <h> [front] [faded]       image placement; front = above shapes, faded = shown at 40% (pixels live in the board file)
 %% @comment <id> <x> <y> [on=<id>] [done] <json>      comment thread [{a: author, t: text, d: time}]; on= makes x y an offset from that shape, done = resolved
 ```
 
@@ -232,11 +247,13 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 - Claude replies with one small command per line (add, connect, update, frame, delete, screen, table, cell, doc, layout, say). A doc with a type is a ticket; each is applied as it arrives.
 - Ask for a comparison ("compare Crystallize and Optimizely and link the parts to the table") and Claude builds a table, colours the stronger option, and connects shapes to the rows they belong to. Longer notes become a document card. "Mock up a login and home screen for mobile and desktop" makes screens from the presets and adjusts their pieces. "Map out the tickets for this" makes an epic with stories, bugs and tasks, connected to each other and to the screens and services they touch. New items are pushed clear of what is already on the board. Claude sees the tables and documents on the board, so you can ask about them or have them updated.
 - Every request is one undo step, with an Undo button on the reply.
+- **Photo to board**: attach, paste or drop a photo of a whiteboard, sticky notes or a sketch, or a screenshot of a diagram (the picture button under the request box, or **Make editable** on a picture already on the board). Claude recreates it beside the picture as sticky notes in matching colours, shapes, lines, frames, tables and icons, keeping the layout; the picture is faded afterwards so the editable copy stands out (Fade on the picture toolbar toggles it). Pictures are scaled to 1500 px and sent as JPEG. Inside Claude this needs the page to be allowed to send images.
+- **AI on the selection**: select sticky notes, shapes or a frame and press **AI** on the toolbar for Group by theme, Summarise into a doc, Sort by sentiment, Make a diagram or Turn into tickets (one item: Expand with ideas, Explain in a doc). It runs without leaving the canvas and says what it did in a note.
 - Selected shapes are sent along, so "these" means your selection. Open comments are sent too.
 - **Think harder** uses a slower, more capable model for bigger changes.
 - While Claude works, the board stays sharp in the middle and goes soft around the edges, where a sketch drifts and a Claude cursor moves between its pieces; a status note shows what it is doing, and the real changes appear as they arrive.
 - "Make it vertical" or "left to right" changes the flow direction and lays the board out again; pinned connection points turn with it.
-- On GitHub Pages or a local copy, the tab asks for your own Claude API key instead. **Create a key in the Claude Console** opens [platform.claude.com/settings/keys](https://platform.claude.com/settings/keys); paste the key, pick a model (Sonnet 5.5 by default, Haiku 5.5 or Opus 5.5) and orim calls the Claude API straight from your browser, streaming changes onto the board the same way. Think harder uses Opus 5.5. The key is kept only in this browser (localStorage, or for this tab only if you untick Remember) and is sent only to api.anthropic.com; usage is billed to your API account. The key button next to Think harder changes the model or forgets the key. Without a key, Export → Ask an AI still works with any AI chat.
+- On GitHub Pages or a local copy, the tab asks for your own Claude API key instead. **Create a key in the Claude Console** opens [platform.claude.com/settings/keys](https://platform.claude.com/settings/keys); paste the key, pick a model (Sonnet 5.5 by default, Haiku 5.5 or Opus 5.5) and orim calls the Claude API straight from your browser, streaming changes onto the board the same way. Think harder uses Opus 5.5. The key is kept only in this browser (localStorage, or for this tab only if you untick Remember) and is sent only to api.anthropic.com; usage is billed to your API account. The key button next to Think harder changes the model or forgets the key. Keys that work across several workspaces (or are linked to your Console account) also need a workspace ID (`wrkspc_…`, from [Workspaces](https://platform.claude.com/settings/workspaces)); when the API asks for one, the key form opens with that field highlighted and orim sends it as the `anthropic-workspace-id` header. The account button (top right) shows a saved key with Remove key and Manage keys, and Sign out forgets both your name and the key. Inside Claude, the AI tab links to the Console for making a key to use elsewhere. Without a key, Export → Ask an AI still works with any AI chat.
 
 ## Move a board to another device
 
@@ -244,7 +261,8 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 
 - The board travels inside the link itself (`#m=` followed by the deflated, base64url-encoded Mermaid), so nothing is uploaded or stored anywhere else.
 - Only the current board is included, and images are left out.
-- A QR code holds about 2,900 characters. If the board is too large, pen strokes and then positions are dropped (the board is laid out again on arrival); **Smaller code** switches between the sizes. Boards that still do not fit need a board file.
+- **Copy link** and **Copy Mermaid** always carry the whole board: positions, arrows, drawings, documents, tables, tickets, mockup screens and comments (only images are left out).
+- A QR code holds about 2,900 characters. If the board is too large for it, the QR code alone drops pen strokes and then positions and arrows (the board is laid out again on arrival); documents, tables, tickets, screens and comments always stay. **Smaller QR code** switches between the sizes. A board that does not fit at all shows just the link.
 - On GitHub Pages or `localhost` the link points to the same site. Anywhere else it points to `https://jussikauhanen.github.io/orim/`; change `ORIM_PAGES` in `js/share-qr.js` for your own deployment.
 
 ## Keyboard shortcuts
@@ -252,6 +270,7 @@ When orim is opened inside Claude (the copy shared from Claude), the editor has 
 | Key | Action |
 | --- | --- |
 | V, H or Space | Select, hand |
+| Right or middle mouse button drag | Move around the board |
 | N, T, S, A, P, Shift+P, E, F | Sticky, text, shapes, arrows, pen, highlighter, eraser, frame |
 | R, O, D, B | Rectangle, circle, decision, database |
 | I | Icon library |

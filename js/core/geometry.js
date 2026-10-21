@@ -470,11 +470,13 @@ function arrowBox(a){ const pad=a.kind==='block'?a.w*4.4+9:a.w*3+8; const x0=Mat
 // Push top-level things apart so none overlap: shapes outside frames, and whole frames (with
 // everything in them, and the title above them). Only the blocks in `movable` move; null moves any.
 // Returns how many blocks moved.
-function separateBlocks(m,movable,gap){
+function separateBlocks(m,movable,gap,pics){
   const G=gap||40, TITLE=30; const boxes=groupBoxes(m); const blocks=[];
   for(const n of m.nodes.values()) if(n.x!=null&&!(n.group&&m.groups.has(n.group))) blocks.push({id:n.id,n,x:n.x,y:n.y,w:n.w,h:n.h});
   for(const g of m.groups.values()){ if(g.parent&&m.groups.has(g.parent)) continue; const b=boxes.get(g.id); if(b) blocks.push({id:g.id,g,x:b.x,y:b.y-TITLE,w:b.w,h:b.h+TITLE}); }
-  const can=b=>!movable||movable.has(b.id);
+  // With pics, pictures stay where they are and nothing new is left on top of them.
+  if(pics) for(const im of m.images||[]) blocks.push({id:'p:'+im.id,im:true,x:im.x,y:im.y,w:im.w,h:im.h});
+  const can=b=>!b.im&&(!movable||movable.has(b.id));
   const moved=new Map();
   for(let pass=0;pass<40;pass++){ let any=false;
     for(const a of blocks) for(const b of blocks){ if(a===b||!can(b)) continue;

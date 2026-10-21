@@ -37,18 +37,57 @@ const Ghost=(()=>{
 const AI=(()=>{
   const log=$('#aiLog'), inp=$('#aiIn'), sendBtn=$('#aiSend'), stopBtn=$('#aiStop'), deep=$('#aiDeep'), selEl=$('#aiSel');
   const chats=new Map();            // board id -> [{role:'user'|'assistant', content, view}]
-  let sample=null, known=false, busy=false, ctl=null, keyMode=false, showKeys=false;
+  let sample=null, known=false, busy=false, ctl=null, keyMode=false, showKeys=false, needWs=false;
   try{ deep.checked=!!LS.get('orim.aiDeep',false); }catch(_){}
   deep.addEventListener('change',()=>LS.set('orim.aiDeep',deep.checked));
   const chat=()=>{ const id=(typeof Boards!=='undefined'&&Boards.current())||'_'; if(!chats.has(id)) chats.set(id,[]); return chats.get(id); };
 
   const ready=(window.claude&&typeof window.claude.use==='function')?window.claude.use('sample').catch(()=>null):Promise.resolve(null);
   // Inside Claude the viewer's own account answers. Elsewhere, an Anthropic API key saved in this browser.
-  ready.then(s=>{ keyMode=!s; sample=s||(AIKey.get()?AIKey.sample:null); known=true; updKeyBtn(); paint(); });
+  ready.then(s=>{ keyMode=!s; sample=s||(AIKey.get()?AIKey.sample:null); known=true; updKeyBtn(); paint();
+    if(s&&typeof s.limits==='function') s.limits().then(c=>{ picOK=!!(c&&c.images); updPic(); paint(); }).catch(()=>{ picOK=false; updPic(); });
+    else { picOK=keyMode; updPic(); paint(); } });
+
+  /* ---------- a picture to turn into a board ---------- */
+  // Attach, paste or drop a photo of a whiteboard, sticky notes or a sketch, or a screenshot of a diagram.
+  let pic=null, picOK=false, photo=null, quiet=null;
+  const picBtn=$('#aiAttach'), picIn=$('#aiPicIn'), picChip=$('#aiPic');
+  function updPic(){
+    picBtn.hidden=!picOK||!sample;
+    if(!pic){ picChip.hidden=true; picChip.innerHTML=''; return; }
+    picChip.hidden=false; picChip.innerHTML='<img alt="" src="'+pic.url+'"><span>'+(pic.imgId?'Picture on the board':'Picture')+'<small>Claude recreates it as stickies, shapes and lines</small></span><button type="button" class="ibtn" data-pic-x title="Remove picture" aria-label="Remove picture">'+ico('close')+'</button>';
+  }
+  // Pictures are scaled to at most 1500 px on the long side and sent as JPEG.
+  function prepPic(blob){
+    return new Promise((res,rej)=>{ const u=URL.createObjectURL(blob), img=new Image();
+      img.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('decode')); };
+      img.onload=()=>{ URL.revokeObjectURL(u); const w=img.naturalWidth||800, h=img.naturalHeight||600, sc=Math.min(1,1500/Math.max(w,h));
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(h*sc)); const g=c.getContext('2d');
+        g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height);
+        const url=c.toDataURL('image/jpeg',0.85); c.toBlob(b=>b?res({blob:b,url,w:c.width,h:c.height}):rej(new Error('encode')),'image/jpeg',0.85); };
+      img.src=u; });
+  }
+  async function attach(file,imgId){
+    if(!file||!/^image\//.test(file.type||'')) return false;
+    if(!picOK){ toast(keyMode||!sample?'Add an API key to send pictures to Claude':'Pictures cannot be sent to Claude here'); return true; }
+    try{ pic=await prepPic(file); pic.imgId=imgId||null; }catch(_){ toast('Could not read that picture'); return true; }
+    updPic(); if(!inp.value.trim()) inp.placeholder='What should Claude do with it? Leave empty to recreate it'; inp.focus(); return true;
+  }
+  const dataBlob=url=>{ const m=/^data:([^;,]+)(;base64)?,(.*)$/s.exec(url||''); if(!m) return null; const bin=m[2]?atob(m[3]):decodeURIComponent(m[3]); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return new Blob([a],{type:m[1]}); };
+  picBtn.addEventListener('click',()=>picIn.click());
+  picIn.addEventListener('change',()=>{ const f=picIn.files&&picIn.files[0]; picIn.value=''; if(f) attach(f); });
+  picChip.addEventListener('click',e=>{ if(e.target.closest('[data-pic-x]')){ pic=null; updPic(); paint(); inp.focus(); } });
+  inp.addEventListener('paste',e=>{ const f=[...((e.clipboardData&&e.clipboardData.files)||[])].find(x=>/^image\//.test(x.type)); if(f){ e.preventDefault(); attach(f); } });
+  const pane=$('#aiForm').closest('.ai-pane')||$('#aiForm').parentNode;
+  pane.addEventListener('dragover',e=>{ if(picOK&&e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){ e.preventDefault(); pane.classList.add('ai-drop'); } });
+  pane.addEventListener('dragleave',e=>{ if(!pane.contains(e.relatedTarget)) pane.classList.remove('ai-drop'); });
+  pane.addEventListener('drop',e=>{ pane.classList.remove('ai-drop'); const f=[...((e.dataTransfer&&e.dataTransfer.files)||[])].find(x=>/^image\//.test(x.type)); if(f){ e.preventDefault(); e.stopPropagation(); attach(f); } });
+  // Grid positions from a picture land on the board to the right of the picture.
+  function atXY(n,xy){ const v=k=>Math.max(-50,Math.min(2000,+xy[k]||0)); n.x=SNAP(photo.x+v(0)*photo.s); n.y=SNAP(photo.y+v(1)*photo.s); }
   const keyBtn=document.createElement('button'); keyBtn.type='button'; keyBtn.className='ai-keybtn'; keyBtn.id='aiKeyBtn'; keyBtn.hidden=true; keyBtn.title='API key and model'; keyBtn.setAttribute('aria-label','API key and model');
   keyBtn.innerHTML='<svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2.5 2.5M14 9l2 2"/></svg>';
   selEl.before(keyBtn);
-  function updKeyBtn(){ keyBtn.hidden=!(keyMode&&sample); }
+  function updKeyBtn(){ keyBtn.hidden=!(keyMode&&sample); if(typeof updPic==='function') try{ updPic(); }catch(_){} }
   keyBtn.addEventListener('click',()=>{ showKeys=!showKeys; paint(); });
   // The key form: a link to the Console to make a key, the key, the model, and where it is kept.
   function keyPanel(){
@@ -57,9 +96,11 @@ const AI=(()=>{
       '<p>'+(has?'orim calls Claude directly from this browser with your key. Usage is billed to your Claude API account.':'Inside Claude this tab uses your Claude account with no setup. Here, add an API key from the Claude Console and orim calls Claude directly from this browser. Usage is billed to your Claude API account.')+'</p>'+
       '<a class="ai-keylink" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">'+ico('link')+'Create a key in the Claude Console</a>'+
       '<label class="ai-field"><span>API key</span><input type="password" id="aiKeyIn" placeholder="'+(has?'Saved. Paste a new key to replace it':'sk-ant-…')+'" autocomplete="off" spellcheck="false"></label>'+
+      '<label class="ai-field'+(needWs?' need':'')+'"><span>Workspace ID <i>only if the API says your key needs one</i></span><input id="aiWsIn" placeholder="wrkspc_…" autocomplete="off" spellcheck="false" value="'+esc(AIKey.workspace())+'"></label>'+
+      (needWs?'<p class="ai-keywarn">This key works across workspaces, so the API needs to know which one to use. Copy the ID (it starts with wrkspc_) from a workspace in the Console, or create a key inside one workspace instead. <a href="'+AIKey.WS_URL+'" target="_blank" rel="noopener noreferrer">Open Workspaces</a></p>':'')+
       '<label class="ai-field"><span>Model</span><select id="aiModel">'+AIKey.MODELS.map(([id,nm,d])=>'<option value="'+id+'"'+(id===m?' selected':'')+'>'+nm+', '+d+'</option>').join('')+'</select></label>'+
       '<label class="toggle"><input type="checkbox" id="aiKeyRemember" checked><span>Remember on this device</span></label>'+
-      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Use this key')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Done</button>':'')+'</div>'+
+      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Use this key')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Cancel</button>':'')+'</div>'+
       '<p class="ai-keynote">The key stays in this browser and is only sent to api.anthropic.com. Avoid saving it on a shared computer. Think harder uses Opus 5.5. No key? Export, then Ask an AI, copies a prompt for any AI chat.</p></div>';
   }
 
@@ -103,6 +144,14 @@ Rules:
 - A question about the board: answer with say lines only, no changes.
 - Something unclear or impossible: one say line asking or explaining, no changes.
 - Always end with one say line of at most 15 words saying what you did.`;
+  const PHOTO=id=>`The person attached a picture: a photo of a whiteboard, sticky notes, a paper sketch, or a screenshot of a diagram. Recreate what it shows as editable items on the board.
+- Sticky notes become sticky shapes in the nearest sticky colour. Boxes become shapes (rounded corners round, cylinders cyl, diamonds diamond, circles circle). Lines and arrows become connect, keeping any words written on them and dotted or thick lines. A box, column or swimlane drawn around items becomes a frame (frame op with items), with its heading as the label. Headings and loose words become text shapes. A recognised product or cloud service gets its icon.
+- A grid or table becomes a table op; a block of written notes becomes a doc.
+- Copy the words exactly as written, fixing only obvious slips. Write [?] for a word you cannot read. Add nothing that is not in the picture.
+- Give every add, table and doc an "xy":[x,y]: its top left corner on a grid over the picture, 0 to 1000 across and the same scale downwards, so the layout matches the picture.
+- Add things in reading order: frames' contents first, then the frame op, then the connections.
+- End with one say line saying what you recreated and anything you could not read.
+The picture itself is already on the board (image ${id}); leave it alone.`;
   function brief(){
     const m=state.model; if(!m) return 'The board is empty.';
     const L=['Direction: '+(m.dir||'LR')+(m.title?'\nTitle: '+m.title:'')];
@@ -124,7 +173,7 @@ Rules:
   function input(text){
     // Earlier turns, leaving out requests that failed (and the question that went with them).
     const all=chat(); const ok=all.filter((t,i)=>!t.failed&&!(t.role==='user'&&all[i+1]&&all[i+1].failed));
-    const past=ok.filter(t=>!t.pending).slice(-6).map(t=>({role:t.role,content:t.role==='assistant'?t.summary||t.content||'(no reply)':t.content}));
+    const past=ok.filter(t=>!t.pending).slice(-6).map(t=>({role:t.role,content:t.role==='assistant'?t.summary||t.content||'(no reply)':t.content+(t.pic?' (with a picture, recreated on the board)':'')}));
     const head={role:'user',content:RULES+'\n\nIcons ('+'pack:id'+'):\n'+aiIconList(false)};
     const now={role:'user',content:'The board now:\n'+brief()+'\n\nRequest: '+text};
     return past.length?[head,{role:'assistant',content:'{"op":"say","text":"Ready."}'},...past,now]:[{role:'user',content:head.content+'\n\n'+now.content}];
@@ -151,7 +200,12 @@ Rules:
     else { const sib=n.group&&[...m.nodes.values()].filter(o=>o!==n&&o.group===n.group&&o.x!=null).pop();
       if(sib){ x=vert?sib.x+sib.w+48:sib.x; y=vert?sib.y:sib.y+sib.h+48; }
       else { const b=contentBounds(m); x=b?b.x+b.w+96:0; y=b?b.y:0; } }
-    for(let k=0;k<40&&!free(m,{x,y,w:n.w,h:n.h},n);k++){ if(vert) x+=n.w+48; else y+=n.h+40; }
+    // Nearest free spot in rings around the first choice, so a shape never drifts far from what it belongs to.
+    const sx=n.w+48, sy=n.h+40, dirs=vert?[[1,0],[0,1],[-1,0],[1,1],[-1,1],[0,-1],[1,-1],[-1,-1]]:[[0,1],[1,0],[0,-1],[1,1],[1,-1],[-1,0],[-1,1],[-1,-1]];
+    let best=null;
+    if(free(m,{x,y,w:n.w,h:n.h},n)) best={x,y};
+    for(let r=1;r<=12&&!best;r++) for(const [a,b] of dirs){ const c={x:x+a*r*sx,y:y+b*r*sy}; if(free(m,{x:c.x,y:c.y,w:n.w,h:n.h},n)){ best=c; break; } }
+    if(best){ x=best.x; y=best.y; }
     n.x=SNAP(x); n.y=SNAP(y);
   }
   // A table row given as a number or as the text of its first cell.
@@ -181,7 +235,7 @@ Rules:
     const near=nearId&&(m.nodes.get(nearId)||(state.boxes&&state.boxes.get(nearId))); const b=contentBounds(m);
     let x=near&&near.x!=null?near.x+near.w+96:b?b.x+b.w+120:0, y=near&&near.y!=null?near.y:b?b.y+30:0;
     let bx=null; try{ bx=groupBoxes(m); }catch(_){}
-    const hit=r=>{ for(const n of m.nodes.values()) if(n.x!=null&&r.x<n.x+n.w+40&&r.x+r.w+40>n.x&&r.y<n.y+n.h+40&&r.y+r.h+40>n.y) return true; if(bx) for(const [gid,o] of bx){ if(typeof gid!=='string') continue; if(r.x<o.x+o.w+40&&r.x+r.w+40>o.x&&r.y<o.y+o.h+70&&r.y+r.h+40>o.y-30) return true; } return false; };
+    const hit=r=>{ for(const n of m.nodes.values()) if(n.x!=null&&r.x<n.x+n.w+40&&r.x+r.w+40>n.x&&r.y<n.y+n.h+40&&r.y+r.h+40>n.y) return true; for(const n of m.images||[]) if(r.x<n.x+n.w+40&&r.x+r.w+40>n.x&&r.y<n.y+n.h+40&&r.y+r.h+40>n.y) return true; if(bx) for(const [gid,o] of bx){ if(typeof gid!=='string') continue; if(r.x<o.x+o.w+40&&r.x+r.w+40>o.x&&r.y<o.y+o.h+70&&r.y+r.h+40>o.y-30) return true; } return false; };
     for(let k=0;k<30&&hit({x,y,w,h});k++) x+=Math.max(120,w/2);
     return {x:SNAP(x),y:SNAP(y)};
   }
@@ -202,7 +256,7 @@ Rules:
       const group=op.in&&m.groups.has(op.in)?op.in:null;
       const n={id,label:UI_KINDS[shape]&&op.label==null?UI_KINDS[shape].def:lb,shape,icon,group,cls:null}; sizeNode(n);
       m.nodes.set(id,n); m.nodeOrder.push(id);
-      if(group&&m.groups.get(group).dev) placePiece(m,n,op); else place(m,n,op.near);
+      if(group&&m.groups.get(group).dev) placePiece(m,n,op); else if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near);
       if(shape==='sticky') setStyle(m,id,{fill:hex(op.fill)||STICKY_COLORS[0]}); else if(hex(op.fill)) setStyle(m,id,{fill:hex(op.fill)});
       done.added++; done.fresh.push(id); return;
     }
@@ -256,7 +310,7 @@ Rules:
         const fields={...((n.doc&&n.doc.fields)||{}),...(op.fields&&typeof op.fields==='object'?op.fields:{})};
         n.doc=cleanDoc({blocks,kind,fields});
       }
-      const cx=n.x; sizeNode(n); if(fresh||cx==null) place(m,n,op.near);
+      const cx=n.x; sizeNode(n); if(fresh||cx==null){ if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near); }
       if(hex(op.fill)) setStyle(m,n.id,{fill:hex(op.fill)});
       if(fresh) done.added++; else done.changed++; done.fresh.push(n.id); return;
     }
@@ -302,76 +356,105 @@ Rules:
         // Starters, like Miro's: a short label, a coloured icon, and the full request it fills in.
         const T=blank?[['shapes','#4262ff','Draw a web shop on Azure','Create a simple web shop on Azure: front end, API, database and sign-in'],['phone','#9510ac','Mock up mobile screens','Mock up a login, a product list and a profile screen for mobile'],['table','#0ca789','Compare two products','Compare Crystallize and Optimizely in a table, and link the parts to a diagram'],['ticket','#f24726','Plan a project with tickets','Plan a customer portal: a short spec doc, the database tables and the first tickets']]
           :[['shapes','#4262ff','Expand this board','Expand this with the services it is missing, like monitoring and secrets'],['ticket','#f24726','Plan it out with docs and tickets','Plan this out with a spec doc, the database tables and tickets for the work'],['phone','#9510ac','Mock up the screens','Mock up the screens a user would see, and connect them to the services'],['doc','#0ca789','Explain this board','Explain what this board shows, in a document card']];
+        if(picOK) T.push(['picture','#d9a800',blank?'Turn a photo into a board':'Add a photo of a whiteboard','__pic']);
         h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What are we building today?':'What should we do with this board?')+'</b><p>Claude builds on the board as it answers. Each request is one undo step.</p><div class="ai-try">'+
-          T.map(([ic,c,l,t])=>'<button type="button" data-try="'+esc(t)+'" title="'+esc(t)+'"><span class="ai-ico" style="color:'+c+'">'+ico(ic)+'</span><span>'+esc(l)+'</span></button>').join('')+'</div></div>'; }
+          T.map(([ic,c,l,t])=>'<button type="button" data-try="'+esc(t)+'" title="'+esc(t==='__pic'?'A photo of sticky notes, a whiteboard or a sketch, or a screenshot of a diagram':t)+'"><span class="ai-ico" style="color:'+c+'">'+ico(ic)+'</span><span>'+esc(l)+'</span></button>').join('')+'</div>'+(keyMode?'':'<a class="ai-keyhint" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">'+ico('link')+'Using orim outside Claude too? Create a Claude API key</a>')+'</div>'; }
     }
     for(const t of list){
-      if(t.role==='user') h+='<div class="ai-msg me">'+esc(t.content)+'</div>';
+      if(t.role==='user') h+='<div class="ai-msg me">'+(t.pic?'<img class="ai-msgpic" alt="" src="'+t.pic+'">':'')+esc(t.content)+'</div>';
       else if(t.failed) h+='<div class="ai-msg err">'+esc(t.view||'Something went wrong.')+'</div>';
       else { const w=t.work||{}; const chips=[]; if(w.added) chips.push('<i>'+w.added+' added</i>'); if(w.linked) chips.push('<i>'+w.linked+' connected</i>'); if(w.changed) chips.push('<i>'+w.changed+' changed</i>'); if(w.removed) chips.push('<i>'+w.removed+' removed</i>'); if(w.layout) chips.push('<i>laid out</i>');
         h+='<div class="ai-msg bot"><div class="ai-text">'+(t.pending&&!t.view?'<span class="ai-dots"><b></b><b></b><b></b>&nbsp;'+(t.phase||'Thinking')+'</span>':esc(t.view||''))+'</div>'+
           (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+'</div>'; }
     }
-    if(showKeys&&keyMode&&sample) h=keyPanel()+h;
+    if((showKeys&&keyMode&&sample)||(keyMode&&known&&!sample&&list.length)) h=keyPanel()+h;
     log.innerHTML=h; if(!showKeys) log.scrollTop=log.scrollHeight;
     inp.placeholder=!state.model||(!state.model.nodes.size&&!state.model.groups.size)?'Where shall we start?':'What should change?';
     sendBtn.disabled=busy||(known&&!sample); sendBtn.hidden=busy; inp.disabled=known&&!sample; stopBtn.hidden=!busy;
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').length; selEl.textContent=sel?sel+' selected':'';
   }
   async function send(text){
-    text=String(text||'').trim(); if(!text||busy) return;
+    text=String(text||'').trim(); if(busy) return;
+    const p=pic; if(!text&&p) text='Turn this picture into an editable board'; if(!text) return;
     if(!sample){ toast(known?'Open orim inside Claude to use this':'Connecting to Claude…'); return; }
     if(!state.model||state.fatal){ toast('Fix the code errors first'); return; }
     flushEditorHist(); histPush(state.code);
     const list=chat(); const turn={role:'assistant',content:'',view:'',pending:true,phase:'Thinking',work:{added:0,linked:0,changed:0,removed:0,layout:false},undoAt:null};
-    const req=input(text); list.push({role:'user',content:text}); list.push(turn); inp.value=''; busy=true; paint(); Ghost.start();
+    let req=input(text); list.push({role:'user',content:text,pic:p?p.url:null}); list.push(turn); inp.value=''; busy=true; pic=null; updPic(); paint(); Ghost.start();
     const before=state.code, prevIds=nodeIds(); const done={say:[],added:0,linked:0,changed:0,removed:0,layout:false,fresh:[]};
+    // The picture goes on the board first (unless it is already there); the recreation lands to its right.
+    let im=null; photo=null;
+    if(p){ const m=state.model; im=p.imgId&&m.images.find(x=>x.id===p.imgId);
+      if(!im){ const id=nextImageId(m), w=Math.min(420,p.w), h=Math.round(w*p.h/p.w); IMG[id]=p.url; const r=freeSpot(m,w,h); im={id,x:r.x,y:r.y,w,h,front:false}; m.images.push(im); live(); }
+      photo={x:im.x+im.w+96,y:im.y,s:Math.max(1.1,Math.min(1.8,1300/1000))};
+      const last=req[req.length-1]; last.content+='\n\n'+PHOTO(im.id); }
     let pending='', applied=0;
     const eat=line=>{ line=line.trim().replace(/^```\w*$/,''); if(!line) return; let op; try{ op=JSON.parse(line); }catch(_){ return; }
       try{ apply(op,done); applied++; if(op.op!=='say') live(); }catch(err){ console.error(err); }
       turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; Ghost.phase(op&&op.op==='say'?null:'Changing the board'); paint(); };
     ctl=new AbortController();
     try{
-      await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick',
+      await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick', ...(p?{images:[p.blob]}:{}),
         onText:({delta})=>{ const parts=(pending+delta).split('\n'); pending=parts.pop(); for(const p of parts) eat(p); } });
       if(pending) eat(pending);
       if(!applied){ turn.view='Claude did not send any changes. Try saying it another way.'; }
     }catch(e){
       if(pending) eat(pending);
-      const c=e&&e.code; const msg={cancelled:'Stopped.',not_granted:'Claude is not allowed for this page. You can allow it from the page’s permissions.',rate_limited:'Claude is busy or your usage limit is reached. Try again in a moment.',sampling_disabled:'Claude is not available for this account.',bad_key:'The API key was not accepted. Check it with the key button below.',no_key:'Add an API key first.',overloaded:'Claude is overloaded right now. Try again in a moment.',network:'Could not reach the Claude API. Check your connection.',api_error:'The Claude API returned an error'+(e&&e.message&&e.message!=='api_error'?': '+e.message:'.'),prompt_too_large:'The board is too large to send in one go.',refused:'Claude declined this request.'}[c]||'Claude could not finish. Try again.';
+      const c=e&&e.code; const msg={cancelled:'Stopped.',not_granted:'Claude is not allowed for this page. You can allow it from the page’s permissions.',rate_limited:'Claude is busy or your usage limit is reached. Try again in a moment.',sampling_disabled:'Claude is not available for this account.',bad_key:'The API key was not accepted. Check it with the key button below.',needs_workspace:'This API key needs a workspace ID. Add it above, then send again.',no_key:'Add an API key first.',overloaded:'Claude is overloaded right now. Try again in a moment.',network:'Could not reach the Claude API. Check your connection.',api_error:'The Claude API returned an error'+(e&&e.message&&e.message!=='api_error'?': '+e.message:'.'),prompt_too_large:'The board is too large to send in one go.',refused:'Claude declined this request.',images_unavailable:'Pictures cannot be sent to Claude here.',image_rejected:'Claude could not take that picture. Try a JPEG or PNG under 20 MB.'}[c]||'Claude could not finish. Try again.';
       turn.view=(done.say.join('\n')?done.say.join('\n')+'\n':'')+msg; if(!applied&&c!=='cancelled') turn.failed=true;
       if(c==='not_granted'||c==='sampling_disabled'){ sample=null; }
       if(c==='bad_key'){ showKeys=true; }
+      if(c==='needs_workspace'){ showKeys=true; needWs=true; setTimeout(()=>{ const w=$('#aiWsIn'); if(w) w.focus(); },50); }
     }
-    // One undo step for the whole request.
-    turn.pending=false; busy=false; ctl=null; Ghost.stop();
+    // One undo step for the whole request. A recreated picture is faded so the editable copy stands out.
+    turn.pending=false; busy=false; ctl=null; Ghost.stop(); photo=null;
+    if(im&&done.added&&state.model){ const cur=state.model.images.find(x=>x.id===im.id); if(cur&&!cur.faded){ cur.faded=true; live(); } }
     // Whatever Claude added or moved is pushed clear of everything else, so nothing ends up on top of something.
     if(state.code!==before&&state.model&&done.fresh.length&&!done.layout){ const m=state.model; const top=id=>{ let cur=m.nodes.get(id)?m.nodes.get(id).group:id, last=id, k=0; while(cur&&m.groups.has(cur)&&k++<60){ last=cur; cur=m.groups.get(cur).parent; } return last; };
-      const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov)) live(); }catch(err){ console.error(err); } }
+      const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov,null,true)) live(); }catch(err){ console.error(err); } }
     if(state.code!==before){ histPush(state.code); turn.undoAt=H.i-1; setEditorFromCode(); syncTitle(); saveLocal(); revealNew(prevIds);
       setTimeout(()=>{ for(const id of done.fresh.filter(id=>prevIds.has(id)).slice(-12)){ const el=R.nodeEls.get(id); if(!el) continue; el.classList.remove('flash'); void el.getBoundingClientRect(); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } },60); }
+    // Started from the canvas with the AI tab closed: say how it went there.
+    if(quiet&&!(log.offsetParent)){ const v=(turn.view||'').split('\n').pop(); if(v) toast(v); } quiet=null;
     turn.content=turn.view; turn.summary=(turn.view||'')+(done.added||done.linked||done.changed||done.removed?' ['+[done.added&&done.added+' added',done.linked&&done.linked+' connected',done.changed&&done.changed+' changed',done.removed&&done.removed+' removed'].filter(Boolean).join(', ')+']':'');
     paint();
   }
   $('#aiForm').addEventListener('submit',e=>{ e.preventDefault(); send(inp.value); });
-  log.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&e.target.id==='aiKeyIn'){ e.preventDefault(); $('#aiKeySave').click(); } });
+  log.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&(e.target.id==='aiKeyIn'||e.target.id==='aiWsIn')){ e.preventDefault(); $('#aiKeySave').click(); } });
   inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(inp.value); } });
   stopBtn.addEventListener('click',()=>{ if(ctl) ctl.abort(); });
   log.addEventListener('click',e=>{
-    if(e.target.closest('#aiKeySave')){ const v=$('#aiKeyIn').value.trim(), md=$('#aiModel').value; AIKey.setModel(md);
+    if(e.target.closest('#aiKeySave')){ const v=$('#aiKeyIn').value.trim(), md=$('#aiModel').value, ws=$('#aiWsIn').value.trim(); AIKey.setModel(md);
+      if(ws&&!AIKey.looksWorkspace(ws)){ toast('A workspace ID starts with wrkspc_'); $('#aiWsIn').focus(); return; }
       if(v){ if(!AIKey.looksValid(v)){ toast('That does not look like a Claude API key (sk-ant-…)'); $('#aiKeyIn').focus(); return; } AIKey.set(v,$('#aiKeyRemember').checked); }
       else if(!AIKey.get()){ toast('Paste your API key first'); $('#aiKeyIn').focus(); return; }
-      sample=AIKey.sample; showKeys=false; updKeyBtn(); paint(); toast(v?'Key saved. Claude is ready':'Saved'); setTimeout(()=>inp.focus(),0); return; }
-    if(e.target.closest('#aiKeyForget')){ AIKey.clear(); sample=null; showKeys=false; updKeyBtn(); paint(); toast('Key removed from this browser'); return; }
-    if(e.target.closest('#aiKeyDone')){ const md=$('#aiModel'); if(md) AIKey.setModel(md.value); showKeys=false; paint(); return; }
-    const t=e.target.closest('[data-try]'); if(t){ inp.value=t.dataset.try; inp.focus(); return; }
+      AIKey.setWorkspace(ws,$('#aiKeyRemember').checked); needWs=false;
+      sample=AIKey.sample; showKeys=false; updKeyBtn(); paint(); if(typeof Me!=='undefined') Me.refresh(); toast(v?'Key saved. Claude is ready':'Saved'); setTimeout(()=>inp.focus(),0); return; }
+    if(e.target.closest('#aiKeyForget')){ AIKey.clear(); sample=null; showKeys=false; needWs=false; updKeyBtn(); paint(); if(typeof Me!=='undefined') Me.refresh(); toast('Key removed from this browser'); return; }
+    if(e.target.closest('#aiKeyDone')){ showKeys=false; paint(); return; }
+    const t=e.target.closest('[data-try]'); if(t){ if(t.dataset.try==='__pic'){ picIn.click(); return; } inp.value=t.dataset.try; inp.focus(); return; }
     const u=e.target.closest('[data-undo]'); if(u&&!busy){ const at=+u.dataset.undo;
       if(H.i===at+1){ undo(); toast('Undone'); for(const t of chat()) if(t.undoAt===at) t.undoAt=null; paint(); }
       else toast('Other changes came after this. Use Ctrl+Z to step back.'); }
   });
   return {
     show(){ paint(); setTimeout(()=>inp.focus(),0); },
+    // From the selection toolbar: run a request without leaving the canvas. Without Claude, open the AI tab instead.
+    async ask(text,name){
+      if(busy){ toast('Claude is still working'); return; }
+      await ready; if(!sample){ openAITab(); inp.value=text; return; }
+      quiet=name||null; send(text); },
+    // From the image toolbar: recreate a picture that is already on the board.
+    async fromImage(id){
+      if(busy){ toast('Claude is still working'); return; }
+      const b=dataBlob(IMG[id]); if(!b){ toast('This picture has no data to send'); return; }
+      openAITab(); await ready;
+      if(!sample){ toast(keyMode?'Add an API key first':'Claude is not available here'); return; }
+      if(!picOK){ toast('Pictures cannot be sent to Claude here'); return; }
+      try{ pic=await prepPic(b); pic.imgId=id; }catch(_){ toast('Could not read that picture'); return; }
+      updPic(); send(inp.value.trim()); },
     onBoard(){ if(ctl) ctl.abort(); if(state.emode==='ai') paint(); },
-    onSel(){ if(state.emode==='ai'&&!busy) paint(); }
+    onSel(){ if(state.emode==='ai'&&!busy) paint(); },
+    keyChanged(){ if(!keyMode) return; sample=AIKey.get()?AIKey.sample:null; showKeys=false; needWs=false; updKeyBtn(); paint(); }
   };
 })();

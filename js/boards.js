@@ -1,6 +1,8 @@
 /* orim · boards.js
  * Several boards per browser, the home page and #b-<id> links.
  * Storage: orim.boards (list), orim.b.<id> (Mermaid code), orim.i.<id> (images).
+ * With a folder chosen (folder.js), boards also live there as .md files: meta.file and meta.dir
+ * link a board to its file; the browser copy stays as a cache and a safety net.
  */
 'use strict';
 const Boards=(()=>{
@@ -21,7 +23,78 @@ const Boards=(()=>{
       saveList();
     }
     window.addEventListener('hashchange',route);
-    renderStatic(); route();
+    renderStatic(); route(); renderFolderBtn();
+    Folder.init().catch(()=>{});
+    setInterval(watch,2500);
+  }
+  /* ---- boards in a folder ---- */
+  const linked=m=>!!(m&&m.file&&m.dir&&m.dir===Folder.name());
+  // Files found in the folder: add new boards, refresh changed ones, and let go of files that are gone.
+  function syncFolder(files){
+    const fname=Folder.name(); let added=0; const seen=new Set();
+    for(const f of files){ seen.add(f.name);
+      let m=list.find(b=>b.file===f.name&&b.dir===fname);
+      if(!m){ const id=newId(); LS.set(CODE+id,f.code); LS.set(IMGS+id,{}); m={id,title:titleOf(f.code)||f.name.replace(/\.md$/i,''),created:f.mod,updated:f.mod,opened:0,file:f.name,dir:fname,fileMod:f.mod,fileCode:f.code,needImgs:true}; list.push(m); added++; continue; }
+      if(f.mod>(m.fileMod||0)+1&&f.code!==m.fileCode&&m.id!==current){ LS.set(CODE+m.id,f.code); m.title=titleOf(f.code)||m.title; m.updated=f.mod; m.fileMod=f.mod; m.fileCode=f.code; m.needImgs=true; thumbs.delete(m.id); }
+    }
+    for(const m of list) if(m.dir===fname&&m.file&&!seen.has(m.file)&&!m.dirty){ delete m.file; delete m.dir; delete m.fileMod; delete m.fileCode; }
+    // Unsaved changes made while the folder was unavailable go out now.
+    for(const m of list) if(linked(m)&&m.dirty) Folder.write(m,LS.get(CODE+m.id,''),LS.get(IMGS+m.id,{})||{});
+    saveList(); return added;
+  }
+  function folderChanged(){ renderFileState(); renderFolderBtn(); if(isHome()) renderRecents(); }
+  function renderFolderBtn(){
+    const b=$('#homeFolder'), foot=$('#homeFoot'); if(!b) return; const st=Folder.state();
+    b.hidden=st==='unsupported'; b.classList.toggle('warn',st==='reconnect');
+    b.innerHTML=ico('folder')+'<span>'+(st==='none'?'Save to a folder':st==='reconnect'?'Reconnect '+esc(Folder.name()):esc(Folder.name()))+'</span>';
+    b.title=st==='none'?'Choose a folder on this computer. Each board is saved there as a Markdown file.':st==='reconnect'?'Let orim open '+Folder.name()+' again':'Boards are saved in '+Folder.name()+'. Click to change.';
+    if(foot) foot.textContent=st==='ready'?'New boards are saved as .md files in '+Folder.name()+', and a copy is kept in this browser.':st==='reconnect'?'Reconnect '+Folder.name()+' to keep saving boards there. Until then, changes are kept in this browser.':st==='none'?'Boards are saved in this browser only. Choose a folder to keep them as Markdown files you can put in Git or share.':'Boards are saved in this browser only. To move a board to another device, open it and use Export, Board file.';
+  }
+  function metaChanged(m,status){ saveList(); if(m.id===current){ fileStatus=status||fileStatus; renderFileState(); } if(isHome()) renderRecents(); }
+  let fileStatus='saved', conflictOpen=false;
+  function fileConflict(id,code,mod){
+    const m=meta(id); if(!m||conflictOpen) return; conflictOpen=true;
+    openModal('This board changed in two places','<p><b>'+esc(m.file)+'</b> was changed outside orim while you were editing it here. Which version do you want to keep?</p>',[
+      {label:'Use the file',primary:true,run:()=>{ conflictOpen=false; closeModal(); Folder.readImages(m.file).then(imgs=>applyFile(m,code,mod,imgs)).catch(()=>applyFile(m,code,mod,null)); }},
+      {label:'Keep mine',run:()=>{ conflictOpen=false; m.fileMod=mod; m.fileCode=code; saveList(); Folder.write(m,id===current?state.code:LS.get(CODE+id,''),id===current?usedImages():LS.get(IMGS+id,{})); closeModal(); toast('Saved your version to the file'); }}]);
+  }
+  function applyFile(m,code,mod,images){
+    m.fileMod=mod; m.fileCode=code; m.title=titleOf(code)||m.title; m.updated=mod; LS.set(CODE+m.id,code); if(images) LS.set(IMGS+m.id,images); thumbs.delete(m.id); saveList();
+    if(m.id===current){ if(images){ for(const k of Object.keys(IMG)) delete IMG[k]; Object.assign(IMG,images); } lastSaved.set(m.id,code); loadCode(code,{history:true}); setEditorFromCode(); syncTitle(); toast('Updated from '+m.file); }
+  }
+  // While a folder board is open, look for changes made to its file by Git, an editor or an AI assistant.
+  let watching=false;
+  async function watch(){
+    const m=meta(current); if(watching||!linked(m)||app.hidden||document.visibilityState!=='visible'||!Folder.ready()) return;
+    watching=true;
+    try{ const r=await Folder.check(m);
+      if(r&&r.missing){ delete m.file; delete m.dir; saveList(); renderFileState(); toast('The board file was moved or deleted, so this board is now kept in the browser only'); }
+      else if(r){ if(state.code===m.fileCode||state.code===lastSaved.get(current)&&lastSaved.get(current)===m.fileCode) applyFile(m,r.code,r.mod,r.images); else fileConflict(m.id,r.code,r.mod); } }
+    finally{ watching=false; }
+  }
+  // The file name and save state next to the board title.
+  function renderFileState(){
+    const el=$('#fileState'); if(!el) return; const m=meta(current);
+    if(!m||!m.file||!m.dir){ el.hidden=true; return; }
+    el.hidden=false; const st=Folder.state(), here=m.dir===Folder.name();
+    if(st==='reconnect'&&here){ el.className='file-state warn'; el.innerHTML=ico('folder')+'<span>Reconnect folder</span>'; el.title='Click to let orim save '+m.file+' in '+m.dir+' again'; return; }
+    if(!here||st!=='ready'){ el.className='file-state off'; el.innerHTML=ico('folder')+'<span>'+esc(m.file)+'</span>'; el.title='Saved in this browser. The folder '+m.dir+' is not connected.'; return; }
+    el.className='file-state'+(fileStatus==='error'?' warn':''); el.innerHTML=ico('folder')+'<span>'+esc(m.file)+'</span>';
+    el.title=fileStatus==='error'?'Could not save to the folder. Your changes are kept in the browser.':'Saved in '+m.dir+'/'+m.file;
+  }
+  function folderMenu(){
+    const st=Folder.state();
+    if(st==='none'){ Folder.choose(); return; }
+    if(st==='reconnect'){ Folder.reconnect(); return; }
+    const browserOnly=list.filter(b=>!linked(b)).length;
+    openModal('Board folder','<p>New boards are saved as Markdown files in <b>'+esc(Folder.name())+'</b>, a moment after each change. They show as diagrams on GitHub, in Azure DevOps and in VS Code, and changes made to a file elsewhere (Git, an editor, an AI assistant) appear here while the board is open.</p>'+
+      (browserOnly?'<p>'+browserOnly+(browserOnly===1?' board is':' boards are')+' still only in this browser. Use Move to folder in a board\'s menu to add it.</p>':''),
+      [{label:'Change folder',run:()=>{ closeModal(); Folder.choose(); }},{label:'Stop using this folder',run:()=>{ closeModal(); Folder.disconnect(); }}]);
+  }
+  function moveToFolder(id){
+    const m=meta(id); if(!m||!Folder.ready()) return;
+    Folder.uniqueName(m.title).then(n=>{ m.file=n; m.dir=Folder.name(); m.fileMod=0; m.fileCode=null; saveList();
+      Folder.write(m,id===current?state.code:LS.get(CODE+id,''),id===current?usedImages():LS.get(IMGS+id,{})||{}); renderRecents(); toast('Saved as '+n); });
   }
   function route(){
     const sh=/^#([mt]=[A-Za-z0-9_-]+)$/.exec(location.hash||'');
@@ -48,6 +121,7 @@ const Boards=(()=>{
     if(lastSaved.get(current)!==state.code){
       LS.set(CODE+current,state.code); lastSaved.set(current,state.code);
       m.updated=now(); m.title=(state.model&&state.model.title)||'Untitled board'; saveList(); thumbs.delete(current);
+      if(linked(m)){ if(Folder.ready()){ fileStatus='saving'; Folder.write(m,state.code,imgs); } else { m.dirty=true; saveList(); } }
     }
     if(!LS.set(IMGS+current,imgs)&&!imgWarned&&Object.keys(imgs).length){ imgWarned=true; toast('Images are too large to autosave in this browser. Export a board file (.json) to keep them.'); }
   }
@@ -55,7 +129,8 @@ const Boards=(()=>{
     const id=newId(); const t=now();
     let c=code||'flowchart LR\n'; if(title) c=setTitleInCode(c,title);
     LS.set(CODE+id,c); LS.set(IMGS+id,{});
-    list.unshift({id,title:titleOf(c)||'Untitled board',created:t,updated:t,opened:t}); saveList();
+    const m={id,title:titleOf(c)||'Untitled board',created:t,updated:t,opened:t}; list.unshift(m); saveList();
+    if(Folder.ready()){ const d=Folder.name(); Folder.uniqueName(m.title).then(n=>{ if(!meta(id)) return; m.file=n; m.dir=d; m.fileMod=0; saveList(); Folder.write(m,LS.get(CODE+id,c),LS.get(IMGS+id,{})||{}); if(id===current) renderFileState(); }); }
     return id;
   }
   function open(id){
@@ -71,6 +146,11 @@ const Boards=(()=>{
     loadCode(typeof code==='string'?code:'flowchart LR\n',{clearCache:true}); updUndo();
     state.viewQuietUntil=performance.now()+1500; requestAnimationFrame(()=>{ applyView(); render(); fit(); });
     setHash('b-'+id); document.title=(m.title||'Untitled board')+' · orim';
+    fileStatus='saved'; renderFileState();
+    if(linked(m)&&Folder.ready()){
+      if(m.needImgs) Folder.readImages(m.file).then(imgs=>{ m.needImgs=false; saveList(); if(Object.keys(imgs).length){ LS.set(IMGS+id,imgs); if(current===id){ Object.assign(IMG,imgs); render(); } } });
+      watch();
+    }
   }
   function openNew(code,title){ const id=create(code,title); open(id); return id; }
   function showHome(){
@@ -125,6 +205,7 @@ const Boards=(()=>{
   const TPL_CARDS=()=>[{id:'ai',name:'Start with AI',desc:'Describe it, Claude draws it',ai:true},{id:'blank',name:'Blank board',desc:'Start from nothing',plus:true},{id:'text',name:'From text',desc:'Type A -> B, get a diagram',text:true},...TEMPLATES.filter(t=>t.id!=='blank').map(t=>({id:t.id,name:t.name,desc:t.desc,code:t.code,tint:t.tint}))];
   const tplThumb=t=>t.ai?'<span class="th-ai">'+(typeof aiSpark==='function'?aiSpark():'')+'</span>':t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
   function renderStatic(){
+    renderTeams();
     $('#homeTpl').innerHTML=TPL_CARDS().map(t=>'<button type="button" class="tpl" data-tpl-id="'+t.id+'"'+(t.tint?' style="--tint:'+t.tint+'"':'')+'><span class="th">'+tplThumb(t)+'</span><b>'+esc(t.name)+'</b><small>'+esc(t.desc||'')+'</small></button>').join('');
     const cards=$('#homeTpl').children.length; $('#homeTpl').style.setProperty('--n',Math.ceil(cards/2)); requestAnimationFrame(updTplNav);
     for(const b of document.querySelectorAll('#homeView [data-view]')) b.setAttribute('aria-pressed',String(b.dataset.view===view));
@@ -175,18 +256,19 @@ const Boards=(()=>{
     $('#home').classList.toggle('landing',!items.length); $('#recentsSec').hidden=!items.length; renderWelcome();
     if(!items.length){ el.innerHTML=''; return; }
     el.className='recents '+view; const ra=$('#removeAllBtn'); if(ra) ra.hidden=view!=='grid';
-    if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
-    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span class="rl-act"><button type="button" class="ibtn" data-remove-all title="Delete all boards" aria-label="Delete all boards">'+ico('trash')+'</button></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>Created '+esc(when(b.created))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
+    if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>'+(b.file&&b.dir?ico('folder')+esc(b.file)+' · ':'')+'Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
+    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span class="rl-act"><button type="button" class="ibtn" data-remove-all title="Delete all boards" aria-label="Delete all boards">'+ico('trash')+'</button></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>'+(b.file&&b.dir?ico('folder')+esc(b.dir+'/'+b.file):'Created '+esc(when(b.created)))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
   }
   function boardMenu(id,anchor){
-    const mn=$('#homeMenu'); mn.dataset.id=id; mn.hidden=false;
+    const mn=$('#homeMenu'); mn.dataset.id=id; const mv=mn.querySelector('[data-hm=move]'); if(mv){ mv.hidden=!Folder.ready()||linked(meta(id)); mv.querySelector('b').textContent='Save to '+Folder.name(); } mn.hidden=false;
     const r=anchor.getBoundingClientRect(); const w=200;
     const h=mn.offsetHeight; let top=r.bottom+6; if(top+h>window.innerHeight-8) top=Math.max(8,r.top-h-6);
     mn.style.left=Math.max(8,Math.min(window.innerWidth-w-8,r.right-w))+'px'; mn.style.top=top+'px';
   }
   function rename(id){
     const m=meta(id); if(!m) return;
-    openModal('Rename board','<input id="renameIn" class="modal-input" value="'+esc(m.title||'')+'" aria-label="Board name" spellcheck="false">',[{label:'Rename',primary:true,run:()=>{ const v=$('#renameIn').value.trim()||'Untitled board'; const code=LS.get(CODE+id,'flowchart LR\n'); const nc=setTitleInCode(code,v); LS.set(CODE+id,nc); m.title=v; m.updated=now(); saveList(); if(current===id){ lastSaved.set(id,nc); } closeModal(); renderRecents(); }}]);
+    openModal('Rename board','<input id="renameIn" class="modal-input" value="'+esc(m.title||'')+'" aria-label="Board name" spellcheck="false">',[{label:'Rename',primary:true,run:()=>{ const v=$('#renameIn').value.trim()||'Untitled board'; const code=LS.get(CODE+id,'flowchart LR\n'); const nc=setTitleInCode(code,v); LS.set(CODE+id,nc); m.title=v; m.updated=now(); saveList(); if(current===id){ lastSaved.set(id,nc); } closeModal(); renderRecents();
+      if(linked(m)&&Folder.ready()){ m.renameTo=v; Folder.write(m,nc,LS.get(IMGS+id,{})||{}); } }}]);
     setTimeout(()=>{ const i=$('#renameIn'); if(i){ i.focus(); i.select(); i.addEventListener('keydown',e=>{ if(e.key==='Enter') $('#modalFoot [data-mb="0"]').click(); }); } },30);
   }
   function duplicate(id){
@@ -195,15 +277,35 @@ const Boards=(()=>{
   }
   function remove(id){
     const m=meta(id); if(!m) return;
-    openModal('Delete board','<p>Delete "'+esc(m.title||'Untitled board')+'"? This removes it from this browser and can\'t be undone. Export a board file first if you want to keep a copy.</p>',[{label:'Delete board',primary:true,run:()=>{ try{ localStorage.removeItem(CODE+id); localStorage.removeItem(IMGS+id); }catch(_){} list=list.filter(b=>b.id!==id); saveList(); if(current===id) current=null; closeModal(); renderRecents(); toast('Board deleted'); }}]);
+    const inFolder=linked(m)&&Folder.ready();
+    openModal('Delete board','<p>Delete "'+esc(m.title||'Untitled board')+'"? '+(inFolder?'This also deletes <b>'+esc(m.file)+'</b> from '+esc(m.dir)+'.':'This removes it from this browser.')+' It can\'t be undone.</p>',[{label:'Delete board',primary:true,run:()=>{ if(inFolder) Folder.removeFile(m.file); try{ localStorage.removeItem(CODE+id); localStorage.removeItem(IMGS+id); }catch(_){} list=list.filter(b=>b.id!==id); saveList(); if(current===id) current=null; closeModal(); renderRecents(); toast('Board deleted'); }}]);
   }
   // A new board with the AI tab open, ready to type.
+  /* ---- landing: a starting point for each kind of team, with an AI step to try next ---- */
+  const TEAMS=[
+    {id:'arch',name:'Cloud architects',tpl:'webapp',say:'Draw the system with real Azure icons, then let Claude fill the gaps and write it up.',ask:'Expand this with monitoring, secrets and a staging slot, and explain the design in a doc'},
+    {id:'pp',name:'Power Platform makers',tpl:'pp',say:'Map apps, flows, Dataverse and agents, then turn the plan into tables and tickets.',ask:'Plan this out with a spec doc, the Dataverse tables and tickets for the work'},
+    {id:'agile',name:'Agile teams',tpl:'retro',say:'Run a retro on sticky notes. Claude groups them by theme and turns actions into tickets.',ask:'Group these notes by theme and turn the action items into tickets'},
+    {id:'product',name:'Product and design',tpl:'brainstorm',say:'Collect ideas, then sketch simple phone, iPad and desktop screens next to them.',ask:'Turn the best ideas into a login, a home page and a profile screen for mobile'}];
+  let team=TEAMS[0].id;
+  function renderTeams(){
+    const tabs=$('#teamTabs'), card=$('#teamCard'); if(!tabs) return;
+    tabs.innerHTML=TEAMS.map(t=>'<button type="button" role="tab" data-team="'+t.id+'" aria-selected="'+(t.id===team)+'">'+esc(t.name)+'</button>').join('');
+    const t=TEAMS.find(x=>x.id===team), tp=TEMPLATES.find(x=>x.id===t.tpl); if(!tp){ card.innerHTML=''; return; }
+    card.innerHTML='<div class="team-text"><p>'+esc(t.say)+'</p><div class="team-ask"><span class="ai-mk">'+(typeof aiSpark==='function'?aiSpark():'')+'</span><span>Then ask: <b>'+esc(t.ask)+'</b></span></div>'+
+      '<div class="team-cta"><button type="button" class="btn primary" data-team-go="ai">Open it and ask Claude</button><button type="button" class="btn" data-team-go="open">Just open the board</button></div></div>'+
+      '<button type="button" class="team-th" data-team-go="open" aria-label="Open '+esc(tp.name)+'"><span class="th">'+tplThumb(tp)+'</span><small>'+esc(tp.name)+'</small></button>';
+  }
+  $('#teamTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-team]'); if(!b) return; team=b.dataset.team; renderTeams(); });
+  $('#teamCard').addEventListener('click',e=>{ const b=e.target.closest('[data-team-go]'); if(!b) return; const t=TEAMS.find(x=>x.id===team), tp=TEMPLATES.find(x=>x.id===t.tpl); if(!tp) return;
+    openNew(tp.code); if(b.dataset.teamGo==='ai') setTimeout(()=>{ openAITab(); const i=$('#aiIn'); if(i){ i.value=t.ask; if(!i.disabled) i.focus(); } },120); });
   function startWithAI(){ openNew('flowchart LR\n','Untitled board'); setTimeout(()=>{ if(typeof openAITab==='function') openAITab(); },80); }
   function removeAll(){
-    const n=list.length; if(!n) return;
-    openModal('Delete all boards','<p>Delete all '+n+(n===1?' board':' boards')+' in this browser? This can\'t be undone. Export board files first for anything you want to keep.</p>',[{label:'Delete '+n+(n===1?' board':' boards'),primary:true,run:()=>{
-      for(const b of list){ try{ localStorage.removeItem(CODE+b.id); localStorage.removeItem(IMGS+b.id); }catch(_){} }
-      list=[]; saveList(); current=null; thumbs.clear(); closeModal(); renderRecents(); toast('All boards deleted'); }}]);
+    const own=list.filter(b=>!linked(b)); const n=own.length;
+    if(!n){ toast('Every board here is a file in '+Folder.name()+'. Delete files there, or one by one here.'); return; }
+    openModal('Delete all boards','<p>Delete all '+n+(n===1?' board':' boards')+' kept in this browser? This can\'t be undone. Export board files first for anything you want to keep.'+(n<list.length?' Boards saved in your folder are not touched.':'')+'</p>',[{label:'Delete '+n+(n===1?' board':' boards'),primary:true,run:()=>{
+      for(const b of own){ try{ localStorage.removeItem(CODE+b.id); localStorage.removeItem(IMGS+b.id); }catch(_){} }
+      list=list.filter(b=>linked(b)); saveList(); if(!meta(current)) current=null; thumbs.clear(); closeModal(); renderRecents(); toast('Deleted '+n+(n===1?' board':' boards')); }}]);
   }
   function exportFile(id){ open(id); setTimeout(()=>{ const b=document.querySelector('#exportMenu [data-export=json]'); if(b) b.click(); },120); }
 
@@ -231,7 +333,12 @@ const Boards=(()=>{
     const op=e.target.closest('[data-open]'); if(op) open(op.dataset.open);
   });
   $('#homeMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-hm]'); if(!b) return; const id=$('#homeMenu').dataset.id; $('#homeMenu').hidden=true;
-    ({open,rename,duplicate,remove,export:exportFile})[b.dataset.hm](id); });
+    ({open,rename,duplicate,remove,export:exportFile,move:moveToFolder})[b.dataset.hm](id); });
+  $('#homeFolder').addEventListener('click',folderMenu);
+  $('#fileState').addEventListener('click',()=>{ const m=meta(current); if(!m) return; if(Folder.state()==='reconnect'&&m.dir===Folder.name()) Folder.reconnect(); else if(linked(m)) folderMenu(); });
+  // New or changed files in the folder show up when you come back to the home page.
+  const rescan=()=>{ if(isHome()&&Folder.ready()&&document.visibilityState==='visible') Folder.scan().then(()=>renderRecents()); };
+  document.addEventListener('visibilitychange',rescan); window.addEventListener('focus',rescan);
   document.addEventListener('click',e=>{ if(!e.target.closest('#homeMenu')&&!e.target.closest('[data-more]')) $('#homeMenu').hidden=true; });
   $('#removeAllBtn').addEventListener('click',removeAll);
   $('#homeView').addEventListener('click',e=>{ const b=e.target.closest('[data-view]'); if(!b) return; view=b.dataset.view; LS.set('orim.homeView',view); renderStatic(); renderRecents(); });
@@ -245,5 +352,5 @@ const Boards=(()=>{
   $('#homeTheme').addEventListener('click',()=>$('#themeBtn').click());
   $('#homeBtn').addEventListener('click',showHome);
 
-  return {init,open,openNew,create,showHome,persist,isHome,iconsReady,current:()=>current,thumbSVG};
+  return {init,open,openNew,create,showHome,persist,isHome,iconsReady,current:()=>current,thumbSVG,syncFolder,folderChanged,metaChanged,fileConflict};
 })();

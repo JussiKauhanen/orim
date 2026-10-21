@@ -715,6 +715,64 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .ai-keybtn{border:0;background:none;color:var(--muted);width:26px;height:26px;border-radius:6px;display:grid;place-items:center;cursor:pointer;padding:0}
 .ai-keybtn:hover{background:var(--panel-2);color:var(--fg)}
 .ai-keybtn svg.i{width:15px;height:15px}
+.ai-keyhint{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:var(--muted);text-decoration:none}
+.ai-keyhint:hover{color:var(--accent);text-decoration:underline}
+.ai-keyhint svg.i{width:13px;height:13px}
+.ai-field span i{font-style:normal;color:var(--faint);margin-left:4px}
+.ai-field.need input{border-color:#e0a800;box-shadow:0 0 0 3px color-mix(in srgb,#ffd23f 30%,transparent)}
+.ai-keywarn{font-size:12.5px;color:var(--fg);background:color-mix(in srgb,#ffd23f 18%,var(--panel));border:1px solid color-mix(in srgb,#ffd23f 60%,var(--line));border-radius:8px;padding:8px 10px;margin:0}
+.ai-keywarn a{color:var(--accent);font-weight:600}
+.me-key{border-top:1px solid var(--line);padding:12px 4px 4px;margin-top:8px;display:flex;flex-direction:column;gap:6px;text-align:left}
+.me-key-head{display:flex;align-items:center;gap:8px}
+.me-key-head svg.i{width:20px;height:20px}
+.me-key small{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.me-key-row{display:flex;gap:6px;flex-wrap:wrap}
+.me-key-row .btn{height:30px;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center}
+.avatar.guest{background:var(--panel-2);color:var(--muted);display:inline-grid;place-items:center}
+.avatar.guest svg.i{width:60%;height:60%}
+/* Boards in a folder */
+.folder-btn{max-width:240px}
+.folder-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.folder-btn.warn,.file-state.warn{color:#9a5b00;border-color:#f0c36d;background:#fff6e0}
+.file-state{display:inline-flex;align-items:center;gap:5px;flex:none;max-width:200px;border:1px solid transparent;background:none;color:var(--muted);font:500 12px var(--font-ui);padding:3px 7px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.file-state span{overflow:hidden;text-overflow:ellipsis}
+.file-state .i{width:15px;height:15px;flex:none}
+.file-state:hover{background:var(--hover,rgba(0,0,0,.05));color:var(--fg)}
+.file-state.off{opacity:.65}
+.rc small .i,.rl .nm small .i{width:13px;height:13px;vertical-align:-2px;margin-right:3px}
+@media (max-width:760px){.file-state span,.folder-btn span{display:none}}
+:root[data-theme="dark"] .folder-btn.warn,:root[data-theme="dark"] .file-state.warn{background:#3a2d12;color:#f5c66b;border-color:#6b5320}
+/* Pictures for Claude */
+.ai-pic{display:flex;align-items:center;gap:10px;padding:6px;margin:0 0 2px -4px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
+.ai-pic img{width:44px;height:44px;object-fit:cover;border-radius:6px;flex:none}
+.ai-pic span{flex:1;min-width:0;font:600 12.5px var(--font-ui);display:flex;flex-direction:column;gap:1px}
+.ai-pic small{font-weight:400;color:var(--muted);font-size:11.5px}
+.ai-pic .ibtn{width:26px;height:26px}
+.ai-msgpic{display:block;max-width:180px;max-height:140px;border-radius:8px;margin:0 0 6px auto;object-fit:cover}
+.ai-drop .ai-box{border-color:var(--accent);border-style:dashed;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.ctx .ai-make{gap:6px;font-weight:600}
+.ctx .ai-make .ai-mark{width:16px;height:16px}
+/* Landing: which team are you on? */
+.teams{margin:0 0 56px}
+.teams h2{font-size:22px;font-weight:600;margin:0 0 14px;text-align:center}
+.team-tabs{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.team-tabs button{border:1px solid var(--line);background:var(--panel);color:var(--fg);font:500 13.5px var(--font-ui);padding:7px 14px;border-radius:999px;cursor:pointer}
+.team-tabs button:hover{border-color:var(--line-strong)}
+.team-tabs button[aria-selected="true"]{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+.team-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 28px}
+.team-text p{font-size:17px;line-height:1.5;margin:0 0 14px}
+.team-ask{display:flex;gap:10px;align-items:flex-start;background:color-mix(in srgb,#ffd23f 24%,var(--panel));border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--fg);margin-bottom:18px}
+.team-ask b{font-weight:600}
+.team-ask .ai-mk{flex:none;margin-top:1px}
+.team-ask .ai-mk svg{width:20px;height:20px}
+.team-cta{display:flex;gap:8px;flex-wrap:wrap}
+.team-th{border:1px solid var(--line);background:var(--panel-2);border-radius:12px;padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0}
+.team-th .th{display:block;height:220px}
+.team-th .th svg{width:100%;height:100%}
+.team-th small{color:var(--muted);font-size:12px;text-align:left}
+.team-th:hover{border-color:var(--line-strong)}
+.home:not(.landing) .teams{display:none}
+@media (max-width:760px){.team-card{grid-template-columns:1fr;padding:18px}.team-th .th{height:160px}}
 
 </style>
 </head>
@@ -724,6 +782,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
       <a class="wordmark" href="#" aria-label="orim home"><svg class="mark" style="width:26px;height:26px" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 8.5h3M4.5 12h2M4.5 15.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="14" y="3.5" width="7.5" height="6" rx="1.6" fill="#4262ff"/><rect x="14" y="14.5" width="7.5" height="6" rx="3" fill="none" stroke="#4262ff" stroke-width="1.6"/><path d="M17.75 9.5v5" stroke="#4262ff" stroke-width="1.6"/></svg><span>orim</span></a>
       <span class="grow"></span>
       <button type="button" class="ibtn" id="homeTheme" aria-label="Theme"></button>
+      <button type="button" class="btn folder-btn" id="homeFolder" hidden></button>
       <button type="button" class="btn" id="homeImport">Import</button>
       <button type="button" class="btn primary" id="homeNew"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New board</button>
       <button type="button" class="me-btn" data-me hidden></button>
@@ -766,6 +825,11 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
           </div>
         </div>
       </section>
+      <section class="teams" aria-labelledby="hTeams">
+        <h2 id="hTeams">Which team are you on?</h2>
+        <div class="team-tabs" id="teamTabs" role="tablist"></div>
+        <div class="team-card" id="teamCard" role="tabpanel"></div>
+      </section>
       <section class="features" aria-label="What orim does">
         <div class="feat"><b>Ask the AI</b><p>Inside Claude, type what you want and it builds on the board as it answers, one undo step per request. Anywhere else, copy a ready prompt for any AI chat.</p></div>
         <div class="feat"><b>Write or draw</b><p>Type Mermaid or plain lines like <code>App -&gt; Dataverse</code>, or drag things around. Both stay in sync, and export to PNG, SVG, draw.io or Markdown.</p></div>
@@ -783,13 +847,14 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
         </div>
         <div class="recents" id="homeRecents"></div>
       </section>
-      <p class="home-foot">Boards are saved in this browser only. To move a board to another device, open it and use Export, Board file.</p>
+      <p class="home-foot" id="homeFoot">Boards are saved in this browser only. To move a board to another device, open it and use Export, Board file.</p>
     </main>
     <div class="menu home-menu" id="homeMenu" hidden>
       <button type="button" data-hm="open"><b>Open</b></button>
       <button type="button" data-hm="rename"><b>Rename</b></button>
       <button type="button" data-hm="duplicate"><b>Duplicate</b></button>
       <button type="button" data-hm="export"><b>Export board file</b></button>
+      <button type="button" data-hm="move" hidden><b>Save to folder</b></button>
       <hr>
       <button type="button" data-hm="remove"><b style="color:var(--danger)">Delete</b></button>
     </div>
@@ -799,6 +864,7 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
     <div class="brand">
       <button type="button" class="home-btn" id="homeBtn" title="All boards" aria-label="All boards"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 8.5h3M4.5 12h2M4.5 15.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="14" y="3.5" width="7.5" height="6" rx="1.6" fill="#2f5bea"/><rect x="14" y="14.5" width="7.5" height="6" rx="3" fill="none" stroke="#2f5bea" stroke-width="1.6"/><path d="M17.75 9.5v5" stroke="#2f5bea" stroke-width="1.6"/></svg></button>
       <input id="docTitle" class="title-input" placeholder="Untitled board" aria-label="Diagram title" spellcheck="false">
+      <button type="button" class="file-state" id="fileState" hidden></button>
     </div>
     <div class="seg" id="viewSeg" aria-label="Panels">
       <button type="button" data-mode="split" title="Split view (Alt+1)">Split</button>
@@ -862,8 +928,11 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
       <div class="ai-pane" id="aiPane" hidden>
         <div class="ai-log" id="aiLog" aria-live="polite"></div>
         <form class="ai-input" id="aiForm"><div class="ai-box">
+          <div class="ai-pic" id="aiPic" hidden></div>
           <textarea id="aiIn" rows="2" placeholder="Where shall we start?" aria-label="Request for Claude"></textarea>
           <div class="ai-bar">
+            <button type="button" class="ai-keybtn ai-attach" id="aiAttach" hidden title="Add a photo or screenshot. Claude turns it into stickies, shapes and lines you can edit" aria-label="Add a picture"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5L5 19.5"/></svg></button>
+            <input type="file" id="aiPicIn" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
             <label class="toggle" title="Slower, for bigger changes and questions that need thought"><input type="checkbox" id="aiDeep"><span>Think harder</span></label>
             <span class="ai-sel" id="aiSel"></span><span class="grow"></span>
             <button type="button" class="ai-round stop" id="aiStop" hidden title="Stop" aria-label="Stop"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" style="fill:currentColor;stroke:none"/></svg></button>
@@ -7545,8 +7614,8 @@ function parseMermaid(src){
       let am=/^%%\s*@arrow\s+(\S+)\s+(straight|elbow|curved|block|line)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+(#[0-9a-fA-F]{3,8})((?:\s+(?:from|to)=\S+)*)\s*$/.exec(t);
       if(am){ const a={id:am[1],kind:am[2],x1:+am[3],y1:+am[4],x2:+am[5],y2:+am[6],w:+am[7],color:am[8],from:null,to:null};
         (am[9]||'').trim().split(/\s+/).forEach(tok=>{ const q=/^(from|to)=(.+)$/.exec(tok); if(q) a[q[1]]=q[2]; }); m.arrows.push(a); continue; }
-      am=/^%%\s*@image\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)(\s+front)?\s*$/.exec(t);
-      if(am){ m.images.push({id:am[1],x:+am[2],y:+am[3],w:+am[4],h:+am[5],front:!!am[6]}); continue; }
+      am=/^%%\s*@image\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)(\s+front)?(\s+faded)?\s*$/.exec(t);
+      if(am){ const im={id:am[1],x:+am[2],y:+am[3],w:+am[4],h:+am[5],front:!!am[6]}; if(am[7]) im.faded=true; m.images.push(im); continue; }
       am=/^%%\s*@comment\s+(\S+)\s+(-?[\d.]+)\s+(-?[\d.]+)((?:\s+(?:on=\S+|done))*)\s+(\[.*\])\s*$/.exec(t);
       if(am){ let msgs=[]; try{ msgs=JSON.parse(am[5]).filter(x=>x&&typeof x.t==='string').map(x=>{ const q={t:x.t,d:+x.d||0}; if(typeof x.a==='string'&&x.a) q.a=x.a; return q; }); }catch(_){}
         const fl=am[4]||''; const on=/on=(\S+)/.exec(fl);
@@ -7664,7 +7733,7 @@ function layoutLines(m,boxes){
   }
   (m.edges||[]).forEach((e,i)=>{ const sd=e.sa||e.sb, rw=e.ra!=null||e.rb!=null; if((e.route&&e.route!==(m.curve||'curved'))||sd||rw) L.push('%% @route '+i+' '+(e.route||m.curve||'curved')+(sd||rw?' '+(e.sa||'-')+' '+(e.sb||'-'):'')+(e.ra!=null?' ra='+e.ra:'')+(e.rb!=null?' rb='+e.rb:'')); });
   for(const a0 of (m.arrows||[])){ const a=resolveArrow(m,a0); L.push('%% @arrow '+a.id+' '+a.kind+' '+r10(a.x1)+' '+r10(a.y1)+' '+r10(a.x2)+' '+r10(a.y2)+' '+(+a.w)+' '+a.color+(a0.from&&(m.nodes.has(a0.from)||m.groups.has(a0.from))?' from='+a0.from:'')+(a0.to&&(m.nodes.has(a0.to)||m.groups.has(a0.to))?' to='+a0.to:'')); }
-  for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':''));
+  for(const im of (m.images||[])) L.push('%% @image '+im.id+' '+r10(im.x)+' '+r10(im.y)+' '+r10(im.w)+' '+r10(im.h)+(im.front?' front':'')+(im.faded?' faded':''));
   for(const k of (m.inks||[])){ const e=encodeInk(k); if(e) L.push(e); }
   for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n) continue; if(n.shape==='table'&&n.table) L.push('%% @table '+id+' '+JSON.stringify(n.table)); if(n.shape==='doc'&&n.doc) L.push('%% @doc '+id+' '+JSON.stringify(n.doc)); }
   for(const c of (m.threads||[])){
@@ -8199,11 +8268,13 @@ function arrowBox(a){ const pad=a.kind==='block'?a.w*4.4+9:a.w*3+8; const x0=Mat
 // Push top-level things apart so none overlap: shapes outside frames, and whole frames (with
 // everything in them, and the title above them). Only the blocks in `movable` move; null moves any.
 // Returns how many blocks moved.
-function separateBlocks(m,movable,gap){
+function separateBlocks(m,movable,gap,pics){
   const G=gap||40, TITLE=30; const boxes=groupBoxes(m); const blocks=[];
   for(const n of m.nodes.values()) if(n.x!=null&&!(n.group&&m.groups.has(n.group))) blocks.push({id:n.id,n,x:n.x,y:n.y,w:n.w,h:n.h});
   for(const g of m.groups.values()){ if(g.parent&&m.groups.has(g.parent)) continue; const b=boxes.get(g.id); if(b) blocks.push({id:g.id,g,x:b.x,y:b.y-TITLE,w:b.w,h:b.h+TITLE}); }
-  const can=b=>!movable||movable.has(b.id);
+  // With pics, pictures stay where they are and nothing new is left on top of them.
+  if(pics) for(const im of m.images||[]) blocks.push({id:'p:'+im.id,im:true,x:im.x,y:im.y,w:im.w,h:im.h});
+  const can=b=>!b.im&&(!movable||movable.has(b.id));
   const moved=new Map();
   for(let pass=0;pass<40;pass++){ let any=false;
     for(const a of blocks) for(const b of blocks){ if(a===b||!can(b)) continue;
@@ -8511,6 +8582,7 @@ const I={
   connector:'<path d="M5 19L18 6"/><path d="M11 6h7v7"/>',
   frame:'<path d="M7 3v18M17 3v18M3 7h18M3 17h18"/>',
   library:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+  folder:'<path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4.2l2 2.2H19a1.5 1.5 0 0 1 1.5 1.5v8.3A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/>',
   trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
   dup:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
   group:'<rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><rect x="7" y="7" width="4" height="4" rx="1"/><rect x="13" y="13" width="4" height="4" rx="1"/>',
@@ -8540,6 +8612,7 @@ const I={
   arBlock:'<path d="M3.5 9.5h9.5V5.5L20.5 12 13 18.5v-4H3.5z"/>',
   layerUp:'<path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4" opacity=".45"/><path d="M4 16l8 4 8-4" opacity=".45"/>',
   layerDown:'<path d="M12 12l8 4-8 4-8-4z"/><path d="M4 8l8 4 8-4" opacity=".45"/><path d="M4 4l8 4 8-4" opacity=".45"/>',
+  close:'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   picture:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5L5 19.5"/>',
   chevD:'<path d="M8 10l4 4 4-4"/>',
   autoSides:'<rect x="3" y="8" width="6" height="8" rx="1.5"/><rect x="15" y="8" width="6" height="8" rx="1.5"/><path d="M9 12h6"/><path d="M12 4v2M12 18v2" opacity=".55"/>',
@@ -9303,12 +9376,13 @@ function renderImages(m){
     const layer=im.front?lImgTop:lImg; if(el.parentNode!==layer||layer.lastChild!==el) layer.appendChild(el);
     const src=IMG[im.id]||null;
     if(el._src!==src){ el._src=src; el.innerHTML=src?'<image preserveAspectRatio="none"/>':'<rect style="fill:var(--panel-2);stroke:var(--line-strong);stroke-dasharray:6 4"/><text text-anchor="middle" style="fill:var(--muted);font:500 13px '+FONT_ATTR+'">Image missing</text>'; if(src) el.firstChild.setAttribute('href',src); }
+    el.style.opacity=im.faded?'.4':'';
     const a=el.firstChild; a.setAttribute('x',im.x); a.setAttribute('y',im.y); a.setAttribute('width',im.w); a.setAttribute('height',im.h);
     if(!src){ const t=el.lastChild; t.setAttribute('x',im.x+im.w/2); t.setAttribute('y',im.y+im.h/2); }
   }
   for(const [id,el] of imgEls) if(!seen.has(id)){ el.remove(); imgEls.delete(id); }
 }
-function imagesMarkup(m,front){ let o=''; for(const im of m.images||[]){ if(!!im.front!==!!front) continue; const src=IMG[im.id]; if(src) o+='<image href="'+src+'" x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" preserveAspectRatio="none"/>'; } return o; }
+function imagesMarkup(m,front){ let o=''; for(const im of m.images||[]){ if(!!im.front!==!!front) continue; const src=IMG[im.id]; if(src) o+='<image href="'+src+'" x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" preserveAspectRatio="none"'+(im.faded?' opacity=".4"':'')+'/>'; } return o; }
 function inkPath(pts){
   if(pts.length===1) return 'M'+pts[0][0]+' '+pts[0][1]+'l0.01 0';
   let d='M'+pts[0][0]+' '+pts[0][1];
@@ -9703,12 +9777,13 @@ function onDown(e){
   const p=toWorld(e); const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind; state.downW=p;
   // Links in documents: Ctrl or Cmd+click opens them.
   const lk=e.target.closest&&e.target.closest('.doc-link'); if(lk&&(e.ctrlKey||e.metaKey)&&e.button===0){ e.preventDefault(); openLink(lk.dataset.href); return; }
-  if(e.button===1||state.tool==='hand'||spaceDown){ startPan(e); return; }
+  // Middle or right mouse button drags the board around; so do the Hand tool and Space.
+  if(e.button===1||e.button===2||state.tool==='hand'||spaceDown){ startPan(e); return; }
   if(e.button!==0) return;
   if(kind==='phandle'){ const im=state.model.images.find(x=>x.id===tgt.dataset.id); if(im){ state.drag={mode:'presize',id:im.id,corner:tgt.dataset.corner,start:p,orig:{...im},moved:false}; } return; }
   if(kind==='ahandle'){ const a=state.model.arrows.find(x=>x.id===tgt.dataset.id); const end=+tgt.dataset.end; state.drag={mode:'aend',id:tgt.dataset.id,end,moved:false,orig:a?(end?a.to:a.from):null}; return; }
   if(kind==='ehandle'){ state.drag={mode:'eend',idx:+tgt.dataset.idx,end:+tgt.dataset.end,cur:p,target:null,moved:false}; return; }
-  if(kind==='handle'&&tgt.dataset.gid){ const gid=tgt.dataset.gid; const b=state.boxes.get(gid); if(!b) return; state.drag={mode:'gresize',gid,corner:tgt.dataset.corner,start:p,orig:{...b},min:state.boxes.content.get(gid)||null,moved:false}; return; }
+  if(kind==='handle'&&tgt.dataset.gid){ const gid=tgt.dataset.gid; const b=state.boxes.get(gid); if(!b) return; state.drag={mode:'gresize',gid,corner:tgt.dataset.corner,start:p,orig:{...b},min:state.boxes.content.get(gid)||null,inside:frameInside(gid),moved:false}; return; }
   if(kind==='handle'){ const n=state.model.nodes.get(tgt.dataset.id); state.drag={mode:'resize',id:n.id,corner:tgt.dataset.corner,start:p,orig:{x:n.x,y:n.y,w:n.w,h:n.h},ofs:labelSize(n),moved:false,styled:false}; return; }
   const tl=state.tool;
   // Drawing closes the pen menu, so it is out of the way.
@@ -9890,7 +9965,10 @@ function onMove(e){
     if(!e.altKey){ x0=SNAP(x0); y0=SNAP(y0); x1=SNAP(x1); y1=SNAP(y1); }
     if(x1-x0<120){ if(d.corner.includes('w')) x0=x1-120; else x1=x0+120; }
     if(y1-y0<80){ if(d.corner.includes('n')) y0=y1-80; else y1=y0+80; }
-    const mn=d.min; if(mn){ x0=Math.min(x0,mn.x); y0=Math.min(y0,mn.y); x1=Math.max(x1,mn.x+mn.w); y1=Math.max(y1,mn.y+mn.h); }
+    // Smaller than its contents: the contents move closer together to fit, keeping their arrangement.
+    const mn=d.min; if(mn&&d.inside) squeezeInto(d,{x:x0,y:y0,w:x1-x0,h:y1-y0});
+    else if(mn){ x0=Math.min(x0,mn.x); y0=Math.min(y0,mn.y); x1=Math.max(x1,mn.x+mn.w); y1=Math.max(y1,mn.y+mn.h); }
+    if(d.inside&&d.inside.minW){ if(x1-x0<d.inside.minW){ if(d.corner.includes('w')) x0=x1-d.inside.minW; else x1=x0+d.inside.minW; } if(y1-y0<d.inside.minH){ if(d.corner.includes('n')) y0=y1-d.inside.minH; else y1=y0+d.inside.minH; } if(mn) squeezeInto(d,{x:x0,y:y0,w:x1-x0,h:y1-y0}); }
     m.pos.set(d.gid,{x:x0,y:y0,w:x1-x0,h:y1-y0}); d.moved=true;
     render(); liveLayoutSync(); return;
   }
@@ -10000,7 +10078,7 @@ function onUp(e){
     if(!state.sel.size&&!d.base.size&&r.w*z>=90&&r.h*z>=60) showFrameOffer({x:SNAP(r.x),y:SNAP(r.y),w:SNAP(r.w),h:SNAP(r.h)});
     return;
   }
-  if(d.mode==='gresize'){ if(d.moved){ mutate(()=>{}, {structural:false}); toast('Frame size locked. Use "Fit to contents" to undo.'); } else render(); return; }
+  if(d.mode==='gresize'){ if(d.moved){ mutate(()=>{}, {structural:false}); toast(d.inside&&(d.orig.w>m.pos.get(d.gid).w||d.orig.h>m.pos.get(d.gid).h)?'Frame resized. Its contents moved closer together':'Frame size locked. Use "Fit to contents" to undo.'); } else render(); return; }
   if(d.mode==='resize'){ if(d.moved) mutate(()=>{}, {structural:!!d.styled}); else render(); return; }
   const snap=state.snapTarget; state.snapTarget=null;
   if(d.mode==='aend'){
@@ -10115,6 +10193,29 @@ function onUp(e){
   }
 }
 function openLink(u){ const s=safeUrl(u); if(!s) return; try{ const w=window.open(s,'_blank','noopener'); if(!w) copyText(s,'Link copied: the browser blocked opening it'); }catch(_){ copyText(s,'Link copied'); } }
+// What a frame holds, for squeezing it: shapes (not in mockup screens) and screens, with where they were.
+function frameInside(gid){
+  const m=state.model; const inG=new Set([gid]); let grew=true; while(grew){ grew=false; for(const g of m.groups.values()) if(!inG.has(g.id)&&g.parent&&inG.has(g.parent)){ inG.add(g.id); grew=true; } }
+  const devs=[...inG].filter(id=>id!==gid&&m.groups.get(id).dev), inDev=new Set(); for(const dv of devs) for(const id of inG) if(id===dv||isDesc(m,id,dv)) inDev.add(id);
+  const items=[];
+  for(const n of m.nodes.values()) if(n.group&&inG.has(n.group)&&!inDev.has(n.group)&&n.x!=null) items.push({n,x:n.x,y:n.y,w:n.w,h:n.h});
+  for(const dv of devs){ const b=state.boxes.get(dv); if(b) items.push({dev:dv,x:b.x,y:b.y,w:b.w,h:b.h,kids:[...m.nodes.values()].filter(n=>n.group&&(n.group===dv||isDesc(m,n.group,dv))).map(n=>({n,x:n.x,y:n.y}))}); }
+  if(!items.length) return null;
+  const x0=Math.min(...items.map(i=>i.x)), y0=Math.min(...items.map(i=>i.y)), x1=Math.max(...items.map(i=>i.x+i.w)), y1=Math.max(...items.map(i=>i.y+i.h));
+  const nested=[...inG].some(id=>id!==gid&&!m.groups.get(id).dev&&!inDev.has(id));
+  return {items,box:{x:x0,y:y0,w:x1-x0,h:y1-y0},minW:Math.max(...items.map(i=>i.w))+PAD*2+(nested?PAD*2:0),minH:Math.max(...items.map(i=>i.h))+PAD+PAD_TOP+(nested?PAD+PAD_TOP:0)};
+}
+function squeezeInto(d,r){
+  const I=d.inside, c=I.box, m=state.model;
+  const tx=r.x+PAD, ty=r.y+PAD_TOP, tw=Math.max(1,r.w-PAD*2), th=Math.max(1,r.h-PAD_TOP-PAD);
+  // Each axis scales gap sizes only, so the farthest item still fits: s = (room - its size) / (span - its size).
+  const scale=(room,span,key,size)=>{ if(room>=span) return 1; let s=1; for(const i of I.items){ const lead=i[key]-c[key]; if(lead>0) s=Math.min(s,Math.max(0,(room-i[size])/lead)); } return s; };
+  const sx=scale(tw,c.w,'x','w'), sy=scale(th,c.h,'y','h');
+  const ox=tw>=c.w?c.x:tx, oy=th>=c.h?c.y:ty;
+  for(const i of I.items){ const nx=ox+(i.x-c.x)*sx, ny=oy+(i.y-c.y)*sy;
+    if(i.n){ i.n.x=nx; i.n.y=ny; state.cache.set(i.n.id,{x:nx,y:ny}); }
+    else { const p=m.pos.get(i.dev); if(p) m.pos.set(i.dev,{...p,x:nx,y:ny}); for(const k of i.kids){ k.n.x=k.x+(nx-i.x); k.n.y=k.y+(ny-i.y); state.cache.set(k.n.id,{x:k.n.x,y:k.n.y}); } } }
+}
 function queueEdit(id,caretEnd,kind){ state.pendingEdit={id,caretEnd,kind:kind||'node'}; clearTimeout(state.pendingEditT); state.pendingEditT=setTimeout(runPendingEdit,120); }
 function runPendingEdit(){ const pe=state.pendingEdit; if(!pe) return; state.pendingEdit=null; clearTimeout(state.pendingEditT); if(!state.model) return; if(pe.kind==='edge'){ if(!state.model.edges[pe.id]) return; openEditor('edge',pe.id); } else { if(!state.model.nodes.has(pe.id)) return; openEditor('node',pe.id); } if(pe.caretEnd&&state.editing){ const el=state.editing.el; el.setSelectionRange(el.value.length,el.value.length); } }
 board.addEventListener('click',()=>{ if(state.pendingEdit) runPendingEdit(); });
@@ -10229,8 +10330,12 @@ function createNode(o){
 }
 board.addEventListener('dblclick',e=>{
   if(!state.model||state.fatal||state.richId) return;
-  const tgt=e.target.closest&&e.target.closest('[data-kind]'); const kind=tgt&&tgt.dataset.kind;
+  let tgt=e.target.closest&&e.target.closest('[data-kind]'); let kind=tgt&&tgt.dataset.kind;
+  // The shape may have been redrawn between the two clicks, so the event lands on the board itself:
+  // look up what is under the pointer instead, and never drop a new shape on top of an existing one.
+  if(!kind||kind==='group'){ const hit=nodeAt(toWorld(e)); if(hit){ kind='node'; tgt={dataset:{id:hit}}; } }
   if(kind==='node'){ if(state.editing&&state.editing.kind==='node'&&state.editing.id===tgt.dataset.id) return; state.pendingEdit=null; openEditor('node',tgt.dataset.id,toWorld(e)); return; }
+  if(state.editing) return;
   if(kind==='edge'){ if(state.editing&&state.editing.kind==='edge'&&state.editing.id===+tgt.dataset.idx) return; state.pendingEdit=null; openEditor('edge',+tgt.dataset.idx); return; }
   if(kind==='group'&&tgt.dataset.part!=='body'){ openEditor('group',tgt.dataset.id); return; }
   if(kind&&kind!=='group') return;
@@ -10782,8 +10887,10 @@ function updCtx(){
   const thick=(v)=>'<label class="thick" title="Thickness"><input type="range" min="1" max="12" step="0.5" value="'+v+'" data-thick aria-label="Thickness"><output>'+v+'</output></label>';
   const colorDots=(cur,withDefault)=>(withDefault?'<button type="button" class="ink-dot" data-acolor="" aria-pressed="'+!cur+'" title="Default" style="background:var(--edge);width:18px;height:18px"></button>':'')+ARROW_COLORS.map(c=>'<button type="button" class="ink-dot" data-acolor="'+c+'" aria-pressed="'+((cur||'').toLowerCase()===c)+'" title="'+c+'" style="background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+';width:18px;height:18px"></button>').join('');
   const lineColorBtn=(c)=>'<button type="button" class="ibtn" data-act="lineColor" title="Line color" aria-label="Line color"><span class="dot" style="background:'+(c?(c==='#1a1a1a'?'var(--ink-black)':c):'var(--edge)')+';border-color:transparent"></span></button>';
+  const aiBtn='<button type="button" class="btn ai-make" data-act="aiPop" title="Ask Claude to sort, summarise or build on the selection">'+aiSpark(true)+'<span>AI</span></button>'+sep;
   if(k.p&&!k.a&&!k.n&&!k.e&&!k.g&&!k.k){
-    html+='<span class="ctx-count">'+(k.p===1?'Image':k.p+' images')+'</span>'+sep+b('picFront','layerUp','Bring to front, above shapes, notes and lines')+b('picBack','layerDown','Send to back, behind shapes and notes')+b('picDup','dup','Duplicate (Ctrl+D)')+sep+b('del','trash','Delete (Del)');
+    html+='<span class="ctx-count">'+(k.p===1?'Image':k.p+' images')+'</span>'+sep+b('picFront','layerUp','Bring to front, above shapes, notes and lines')+b('picBack','layerDown','Send to back, behind shapes and notes')+b('picDup','dup','Duplicate (Ctrl+D)')+b('picFade','picture',(m.images.find(x=>'p:'+x.id===[...state.sel][0])||{}).faded?'Show at full strength':'Fade, to trace over it')+sep+b('del','trash','Delete (Del)');
+    if(k.p===1) html='<button type="button" class="btn ai-make" data-act="picAI" title="Claude recreates this picture as stickies, shapes and lines you can edit">'+aiSpark(true)+'<span>Make editable</span></button>'+sep+html;
   } else if(k.a&&!k.n&&!k.e&&!k.g&&!k.k){
     const as=[...state.sel].map(x=>m.arrows.find(a=>a.id===x.slice(2))).filter(Boolean); const a0=as[0];
     if(as.length>1) html+='<span class="ctx-count">'+as.length+' arrows</span>';
@@ -10805,6 +10912,7 @@ function updCtx(){
     html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p){
     const ns=selNodes(); const first=ns[0]; const st=m.styles.get(first.id);
+    html+=aiBtn;
     const allIcon=ns.every(n=>n.shape==='icon'); const allSticky=ns.every(n=>n.shape==='sticky');
     const shapeIco=allIcon?'image':(SHAPES.find(s=>s.id===first.shape)?first.shape:'rect');
     if(!allSticky) html+='<button type="button" class="ibtn" data-act="shapes" title="Change shape" aria-label="Change shape">'+ico(shapeIco)+'</button>';
@@ -10836,6 +10944,7 @@ function updCtx(){
     html+=sep+b('del','trash','Delete (Del)');
   } else if(k.g&&!k.n&&!k.e&&!k.k&&!k.a&&!k.p){
     const g=m.groups.get([...state.sel][0].slice(2)); const st=g&&m.styles.get(g.id);
+    if(k.g===1&&g&&!g.dev) html+=aiBtn;
     if(k.g===1) html+='<button type="button" class="btn" data-act="editLabel" title="Rename frame (Enter)">'+esc(g?g.label:'Frame')+'</button>'+sep;
     else html+='<span class="ctx-count">'+k.g+' frames</span>'+sep;
     if(k.g===1&&g&&g.dev) html+='<span class="ctx-count">'+esc(DEVICES[g.dev].name)+'</span>';
@@ -10844,7 +10953,7 @@ function updCtx(){
     if(k.g===1&&g&&!g.dev){ const p=m.pos.get(g.id); if(p&&p.w&&groupHasMembers(m,g.id)) html+=b('fitGroup','fitIn','Resize to fit content'); }
     html+=sep+b('ungroup','ungroup','Remove frame, keep contents (Ctrl+Shift+G)')+b('del','trash','Delete frame and contents (Del)');
   } else {
-    html+='<span class="ctx-count">'+state.sel.size+' selected</span>'+b('group','group','Group into frame (Ctrl+G)')+b('del','trash','Delete (Del)');
+    html+=aiBtn+'<span class="ctx-count">'+state.sel.size+' selected</span>'+b('group','group','Group into frame (Ctrl+G)')+b('del','trash','Delete (Del)');
   }
   if(html!==ctxSig&&!state.sliding){ ctxEl.innerHTML=html; ctxSig=html; }
   ctxEl.hidden=false; placeCtx();
@@ -10889,6 +10998,9 @@ ctxEl.addEventListener('click',e=>{
     case 'colors': openPop('colors',btn); break;
     case 'format': openPop('format',btn); break;
     case 'picFront': case 'picBack': { const ids=new Set([...state.sel].filter(x=>x[0]==='p').map(x=>x.slice(2))); mutate(mm=>{ const sel=mm.images.filter(im=>ids.has(im.id)),rest=mm.images.filter(im=>!ids.has(im.id)); for(const im of sel) im.front=act==='picFront'; mm.images=act==='picFront'?[...rest,...sel]:[...sel,...rest]; },{structural:false}); for(const el of imgEls.values()) el.remove(); imgEls.clear(); render(); toast(act==='picFront'?'Image in front of everything':'Image behind shapes and notes'); break; }
+    case 'aiPop': openPop('ai',btn); return;
+    case 'picAI': { const id=[...state.sel].find(x=>x[0]==='p'); if(id) AI.fromImage(id.slice(2)); return; }
+    case 'picFade': { const ids=new Set([...state.sel].filter(x=>x[0]==='p').map(x=>x.slice(2))); mutate(mm=>{ const sel=mm.images.filter(im=>ids.has(im.id)); const on=!sel.every(im=>im.faded); for(const im of sel){ if(on) im.faded=true; else delete im.faded; } },{structural:false}); return; }
     case 'picDup': { const ids=[...state.sel].filter(x=>x[0]==='p').map(x=>x.slice(2)); const nsel=[]; mutate(mm=>{ for(const id of ids){ const im=mm.images.find(x=>x.id===id); if(!im) continue; const nid=nextImageId(mm); IMG[nid]=IMG[id]; mm.images.push({id:nid,x:im.x+24,y:im.y+24,w:im.w,h:im.h,front:!!im.front}); nsel.push('p:'+nid); } },{structural:false}); state.sel=new Set(nsel); selChanged(); break; }
     case 'fontSize': openPop('fontSize',btn); break;
     case 'textColor': openPop('textColor',btn); break;
@@ -10908,6 +11020,21 @@ ctxEl.addEventListener('click',e=>{
       else if(act.startsWith('al-')) align(act.slice(3));
   }
 });
+// What Claude can do with the selection. The request text is what the AI tab sends; "selected" means the selection.
+const AI_ACTIONS={
+  themes:{name:'Group by theme',ask:'Group the selected items by theme. Put each group in a new frame named after its theme, side by side next to where they are now. Keep their text as it is.'},
+  summary:{name:'Summarise into a doc',ask:'Summarise the selected items in a doc next to them: a short title, the key points as a list, and any open questions.'},
+  sentiment:{name:'Sort by sentiment',ask:'Sort the selected notes by sentiment: colour positive ones green (#c9df56), neutral ones yellow (#fff9b1) and negative ones pink (#ffcee0), and move them into three frames named Positive, Neutral and Negative.'},
+  expand:{name:'Expand with ideas',ask:'Build on the selected item: add four to six related ideas as sticky notes around it, each connected to it.'},
+  diagram:{name:'Make a diagram',ask:'Turn the selected notes into a diagram next to them: shapes (with icons where a service fits) and connections that show how the ideas relate.'},
+  tickets:{name:'Turn into tickets',ask:'Turn the selected items into tickets next to them: a user story for each piece of work (a task if it is small), with acceptance criteria, connected to the item it came from, in a frame named Tickets.'},
+  explain:{name:'Explain in a doc',ask:'Explain the selected items in a doc next to them: what each part is for and how they connect.'}
+};
+function aiActions(){
+  const ns=selNodes(), many=state.sel.size>1||[...state.sel].some(k=>k[0]==='g'); const sticky=ns.some(n=>n.shape==='sticky');
+  const L=many?[['themes','frame'],['summary','doc'],...(sticky?[['sentiment','sticky']]:[]),['diagram','shapes'],['tickets','ticket']]:[['expand','sticky'],['explain','doc'],['tickets','ticket']];
+  return L.map(([k,ic])=>[k,ic,AI_ACTIONS[k].name]);
+}
 function openPop(kind,anchor){
   if(!popEl.hidden&&popEl.dataset.kind===kind){ closePop(); return; }
   const m=state.model; let html='';
@@ -10921,6 +11048,9 @@ function openPop(kind,anchor){
   } else if(kind==='textColor'||kind==='textBg'){
     const st=m.styles.get([...state.sel][0].slice(2)); const list=kind==='textColor'?TEXT_COLORS:TEXT_BGS; const curv=st?(kind==='textColor'?st.color:st.bg):null;
     html='<div class="pop-label">'+(kind==='textColor'?'Text color':'Highlight')+'</div><div class="swatches">'+list.map(c=>'<button type="button" class="swt'+(c?'':' none')+'" data-tc="'+(c||'')+'" data-tk="'+kind+'" aria-pressed="'+((curv||'')===(c||''))+'" title="'+(c||'None')+'" style="'+(c?'background:'+c+';border-color:'+(c==='#ffffff'?'var(--line-strong)':c):'')+'"></button>').join('')+'</div>';
+  } else if(kind==='ai'){
+    // Quick AI actions on the selection, like Mural's: Claude sees what is selected.
+    html='<div class="pop-label">Claude</div>'+aiActions().map(([key,icon,name])=>'<button type="button" class="fly-row" data-aiask="'+key+'">'+ico(icon)+'<span>'+name+'</span></button>').join('');
   } else if(kind==='format'){
     html='<div class="pop-label">Frame format</div><div class="fmt-list">'+FRAME_FORMATS.map((f,i)=>'<button type="button" class="fmt" data-fmt="'+i+'"><b>'+f.name+'</b><small>'+(f.w?f.w+' × '+f.h:'Grows with content')+'</small></button>').join('')+'</div>';
   } else if(kind==='shapes'){
@@ -10960,6 +11090,7 @@ function closePop(){ popEl.hidden=true; popEl.dataset.kind=''; popEl._anchor=nul
 popEl.addEventListener('pointerdown',e=>e.stopPropagation());
 popEl.addEventListener('keydown',e=>{ if(e.target.id==='fsIn'&&e.key==='Enter'){ e.preventDefault(); const v=e.target.value.trim(); setFontSize(v?+v:null); closePop(); } e.stopPropagation(); });
 popEl.addEventListener('click',e=>{
+  const aa=e.target.closest('[data-aiask]'); if(aa){ const a=AI_ACTIONS[aa.dataset.aiask]; closePop(); if(a) AI.ask(a.ask,a.name); return; }
   const sb=e.target.closest('[data-shape]'),sw=e.target.closest('[data-sw]'),stc=e.target.closest('[data-stc]'),fmt=e.target.closest('[data-fmt]');
   const fsb=e.target.closest('[data-fs]'),tcb=e.target.closest('[data-tc]'),lcb=e.target.closest('[data-lc]');
   if(lcb){ const c=lcb.dataset.lc||null; const t=thickTargets(); mutate(()=>{ t.edges.forEach(x=>x.color=c); t.arrows.forEach(x=>x.color=c||'#1a1a1a'); },{structural:t.edges.length>0}); closePop(); return; }
@@ -11192,7 +11323,8 @@ document.addEventListener('keyup',e=>{ if(e.key===' '){ spaceDown=false; updTool
 const CLIP_MARK='%% mermaid-board-clip';
 function looksMermaid(t){ return /^\s*(---\s*\n|%%|flowchart\b|graph\b)/.test(t)||/```mermaid\s*\n\s*(---[\s\S]*?---\s*\n\s*)?(%%[^\n]*\n\s*)*(flowchart|graph)\b/.test(t); }
 document.addEventListener('paste',e=>{
-  const t=e.target; if(t&&t.closest&&t.closest('input,textarea')) return;
+  // Pasting into a text field, a table cell or a document stays there; only the board itself takes pastes.
+  const t=e.target; if(e.defaultPrevented||(t&&t.closest&&t.closest('input,textarea,[contenteditable],.rich-box,.rich-bar'))) return;
   const files=[]; for(const it of (e.clipboardData&&e.clipboardData.items)||[]) if(it.kind==='file'&&/^image\//.test(it.type)){ const f=it.getAsFile(); if(f) files.push(f); }
   if(Boards.isHome()){
     const tx=(e.clipboardData&&e.clipboardData.getData('text/plain'))||'';
@@ -11721,7 +11853,8 @@ function showExportFallback(fmt,filename,data,preview){
  * The board's Mermaid code is deflated and base64url-encoded into the link:
  *   https://<host>/orim/#m=<data>
  * Opening that link creates a new board from it (see Boards.route).
- * Images are not included; their pixels are far too large for a QR code.
+ * Images are not included; their pixels are far too large for a link or a QR code.
+ * The link always carries the whole board; a QR code may carry a smaller version that fits.
  */
 'use strict';
 const ORIM_PAGES='https://jussikauhanen.github.io/orim/';
@@ -11752,15 +11885,16 @@ async function decodeBoard(hash){
   return new TextDecoder().decode(await pipeBytes(data,new DecompressionStream('deflate-raw')));
 }
 
-// Three sizes of the same board, largest first: everything except image placement,
-// then without pen strokes, then without any canvas data (the board is laid out again).
+// Three sizes of the same board, largest first: everything except image placement, then without
+// pen strokes, then without positions and arrows (laid out again on the other device). Documents,
+// tables, tickets, mockup screens and comments are content, so every size keeps them.
 function shareVariants(code){
   const lines=String(code).split('\n');
   const keep=re=>lines.filter(l=>!re.test(l)).join('\n').replace(/\n{3,}/g,'\n\n').replace(/\s+$/,'')+'\n';
   return [
-    {code:keep(/^\s*%%\s*@image\b/),note:'Positions, arrows and drawings included.'},
+    {code:keep(/^\s*%%\s*@image\b/),note:'Everything except images.'},
     {code:keep(/^\s*%%\s*@(image|ink)\b/),note:'Positions included. Pen and highlighter strokes left out to fit.'},
-    {code:stripLayout(code)+'\n',note:'Positions left out to fit; the board is laid out again on the other device.'}
+    {code:keep(/^\s*%%\s*(@(image|ink|pos|route|arrow)\b|layout:)/),note:'Positions left out to fit; the board is laid out again on the other device.'}
   ];
 }
 
@@ -11782,28 +11916,27 @@ async function openShareQR(){
     const url=base+'#'+await encodeBoard(v.code);
     opts.push(Object.assign({url},v));
   }
-  const fits=opts.filter(o=>o.url.length<=QR_MAX);
-  if(!fits.length){
-    openModal('Too large for a QR code','<p>This board is too large to fit in a QR code, even without positions. Export a board file (.json) and open it on the other device with Import.</p>',[]);
-    return;
-  }
+  // The link always carries the whole board; only the QR code may have to leave things out to fit.
+  const full=opts[0], fits=opts.filter(o=>o.url.length<=QR_MAX);
   let i=0;
   const hasImg=((state.model&&state.model.images)||[]).length>0;
   const show=()=>{
-    const o=fits[i], q=qrSVG(o.url);
+    const o=fits[i], q=o?qrSVG(o.url):null;
     openModal('Open on another device',
       '<div class="qr-wrap">'+
-        '<div class="qr-code">'+q.svg+'</div>'+
+        (q?'<div class="qr-code">'+q.svg+'</div>':'')+
         '<div class="qr-side">'+
-          '<p>Scan with a phone or tablet camera to open this board there. The link carries the whole board, so nothing is uploaded. You can also save the link or the code below.</p>'+
-          '<p class="qr-note">'+esc(o.note)+(hasImg?' Images are not included.':'')+' '+o.url.length+' characters.</p>'+
-          '<label class="qr-lbl">Link</label><input class="modal-input qr-url" readonly value="'+esc(o.url)+'">'+
-          '<label class="qr-lbl">Mermaid</label><textarea class="qr-code-text" readonly>'+esc(o.code)+'</textarea>'+
+          (q?'<p>Scan with a phone or tablet camera to open this board there. The link carries the whole board, so nothing is uploaded.</p>'+
+            '<p class="qr-note">QR code: '+esc(o.note)+(o===full?'':' The link below has everything.')+'</p>'
+            :'<p>This board is too large for a QR code. Copy the link instead: it carries the whole board, so nothing is uploaded.</p>')+
+          '<p class="qr-note">Link: everything'+(hasImg?' except images (use a board file for those)':'')+', '+full.url.length+' characters.</p>'+
+          '<label class="qr-lbl">Link</label><input class="modal-input qr-url" readonly value="'+esc(full.url)+'">'+
+          '<label class="qr-lbl">Mermaid</label><textarea class="qr-code-text" readonly>'+esc(full.code)+'</textarea>'+
         '</div>'+
       '</div>',
-      [{label:'Copy link',primary:true,run:()=>copyText(o.url,'Link copied')},
-       {label:'Copy Mermaid',run:()=>copyText(o.code,'Mermaid code copied')}]
-        .concat(fits.length>1?[{label:i<fits.length-1?'Smaller code':'Larger code',run:()=>{ i=i<fits.length-1?i+1:0; show(); }}]:[]));
+      [{label:'Copy link',primary:true,run:()=>copyText(full.url,'Link copied')},
+       {label:'Copy Mermaid',run:()=>copyText(full.code,'Mermaid code copied')}]
+        .concat(fits.length>1?[{label:i<fits.length-1?'Smaller QR code':'Larger QR code',run:()=>{ i=i<fits.length-1?i+1:0; show(); }}]:[]));
     $('.modal').classList.add('qr');
     const u=$('#modalBody .qr-url'); u.addEventListener('focus',()=>u.select());
   };
@@ -11952,30 +12085,41 @@ function openAskAI(){
  */
 'use strict';
 const AIKey=(()=>{
-  const LSK='orim.anthropicKey', LSM='orim.anthropicModel', API='https://api.anthropic.com/v1/messages';
-  const KEYS_URL='https://platform.claude.com/settings/keys';
+  const LSK='orim.anthropicKey', LSM='orim.anthropicModel', LSW='orim.anthropicWorkspace', API='https://api.anthropic.com/v1/messages';
+  const KEYS_URL='https://platform.claude.com/settings/keys', WS_URL='https://platform.claude.com/settings/workspaces';
   const MODELS=[['claude-sonnet-5-5','Sonnet 5.5','recommended'],['claude-haiku-5-5','Haiku 5.5','fastest, lowest cost'],['claude-opus-5-5','Opus 5.5','most capable']];
   const store=()=>{ try{ return localStorage; }catch(_){ return null; } }, sess=()=>{ try{ return sessionStorage; }catch(_){ return null; } };
   function get(){ try{ return (store()&&store().getItem(LSK))||(sess()&&sess().getItem(LSK))||''; }catch(_){ return ''; } }
   function set(key,remember){ clear(); try{ (remember?store():sess()).setItem(LSK,key); }catch(_){ mem=key; } mem=key; }
   let mem='';
   function key(){ return get()||mem; }
-  function clear(){ mem=''; try{ store()&&store().removeItem(LSK); }catch(_){} try{ sess()&&sess().removeItem(LSK); }catch(_){} }
+  function clear(){ mem=''; for(const s of [store(),sess()]) try{ if(s){ s.removeItem(LSK); s.removeItem(LSW); } }catch(_){} }
+  // Keys that work across workspaces (or are linked to your account) need the workspace to use on each request.
+  function workspace(){ try{ return (store()&&store().getItem(LSW))||(sess()&&sess().getItem(LSW))||''; }catch(_){ return ''; } }
+  function setWorkspace(id,remember){ for(const s of [store(),sess()]) try{ s&&s.removeItem(LSW); }catch(_){} if(id) try{ (remember?store():sess()).setItem(LSW,id); }catch(_){} }
+  const looksWorkspace=w=>/^wrkspc_[A-Za-z0-9]{6,}$/.test(String(w||'').trim());
   function model(){ try{ const m=store()&&store().getItem(LSM); if(MODELS.some(x=>x[0]===m)) return m; }catch(_){} return MODELS[0][0]; }
   function setModel(m){ try{ store()&&store().setItem(LSM,m); }catch(_){} }
   const looksValid=k=>/^sk-ant-[\w-]{20,}$/.test(String(k||'').trim());
+  const b64=blob=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]||''); fr.onerror=()=>rej(fr.error); fr.readAsDataURL(blob); });
   const fail=(code,message)=>Object.assign(new Error(message||code),{code});
   // Stream a Messages API answer, handing each piece of text to onText as it arrives.
   async function sample(input,opt){
     opt=opt||{}; const k=key(); if(!k) throw fail('no_key','Add an API key first');
-    const messages=typeof input==='string'?[{role:'user',content:input}]:input;
+    let messages=typeof input==='string'?[{role:'user',content:input}]:input;
+    // Pictures go with the last user turn, before its text, as the Messages API expects.
+    const pics=opt.images?[].concat(opt.images):[];
+    if(pics.length){ const blocks=[]; for(const b of pics) blocks.push({type:'image',source:{type:'base64',media_type:b.type||'image/jpeg',data:await b64(b)}});
+      const last=messages[messages.length-1]; messages=messages.slice(0,-1).concat([{role:'user',content:blocks.concat([{type:'text',text:String(last.content)}])}]); }
     const m=opt.modelTier==='default'?'claude-opus-5-5':model();
+    const headers={'content-type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}; const ws=workspace(); if(ws) headers['anthropic-workspace-id']=ws;
     let res;
     try{
-      res=await fetch(API,{method:'POST',signal:opt.signal,headers:{'content-type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      res=await fetch(API,{method:'POST',signal:opt.signal,headers,
         body:JSON.stringify({model:m,max_tokens:16000,stream:true,messages})});
     }catch(e){ if(e&&e.name==='AbortError') throw fail('cancelled'); throw fail('network','Could not reach the Claude API'); }
     if(!res.ok){ let j=null; try{ j=await res.json(); }catch(_){} const t=j&&j.error&&j.error.type, msg=j&&j.error&&j.error.message;
+      if(/workspace/i.test(msg||'')&&/anthropic-workspace-id|not scoped|workspace id/i.test(msg||'')) throw fail('needs_workspace',msg);
       throw fail(res.status===401||res.status===403?'bad_key':res.status===429?'rate_limited':res.status===529||t==='overloaded_error'?'overloaded':res.status===413||/too long|too large/i.test(msg||'')?'prompt_too_large':'api_error',msg); }
     const reader=res.body.getReader(), dec=new TextDecoder(); let buf='', text='', stop=null;
     try{
@@ -11989,7 +12133,8 @@ const AIKey=(()=>{
     }catch(e){ if(e&&e.name==='AbortError') throw fail('cancelled'); throw e.code?e:fail('network','The answer was cut off'); }
     return {text,truncated:stop==='max_tokens'};
   }
-  return {get:key,set,clear,model,setModel,sample,looksValid,MODELS,KEYS_URL};
+  function modelName(){ const x=MODELS.find(q=>q[0]===model()); return x?x[1]:model(); }
+  return {get:key,set,clear,model,setModel,modelName,workspace,setWorkspace,looksWorkspace,sample,looksValid,MODELS,KEYS_URL,WS_URL};
 })();
 
 </script>
@@ -12033,18 +12178,57 @@ const Ghost=(()=>{
 const AI=(()=>{
   const log=$('#aiLog'), inp=$('#aiIn'), sendBtn=$('#aiSend'), stopBtn=$('#aiStop'), deep=$('#aiDeep'), selEl=$('#aiSel');
   const chats=new Map();            // board id -> [{role:'user'|'assistant', content, view}]
-  let sample=null, known=false, busy=false, ctl=null, keyMode=false, showKeys=false;
+  let sample=null, known=false, busy=false, ctl=null, keyMode=false, showKeys=false, needWs=false;
   try{ deep.checked=!!LS.get('orim.aiDeep',false); }catch(_){}
   deep.addEventListener('change',()=>LS.set('orim.aiDeep',deep.checked));
   const chat=()=>{ const id=(typeof Boards!=='undefined'&&Boards.current())||'_'; if(!chats.has(id)) chats.set(id,[]); return chats.get(id); };
 
   const ready=(window.claude&&typeof window.claude.use==='function')?window.claude.use('sample').catch(()=>null):Promise.resolve(null);
   // Inside Claude the viewer's own account answers. Elsewhere, an Anthropic API key saved in this browser.
-  ready.then(s=>{ keyMode=!s; sample=s||(AIKey.get()?AIKey.sample:null); known=true; updKeyBtn(); paint(); });
+  ready.then(s=>{ keyMode=!s; sample=s||(AIKey.get()?AIKey.sample:null); known=true; updKeyBtn(); paint();
+    if(s&&typeof s.limits==='function') s.limits().then(c=>{ picOK=!!(c&&c.images); updPic(); paint(); }).catch(()=>{ picOK=false; updPic(); });
+    else { picOK=keyMode; updPic(); paint(); } });
+
+  /* ---------- a picture to turn into a board ---------- */
+  // Attach, paste or drop a photo of a whiteboard, sticky notes or a sketch, or a screenshot of a diagram.
+  let pic=null, picOK=false, photo=null, quiet=null;
+  const picBtn=$('#aiAttach'), picIn=$('#aiPicIn'), picChip=$('#aiPic');
+  function updPic(){
+    picBtn.hidden=!picOK||!sample;
+    if(!pic){ picChip.hidden=true; picChip.innerHTML=''; return; }
+    picChip.hidden=false; picChip.innerHTML='<img alt="" src="'+pic.url+'"><span>'+(pic.imgId?'Picture on the board':'Picture')+'<small>Claude recreates it as stickies, shapes and lines</small></span><button type="button" class="ibtn" data-pic-x title="Remove picture" aria-label="Remove picture">'+ico('close')+'</button>';
+  }
+  // Pictures are scaled to at most 1500 px on the long side and sent as JPEG.
+  function prepPic(blob){
+    return new Promise((res,rej)=>{ const u=URL.createObjectURL(blob), img=new Image();
+      img.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('decode')); };
+      img.onload=()=>{ URL.revokeObjectURL(u); const w=img.naturalWidth||800, h=img.naturalHeight||600, sc=Math.min(1,1500/Math.max(w,h));
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(h*sc)); const g=c.getContext('2d');
+        g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(img,0,0,c.width,c.height);
+        const url=c.toDataURL('image/jpeg',0.85); c.toBlob(b=>b?res({blob:b,url,w:c.width,h:c.height}):rej(new Error('encode')),'image/jpeg',0.85); };
+      img.src=u; });
+  }
+  async function attach(file,imgId){
+    if(!file||!/^image\//.test(file.type||'')) return false;
+    if(!picOK){ toast(keyMode||!sample?'Add an API key to send pictures to Claude':'Pictures cannot be sent to Claude here'); return true; }
+    try{ pic=await prepPic(file); pic.imgId=imgId||null; }catch(_){ toast('Could not read that picture'); return true; }
+    updPic(); if(!inp.value.trim()) inp.placeholder='What should Claude do with it? Leave empty to recreate it'; inp.focus(); return true;
+  }
+  const dataBlob=url=>{ const m=/^data:([^;,]+)(;base64)?,(.*)$/s.exec(url||''); if(!m) return null; const bin=m[2]?atob(m[3]):decodeURIComponent(m[3]); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return new Blob([a],{type:m[1]}); };
+  picBtn.addEventListener('click',()=>picIn.click());
+  picIn.addEventListener('change',()=>{ const f=picIn.files&&picIn.files[0]; picIn.value=''; if(f) attach(f); });
+  picChip.addEventListener('click',e=>{ if(e.target.closest('[data-pic-x]')){ pic=null; updPic(); paint(); inp.focus(); } });
+  inp.addEventListener('paste',e=>{ const f=[...((e.clipboardData&&e.clipboardData.files)||[])].find(x=>/^image\//.test(x.type)); if(f){ e.preventDefault(); attach(f); } });
+  const pane=$('#aiForm').closest('.ai-pane')||$('#aiForm').parentNode;
+  pane.addEventListener('dragover',e=>{ if(picOK&&e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){ e.preventDefault(); pane.classList.add('ai-drop'); } });
+  pane.addEventListener('dragleave',e=>{ if(!pane.contains(e.relatedTarget)) pane.classList.remove('ai-drop'); });
+  pane.addEventListener('drop',e=>{ pane.classList.remove('ai-drop'); const f=[...((e.dataTransfer&&e.dataTransfer.files)||[])].find(x=>/^image\//.test(x.type)); if(f){ e.preventDefault(); e.stopPropagation(); attach(f); } });
+  // Grid positions from a picture land on the board to the right of the picture.
+  function atXY(n,xy){ const v=k=>Math.max(-50,Math.min(2000,+xy[k]||0)); n.x=SNAP(photo.x+v(0)*photo.s); n.y=SNAP(photo.y+v(1)*photo.s); }
   const keyBtn=document.createElement('button'); keyBtn.type='button'; keyBtn.className='ai-keybtn'; keyBtn.id='aiKeyBtn'; keyBtn.hidden=true; keyBtn.title='API key and model'; keyBtn.setAttribute('aria-label','API key and model');
   keyBtn.innerHTML='<svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2.5 2.5M14 9l2 2"/></svg>';
   selEl.before(keyBtn);
-  function updKeyBtn(){ keyBtn.hidden=!(keyMode&&sample); }
+  function updKeyBtn(){ keyBtn.hidden=!(keyMode&&sample); if(typeof updPic==='function') try{ updPic(); }catch(_){} }
   keyBtn.addEventListener('click',()=>{ showKeys=!showKeys; paint(); });
   // The key form: a link to the Console to make a key, the key, the model, and where it is kept.
   function keyPanel(){
@@ -12053,9 +12237,11 @@ const AI=(()=>{
       '<p>'+(has?'orim calls Claude directly from this browser with your key. Usage is billed to your Claude API account.':'Inside Claude this tab uses your Claude account with no setup. Here, add an API key from the Claude Console and orim calls Claude directly from this browser. Usage is billed to your Claude API account.')+'</p>'+
       '<a class="ai-keylink" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">'+ico('link')+'Create a key in the Claude Console</a>'+
       '<label class="ai-field"><span>API key</span><input type="password" id="aiKeyIn" placeholder="'+(has?'Saved. Paste a new key to replace it':'sk-ant-…')+'" autocomplete="off" spellcheck="false"></label>'+
+      '<label class="ai-field'+(needWs?' need':'')+'"><span>Workspace ID <i>only if the API says your key needs one</i></span><input id="aiWsIn" placeholder="wrkspc_…" autocomplete="off" spellcheck="false" value="'+esc(AIKey.workspace())+'"></label>'+
+      (needWs?'<p class="ai-keywarn">This key works across workspaces, so the API needs to know which one to use. Copy the ID (it starts with wrkspc_) from a workspace in the Console, or create a key inside one workspace instead. <a href="'+AIKey.WS_URL+'" target="_blank" rel="noopener noreferrer">Open Workspaces</a></p>':'')+
       '<label class="ai-field"><span>Model</span><select id="aiModel">'+AIKey.MODELS.map(([id,nm,d])=>'<option value="'+id+'"'+(id===m?' selected':'')+'>'+nm+', '+d+'</option>').join('')+'</select></label>'+
       '<label class="toggle"><input type="checkbox" id="aiKeyRemember" checked><span>Remember on this device</span></label>'+
-      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Use this key')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Done</button>':'')+'</div>'+
+      '<div class="ai-keyrow"><button type="button" class="btn primary" id="aiKeySave">'+(has?'Save':'Use this key')+'</button>'+(has?'<button type="button" class="btn" id="aiKeyForget">Forget key</button><button type="button" class="btn ghost" id="aiKeyDone">Cancel</button>':'')+'</div>'+
       '<p class="ai-keynote">The key stays in this browser and is only sent to api.anthropic.com. Avoid saving it on a shared computer. Think harder uses Opus 5.5. No key? Export, then Ask an AI, copies a prompt for any AI chat.</p></div>';
   }
 
@@ -12099,6 +12285,14 @@ Rules:
 - A question about the board: answer with say lines only, no changes.
 - Something unclear or impossible: one say line asking or explaining, no changes.
 - Always end with one say line of at most 15 words saying what you did.`;
+  const PHOTO=id=>`The person attached a picture: a photo of a whiteboard, sticky notes, a paper sketch, or a screenshot of a diagram. Recreate what it shows as editable items on the board.
+- Sticky notes become sticky shapes in the nearest sticky colour. Boxes become shapes (rounded corners round, cylinders cyl, diamonds diamond, circles circle). Lines and arrows become connect, keeping any words written on them and dotted or thick lines. A box, column or swimlane drawn around items becomes a frame (frame op with items), with its heading as the label. Headings and loose words become text shapes. A recognised product or cloud service gets its icon.
+- A grid or table becomes a table op; a block of written notes becomes a doc.
+- Copy the words exactly as written, fixing only obvious slips. Write [?] for a word you cannot read. Add nothing that is not in the picture.
+- Give every add, table and doc an "xy":[x,y]: its top left corner on a grid over the picture, 0 to 1000 across and the same scale downwards, so the layout matches the picture.
+- Add things in reading order: frames' contents first, then the frame op, then the connections.
+- End with one say line saying what you recreated and anything you could not read.
+The picture itself is already on the board (image ${id}); leave it alone.`;
   function brief(){
     const m=state.model; if(!m) return 'The board is empty.';
     const L=['Direction: '+(m.dir||'LR')+(m.title?'\nTitle: '+m.title:'')];
@@ -12120,7 +12314,7 @@ Rules:
   function input(text){
     // Earlier turns, leaving out requests that failed (and the question that went with them).
     const all=chat(); const ok=all.filter((t,i)=>!t.failed&&!(t.role==='user'&&all[i+1]&&all[i+1].failed));
-    const past=ok.filter(t=>!t.pending).slice(-6).map(t=>({role:t.role,content:t.role==='assistant'?t.summary||t.content||'(no reply)':t.content}));
+    const past=ok.filter(t=>!t.pending).slice(-6).map(t=>({role:t.role,content:t.role==='assistant'?t.summary||t.content||'(no reply)':t.content+(t.pic?' (with a picture, recreated on the board)':'')}));
     const head={role:'user',content:RULES+'\n\nIcons ('+'pack:id'+'):\n'+aiIconList(false)};
     const now={role:'user',content:'The board now:\n'+brief()+'\n\nRequest: '+text};
     return past.length?[head,{role:'assistant',content:'{"op":"say","text":"Ready."}'},...past,now]:[{role:'user',content:head.content+'\n\n'+now.content}];
@@ -12147,7 +12341,12 @@ Rules:
     else { const sib=n.group&&[...m.nodes.values()].filter(o=>o!==n&&o.group===n.group&&o.x!=null).pop();
       if(sib){ x=vert?sib.x+sib.w+48:sib.x; y=vert?sib.y:sib.y+sib.h+48; }
       else { const b=contentBounds(m); x=b?b.x+b.w+96:0; y=b?b.y:0; } }
-    for(let k=0;k<40&&!free(m,{x,y,w:n.w,h:n.h},n);k++){ if(vert) x+=n.w+48; else y+=n.h+40; }
+    // Nearest free spot in rings around the first choice, so a shape never drifts far from what it belongs to.
+    const sx=n.w+48, sy=n.h+40, dirs=vert?[[1,0],[0,1],[-1,0],[1,1],[-1,1],[0,-1],[1,-1],[-1,-1]]:[[0,1],[1,0],[0,-1],[1,1],[1,-1],[-1,0],[-1,1],[-1,-1]];
+    let best=null;
+    if(free(m,{x,y,w:n.w,h:n.h},n)) best={x,y};
+    for(let r=1;r<=12&&!best;r++) for(const [a,b] of dirs){ const c={x:x+a*r*sx,y:y+b*r*sy}; if(free(m,{x:c.x,y:c.y,w:n.w,h:n.h},n)){ best=c; break; } }
+    if(best){ x=best.x; y=best.y; }
     n.x=SNAP(x); n.y=SNAP(y);
   }
   // A table row given as a number or as the text of its first cell.
@@ -12177,7 +12376,7 @@ Rules:
     const near=nearId&&(m.nodes.get(nearId)||(state.boxes&&state.boxes.get(nearId))); const b=contentBounds(m);
     let x=near&&near.x!=null?near.x+near.w+96:b?b.x+b.w+120:0, y=near&&near.y!=null?near.y:b?b.y+30:0;
     let bx=null; try{ bx=groupBoxes(m); }catch(_){}
-    const hit=r=>{ for(const n of m.nodes.values()) if(n.x!=null&&r.x<n.x+n.w+40&&r.x+r.w+40>n.x&&r.y<n.y+n.h+40&&r.y+r.h+40>n.y) return true; if(bx) for(const [gid,o] of bx){ if(typeof gid!=='string') continue; if(r.x<o.x+o.w+40&&r.x+r.w+40>o.x&&r.y<o.y+o.h+70&&r.y+r.h+40>o.y-30) return true; } return false; };
+    const hit=r=>{ for(const n of m.nodes.values()) if(n.x!=null&&r.x<n.x+n.w+40&&r.x+r.w+40>n.x&&r.y<n.y+n.h+40&&r.y+r.h+40>n.y) return true; for(const n of m.images||[]) if(r.x<n.x+n.w+40&&r.x+r.w+40>n.x&&r.y<n.y+n.h+40&&r.y+r.h+40>n.y) return true; if(bx) for(const [gid,o] of bx){ if(typeof gid!=='string') continue; if(r.x<o.x+o.w+40&&r.x+r.w+40>o.x&&r.y<o.y+o.h+70&&r.y+r.h+40>o.y-30) return true; } return false; };
     for(let k=0;k<30&&hit({x,y,w,h});k++) x+=Math.max(120,w/2);
     return {x:SNAP(x),y:SNAP(y)};
   }
@@ -12198,7 +12397,7 @@ Rules:
       const group=op.in&&m.groups.has(op.in)?op.in:null;
       const n={id,label:UI_KINDS[shape]&&op.label==null?UI_KINDS[shape].def:lb,shape,icon,group,cls:null}; sizeNode(n);
       m.nodes.set(id,n); m.nodeOrder.push(id);
-      if(group&&m.groups.get(group).dev) placePiece(m,n,op); else place(m,n,op.near);
+      if(group&&m.groups.get(group).dev) placePiece(m,n,op); else if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near);
       if(shape==='sticky') setStyle(m,id,{fill:hex(op.fill)||STICKY_COLORS[0]}); else if(hex(op.fill)) setStyle(m,id,{fill:hex(op.fill)});
       done.added++; done.fresh.push(id); return;
     }
@@ -12252,7 +12451,7 @@ Rules:
         const fields={...((n.doc&&n.doc.fields)||{}),...(op.fields&&typeof op.fields==='object'?op.fields:{})};
         n.doc=cleanDoc({blocks,kind,fields});
       }
-      const cx=n.x; sizeNode(n); if(fresh||cx==null) place(m,n,op.near);
+      const cx=n.x; sizeNode(n); if(fresh||cx==null){ if(photo&&Array.isArray(op.xy)) atXY(n,op.xy); else place(m,n,op.near); }
       if(hex(op.fill)) setStyle(m,n.id,{fill:hex(op.fill)});
       if(fresh) done.added++; else done.changed++; done.fresh.push(n.id); return;
     }
@@ -12298,77 +12497,106 @@ Rules:
         // Starters, like Miro's: a short label, a coloured icon, and the full request it fills in.
         const T=blank?[['shapes','#4262ff','Draw a web shop on Azure','Create a simple web shop on Azure: front end, API, database and sign-in'],['phone','#9510ac','Mock up mobile screens','Mock up a login, a product list and a profile screen for mobile'],['table','#0ca789','Compare two products','Compare Crystallize and Optimizely in a table, and link the parts to a diagram'],['ticket','#f24726','Plan a project with tickets','Plan a customer portal: a short spec doc, the database tables and the first tickets']]
           :[['shapes','#4262ff','Expand this board','Expand this with the services it is missing, like monitoring and secrets'],['ticket','#f24726','Plan it out with docs and tickets','Plan this out with a spec doc, the database tables and tickets for the work'],['phone','#9510ac','Mock up the screens','Mock up the screens a user would see, and connect them to the services'],['doc','#0ca789','Explain this board','Explain what this board shows, in a document card']];
+        if(picOK) T.push(['picture','#d9a800',blank?'Turn a photo into a board':'Add a photo of a whiteboard','__pic']);
         h='<div class="ai-empty"><span class="ai-hi">'+aiSpark()+'</span><b>'+(blank?'What are we building today?':'What should we do with this board?')+'</b><p>Claude builds on the board as it answers. Each request is one undo step.</p><div class="ai-try">'+
-          T.map(([ic,c,l,t])=>'<button type="button" data-try="'+esc(t)+'" title="'+esc(t)+'"><span class="ai-ico" style="color:'+c+'">'+ico(ic)+'</span><span>'+esc(l)+'</span></button>').join('')+'</div></div>'; }
+          T.map(([ic,c,l,t])=>'<button type="button" data-try="'+esc(t)+'" title="'+esc(t==='__pic'?'A photo of sticky notes, a whiteboard or a sketch, or a screenshot of a diagram':t)+'"><span class="ai-ico" style="color:'+c+'">'+ico(ic)+'</span><span>'+esc(l)+'</span></button>').join('')+'</div>'+(keyMode?'':'<a class="ai-keyhint" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">'+ico('link')+'Using orim outside Claude too? Create a Claude API key</a>')+'</div>'; }
     }
     for(const t of list){
-      if(t.role==='user') h+='<div class="ai-msg me">'+esc(t.content)+'</div>';
+      if(t.role==='user') h+='<div class="ai-msg me">'+(t.pic?'<img class="ai-msgpic" alt="" src="'+t.pic+'">':'')+esc(t.content)+'</div>';
       else if(t.failed) h+='<div class="ai-msg err">'+esc(t.view||'Something went wrong.')+'</div>';
       else { const w=t.work||{}; const chips=[]; if(w.added) chips.push('<i>'+w.added+' added</i>'); if(w.linked) chips.push('<i>'+w.linked+' connected</i>'); if(w.changed) chips.push('<i>'+w.changed+' changed</i>'); if(w.removed) chips.push('<i>'+w.removed+' removed</i>'); if(w.layout) chips.push('<i>laid out</i>');
         h+='<div class="ai-msg bot"><div class="ai-text">'+(t.pending&&!t.view?'<span class="ai-dots"><b></b><b></b><b></b>&nbsp;'+(t.phase||'Thinking')+'</span>':esc(t.view||''))+'</div>'+
           (chips.length||t.undoAt!=null?'<div class="ai-work">'+chips.join('')+(t.undoAt!=null&&!t.pending&&(w.added||w.linked||w.changed||w.removed||w.layout)?'<button type="button" class="ai-undo" data-undo="'+t.undoAt+'">Undo</button>':'')+'</div>':'')+'</div>'; }
     }
-    if(showKeys&&keyMode&&sample) h=keyPanel()+h;
+    if((showKeys&&keyMode&&sample)||(keyMode&&known&&!sample&&list.length)) h=keyPanel()+h;
     log.innerHTML=h; if(!showKeys) log.scrollTop=log.scrollHeight;
     inp.placeholder=!state.model||(!state.model.nodes.size&&!state.model.groups.size)?'Where shall we start?':'What should change?';
     sendBtn.disabled=busy||(known&&!sample); sendBtn.hidden=busy; inp.disabled=known&&!sample; stopBtn.hidden=!busy;
     const sel=[...state.sel].filter(k=>k[0]==='n'||k[0]==='g').length; selEl.textContent=sel?sel+' selected':'';
   }
   async function send(text){
-    text=String(text||'').trim(); if(!text||busy) return;
+    text=String(text||'').trim(); if(busy) return;
+    const p=pic; if(!text&&p) text='Turn this picture into an editable board'; if(!text) return;
     if(!sample){ toast(known?'Open orim inside Claude to use this':'Connecting to Claude…'); return; }
     if(!state.model||state.fatal){ toast('Fix the code errors first'); return; }
     flushEditorHist(); histPush(state.code);
     const list=chat(); const turn={role:'assistant',content:'',view:'',pending:true,phase:'Thinking',work:{added:0,linked:0,changed:0,removed:0,layout:false},undoAt:null};
-    const req=input(text); list.push({role:'user',content:text}); list.push(turn); inp.value=''; busy=true; paint(); Ghost.start();
+    let req=input(text); list.push({role:'user',content:text,pic:p?p.url:null}); list.push(turn); inp.value=''; busy=true; pic=null; updPic(); paint(); Ghost.start();
     const before=state.code, prevIds=nodeIds(); const done={say:[],added:0,linked:0,changed:0,removed:0,layout:false,fresh:[]};
+    // The picture goes on the board first (unless it is already there); the recreation lands to its right.
+    let im=null; photo=null;
+    if(p){ const m=state.model; im=p.imgId&&m.images.find(x=>x.id===p.imgId);
+      if(!im){ const id=nextImageId(m), w=Math.min(420,p.w), h=Math.round(w*p.h/p.w); IMG[id]=p.url; const r=freeSpot(m,w,h); im={id,x:r.x,y:r.y,w,h,front:false}; m.images.push(im); live(); }
+      photo={x:im.x+im.w+96,y:im.y,s:Math.max(1.1,Math.min(1.8,1300/1000))};
+      const last=req[req.length-1]; last.content+='\n\n'+PHOTO(im.id); }
     let pending='', applied=0;
     const eat=line=>{ line=line.trim().replace(/^```\w*$/,''); if(!line) return; let op; try{ op=JSON.parse(line); }catch(_){ return; }
       try{ apply(op,done); applied++; if(op.op!=='say') live(); }catch(err){ console.error(err); }
       turn.work={added:done.added,linked:done.linked,changed:done.changed,removed:done.removed,layout:done.layout}; turn.view=done.say.join('\n'); turn.phase='Changing the board'; Ghost.phase(op&&op.op==='say'?null:'Changing the board'); paint(); };
     ctl=new AbortController();
     try{
-      await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick',
+      await sample(req,{ cache:false, signal:ctl.signal, modelTier:deep.checked?'default':'quick', ...(p?{images:[p.blob]}:{}),
         onText:({delta})=>{ const parts=(pending+delta).split('\n'); pending=parts.pop(); for(const p of parts) eat(p); } });
       if(pending) eat(pending);
       if(!applied){ turn.view='Claude did not send any changes. Try saying it another way.'; }
     }catch(e){
       if(pending) eat(pending);
-      const c=e&&e.code; const msg={cancelled:'Stopped.',not_granted:'Claude is not allowed for this page. You can allow it from the page’s permissions.',rate_limited:'Claude is busy or your usage limit is reached. Try again in a moment.',sampling_disabled:'Claude is not available for this account.',bad_key:'The API key was not accepted. Check it with the key button below.',no_key:'Add an API key first.',overloaded:'Claude is overloaded right now. Try again in a moment.',network:'Could not reach the Claude API. Check your connection.',api_error:'The Claude API returned an error'+(e&&e.message&&e.message!=='api_error'?': '+e.message:'.'),prompt_too_large:'The board is too large to send in one go.',refused:'Claude declined this request.'}[c]||'Claude could not finish. Try again.';
+      const c=e&&e.code; const msg={cancelled:'Stopped.',not_granted:'Claude is not allowed for this page. You can allow it from the page’s permissions.',rate_limited:'Claude is busy or your usage limit is reached. Try again in a moment.',sampling_disabled:'Claude is not available for this account.',bad_key:'The API key was not accepted. Check it with the key button below.',needs_workspace:'This API key needs a workspace ID. Add it above, then send again.',no_key:'Add an API key first.',overloaded:'Claude is overloaded right now. Try again in a moment.',network:'Could not reach the Claude API. Check your connection.',api_error:'The Claude API returned an error'+(e&&e.message&&e.message!=='api_error'?': '+e.message:'.'),prompt_too_large:'The board is too large to send in one go.',refused:'Claude declined this request.',images_unavailable:'Pictures cannot be sent to Claude here.',image_rejected:'Claude could not take that picture. Try a JPEG or PNG under 20 MB.'}[c]||'Claude could not finish. Try again.';
       turn.view=(done.say.join('\n')?done.say.join('\n')+'\n':'')+msg; if(!applied&&c!=='cancelled') turn.failed=true;
       if(c==='not_granted'||c==='sampling_disabled'){ sample=null; }
       if(c==='bad_key'){ showKeys=true; }
+      if(c==='needs_workspace'){ showKeys=true; needWs=true; setTimeout(()=>{ const w=$('#aiWsIn'); if(w) w.focus(); },50); }
     }
-    // One undo step for the whole request.
-    turn.pending=false; busy=false; ctl=null; Ghost.stop();
+    // One undo step for the whole request. A recreated picture is faded so the editable copy stands out.
+    turn.pending=false; busy=false; ctl=null; Ghost.stop(); photo=null;
+    if(im&&done.added&&state.model){ const cur=state.model.images.find(x=>x.id===im.id); if(cur&&!cur.faded){ cur.faded=true; live(); } }
     // Whatever Claude added or moved is pushed clear of everything else, so nothing ends up on top of something.
     if(state.code!==before&&state.model&&done.fresh.length&&!done.layout){ const m=state.model; const top=id=>{ let cur=m.nodes.get(id)?m.nodes.get(id).group:id, last=id, k=0; while(cur&&m.groups.has(cur)&&k++<60){ last=cur; cur=m.groups.get(cur).parent; } return last; };
-      const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov)) live(); }catch(err){ console.error(err); } }
+      const mov=new Set(done.fresh.filter(id=>m.nodes.has(id)||m.groups.has(id)).map(top)); try{ if(mov.size&&separateBlocks(m,mov,null,true)) live(); }catch(err){ console.error(err); } }
     if(state.code!==before){ histPush(state.code); turn.undoAt=H.i-1; setEditorFromCode(); syncTitle(); saveLocal(); revealNew(prevIds);
       setTimeout(()=>{ for(const id of done.fresh.filter(id=>prevIds.has(id)).slice(-12)){ const el=R.nodeEls.get(id); if(!el) continue; el.classList.remove('flash'); void el.getBoundingClientRect(); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1700); } },60); }
+    // Started from the canvas with the AI tab closed: say how it went there.
+    if(quiet&&!(log.offsetParent)){ const v=(turn.view||'').split('\n').pop(); if(v) toast(v); } quiet=null;
     turn.content=turn.view; turn.summary=(turn.view||'')+(done.added||done.linked||done.changed||done.removed?' ['+[done.added&&done.added+' added',done.linked&&done.linked+' connected',done.changed&&done.changed+' changed',done.removed&&done.removed+' removed'].filter(Boolean).join(', ')+']':'');
     paint();
   }
   $('#aiForm').addEventListener('submit',e=>{ e.preventDefault(); send(inp.value); });
-  log.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&e.target.id==='aiKeyIn'){ e.preventDefault(); $('#aiKeySave').click(); } });
+  log.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&(e.target.id==='aiKeyIn'||e.target.id==='aiWsIn')){ e.preventDefault(); $('#aiKeySave').click(); } });
   inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(inp.value); } });
   stopBtn.addEventListener('click',()=>{ if(ctl) ctl.abort(); });
   log.addEventListener('click',e=>{
-    if(e.target.closest('#aiKeySave')){ const v=$('#aiKeyIn').value.trim(), md=$('#aiModel').value; AIKey.setModel(md);
+    if(e.target.closest('#aiKeySave')){ const v=$('#aiKeyIn').value.trim(), md=$('#aiModel').value, ws=$('#aiWsIn').value.trim(); AIKey.setModel(md);
+      if(ws&&!AIKey.looksWorkspace(ws)){ toast('A workspace ID starts with wrkspc_'); $('#aiWsIn').focus(); return; }
       if(v){ if(!AIKey.looksValid(v)){ toast('That does not look like a Claude API key (sk-ant-…)'); $('#aiKeyIn').focus(); return; } AIKey.set(v,$('#aiKeyRemember').checked); }
       else if(!AIKey.get()){ toast('Paste your API key first'); $('#aiKeyIn').focus(); return; }
-      sample=AIKey.sample; showKeys=false; updKeyBtn(); paint(); toast(v?'Key saved. Claude is ready':'Saved'); setTimeout(()=>inp.focus(),0); return; }
-    if(e.target.closest('#aiKeyForget')){ AIKey.clear(); sample=null; showKeys=false; updKeyBtn(); paint(); toast('Key removed from this browser'); return; }
-    if(e.target.closest('#aiKeyDone')){ const md=$('#aiModel'); if(md) AIKey.setModel(md.value); showKeys=false; paint(); return; }
-    const t=e.target.closest('[data-try]'); if(t){ inp.value=t.dataset.try; inp.focus(); return; }
+      AIKey.setWorkspace(ws,$('#aiKeyRemember').checked); needWs=false;
+      sample=AIKey.sample; showKeys=false; updKeyBtn(); paint(); if(typeof Me!=='undefined') Me.refresh(); toast(v?'Key saved. Claude is ready':'Saved'); setTimeout(()=>inp.focus(),0); return; }
+    if(e.target.closest('#aiKeyForget')){ AIKey.clear(); sample=null; showKeys=false; needWs=false; updKeyBtn(); paint(); if(typeof Me!=='undefined') Me.refresh(); toast('Key removed from this browser'); return; }
+    if(e.target.closest('#aiKeyDone')){ showKeys=false; paint(); return; }
+    const t=e.target.closest('[data-try]'); if(t){ if(t.dataset.try==='__pic'){ picIn.click(); return; } inp.value=t.dataset.try; inp.focus(); return; }
     const u=e.target.closest('[data-undo]'); if(u&&!busy){ const at=+u.dataset.undo;
       if(H.i===at+1){ undo(); toast('Undone'); for(const t of chat()) if(t.undoAt===at) t.undoAt=null; paint(); }
       else toast('Other changes came after this. Use Ctrl+Z to step back.'); }
   });
   return {
     show(){ paint(); setTimeout(()=>inp.focus(),0); },
+    // From the selection toolbar: run a request without leaving the canvas. Without Claude, open the AI tab instead.
+    async ask(text,name){
+      if(busy){ toast('Claude is still working'); return; }
+      await ready; if(!sample){ openAITab(); inp.value=text; return; }
+      quiet=name||null; send(text); },
+    // From the image toolbar: recreate a picture that is already on the board.
+    async fromImage(id){
+      if(busy){ toast('Claude is still working'); return; }
+      const b=dataBlob(IMG[id]); if(!b){ toast('This picture has no data to send'); return; }
+      openAITab(); await ready;
+      if(!sample){ toast(keyMode?'Add an API key first':'Claude is not available here'); return; }
+      if(!picOK){ toast('Pictures cannot be sent to Claude here'); return; }
+      try{ pic=await prepPic(b); pic.imgId=id; }catch(_){ toast('Could not read that picture'); return; }
+      updPic(); send(inp.value.trim()); },
     onBoard(){ if(ctl) ctl.abort(); if(state.emode==='ai') paint(); },
-    onSel(){ if(state.emode==='ai'&&!busy) paint(); }
+    onSel(){ if(state.emode==='ai'&&!busy) paint(); },
+    keyChanged(){ if(!keyMode) return; sample=AIKey.get()?AIKey.sample:null; showKeys=false; needWs=false; updKeyBtn(); paint(); }
   };
 })();
 
@@ -12428,7 +12656,8 @@ document.addEventListener('wheel',hideTip,{passive:true,capture:true});
   <script>
 /* orim · me.js
  * Your name for comments, shown as an avatar in the top right like a signed-in account.
- * There is no server: the name lives in this browser (orim.me). Signing out forgets it;
+ * There is no server: the name lives in this browser (orim.me). The account card also shows a
+ * Claude API key saved for the AI tab, with a way to remove it. Signing out forgets both;
  * comments you already wrote keep the name they were written with.
  */
 'use strict';
@@ -12441,21 +12670,34 @@ const Me=(()=>{
   function initial(n){ const w=String(n||'').trim(); return w?[...w][0].toUpperCase():'?'; }
   function avatar(n,size,cls){ return '<span class="avatar'+(cls?' '+cls:'')+'" style="--av:'+color(n)+';--sz:'+(size||28)+'px" aria-hidden="true">'+esc(initial(n))+'</span>'; }
   function set(n){ name=String(n||'').trim().slice(0,40); if(name) LS.set(KEY,name); else { try{ localStorage.removeItem(KEY); }catch(_){} } paint(); }
+  const hasKey=()=>typeof AIKey!=='undefined'&&!!AIKey.get();
+  const guest='<span class="avatar guest" style="--sz:30px" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></span>';
   function paint(){
     for(const b of document.querySelectorAll('[data-me]')){
-      b.hidden=!name; b.innerHTML=name?avatar(name,30):''; b.title=name?name+' · account':''; b.setAttribute('aria-label',name?'Account: '+name:'Account');
+      const show=!!name||hasKey(); b.hidden=!show; b.innerHTML=name?avatar(name,30):show?guest:''; b.title=name?name+' · account':'Account'; b.setAttribute('aria-label',name?'Account: '+name:'Account');
     }
-    if(!name) closeMenu();
+    if(!name&&!hasKey()) closeMenu();
   }
   const menu=$('#meMenu');
   function openMenu(btn){
     const r=btn.getBoundingClientRect();
-    menu.innerHTML='<div class="me-card">'+avatar(name,64)+'<b>Hi, '+esc(name)+'!</b><small>Your name on comments. Saved in this browser only.</small></div>'+
-      '<div class="me-actions"><button type="button" class="btn" data-me-act="rename">Change name</button><button type="button" class="btn" data-me-act="out">Sign out</button></div>';
+    menu.innerHTML=(name?'<div class="me-card">'+avatar(name,64)+'<b>Hi, '+esc(name)+'!</b><small>Your name on comments. Saved in this browser only.</small></div>'
+        :'<div class="me-card">'+guest.replace('--sz:30px','--sz:64px')+'<b>Not signed in</b><small>Add your name to sign your comments.</small></div>')+
+      keySection()+
+      '<div class="me-actions">'+(name?'<button type="button" class="btn" data-me-act="rename">Change name</button>':'<button type="button" class="btn" data-me-act="rename">Add your name</button>')+
+      '<button type="button" class="btn" data-me-act="out" title="'+(hasKey()?'Forgets your name and the Claude API key in this browser':'Forgets your name in this browser')+'">Sign out</button></div>';
     menu.hidden=false;
     menu.style.top=(r.bottom+8)+'px'; menu.style.right=Math.max(8,window.innerWidth-r.right)+'px';
   }
   function closeMenu(){ menu.hidden=true; }
+  // The Claude API key used by the AI tab outside Claude: where it is, a way to remove it, and where to make one.
+  function keySection(){
+    if(typeof AIKey==='undefined') return '';
+    const k=AIKey.get(), ws=AIKey.workspace();
+    return '<div class="me-key"><div class="me-key-head">'+aiSpark()+'<b>Claude API key</b></div>'+
+      (k?'<small>Saved in this browser: '+esc(k.slice(0,10))+'…'+esc(k.slice(-4))+' · '+esc(AIKey.modelName())+(ws?' · '+esc(ws.slice(0,12))+'…':'')+'</small><div class="me-key-row"><button type="button" class="btn" data-me-act="forgetkey">Remove key</button><a class="btn ghost" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">Manage keys</a></div>'
+        :'<small>None saved. Outside Claude, the AI tab uses your own key.</small><div class="me-key-row"><a class="btn ghost" href="'+AIKey.KEYS_URL+'" target="_blank" rel="noopener noreferrer">Create a key in the Claude Console</a></div>')+'</div>';
+  }
   // Change the name right in the account card.
   function editName(){
     menu.querySelector('.me-card').innerHTML=avatar(name,64)+'<input class="me-input" maxlength="40" autocomplete="name" value="'+esc(name)+'" aria-label="Your name"><small>New comments use the new name.</small>';
@@ -12471,14 +12713,15 @@ const Me=(()=>{
     if(b){ e.stopPropagation(); if(menu.hidden) openMenu(b); else closeMenu(); return; }
     const a=e.target.closest('[data-me-act]');
     if(a){ e.stopPropagation(); const k=a.dataset.meAct;
-      if(k==='out'){ closeMenu(); set(''); toast('Signed out. Your comments keep your name.'); }
+      if(k==='out'){ const had=hasKey(); closeMenu(); if(had&&typeof AIKey!=='undefined'){ AIKey.clear(); if(typeof AI!=='undefined'&&AI.keyChanged) AI.keyChanged(); } set(''); toast(had?'Signed out. Your name and Claude API key are gone from this browser.':'Signed out. Your comments keep your name.'); }
+      else if(k==='forgetkey'){ AIKey.clear(); if(typeof AI!=='undefined'&&AI.keyChanged) AI.keyChanged(); paint(); const btn=document.querySelector('[data-me]:not([hidden])'); if(name&&btn) openMenu(btn); else closeMenu(); toast('Claude API key removed from this browser'); }
       else if(k==='rename') editName(); else if(k==='save') save(); else closeMenu();
       return; }
     if(!e.target.closest('#meMenu')) closeMenu();
   });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!menu.hidden) closeMenu(); });
   paint();
-  return {get,set,avatar,color};
+  return {get,set,avatar,color,refresh:paint};
 })();
 
 </script>
@@ -12671,10 +12914,139 @@ const Mini=(()=>{
 })();
 
 </script>
-  <script>
+<script>
+/* orim · folder.js
+ * Boards as .md files in a folder you choose (Chrome and Edge on a computer).
+ * Each board is one Markdown file with a ```mermaid block, so it renders on GitHub, in Azure DevOps
+ * and in VS Code; orim's own data rides along in its %% lines. Images go in "<name>.images/".
+ * The browser keeps a copy of every board as before, so nothing is lost if the folder is unavailable.
+ * Changes made to a file outside orim (Git, an editor, an AI assistant) are picked up while it is open.
+ */
+'use strict';
+const Folder=(()=>{
+  const supported=typeof window.showDirectoryPicker==='function'&&window.isSecureContext&&(()=>{ try{ return window.self===window.top; }catch(_){ return false; } })();
+  let dir=null, perm='none';
+  /* ---- the folder handle survives reloads in IndexedDB ---- */
+  const idb=(mode,fn)=>new Promise((res,rej)=>{ let r; try{ r=indexedDB.open('orim-folder',1); }catch(e){ rej(e); return; }
+    r.onupgradeneeded=()=>r.result.createObjectStore('h'); r.onerror=()=>rej(r.error);
+    r.onsuccess=()=>{ try{ const tx=r.result.transaction('h',mode); const q=fn(tx.objectStore('h')); tx.oncomplete=()=>res(q&&q.result); tx.onerror=()=>rej(tx.error); }catch(e){ rej(e); } }; });
+  const save=h=>idb('readwrite',s=>s.put(h,'dir')).catch(()=>{});
+  const load=()=>idb('readonly',s=>s.get('dir')).catch(()=>null);
+  const forget=()=>idb('readwrite',s=>s.delete('dir')).catch(()=>{});
+
+  const ready=()=>!!dir&&perm==='granted';
+  const name=()=>dir?dir.name:'';
+  const state=()=>!supported?'unsupported':!dir?'none':perm==='granted'?'ready':'reconnect';
+
+  async function init(){
+    if(!supported) return;
+    const h=await load(); if(!h) return;
+    dir=h; try{ perm=await h.queryPermission({mode:'readwrite'}); }catch(_){ perm='prompt'; }
+    if(perm==='granted') await scan();
+    Boards.folderChanged();
+  }
+  async function choose(){
+    if(!supported) return;
+    let h; try{ h=await window.showDirectoryPicker({id:'orim-boards',mode:'readwrite',startIn:'documents'}); }catch(e){ if(e&&e.name!=='AbortError') toast('Could not open that folder'); return; }
+    dir=h; perm='granted'; await save(h);
+    const n=await scan(); Boards.folderChanged(true);
+    toast('New boards are saved in '+h.name+(n?'. Found '+n+(n===1?' board':' boards')+' there':''));
+  }
+  async function reconnect(){
+    if(!dir) return choose();
+    try{ perm=await dir.requestPermission({mode:'readwrite'}); }catch(_){ perm='prompt'; }
+    if(perm==='granted'){ await scan(); Boards.folderChanged(true); toast('Reconnected to '+dir.name); }
+  }
+  async function disconnect(){ dir=null; perm='none'; await forget(); Boards.folderChanged(); toast('Boards are saved in this browser only again'); }
+
+  /* ---- reading and writing boards ---- */
+  const MD_RE=/```mermaid[^\n]*\n([\s\S]*?)\n?```/;
+  const codeOf=text=>{ const m=MD_RE.exec(text); return m?m[1].replace(/\s+$/,'')+'\n':null; };
+  function fileText(old,title,code){
+    const block='```mermaid\n'+code.replace(/\s+$/,'')+'\n```';
+    if(old&&MD_RE.test(old)) return old.replace(MD_RE,()=>block);   // keep anything you wrote around the diagram
+    return '# '+(title||'Untitled board')+'\n\n'+block+'\n';
+  }
+  // Keep the file's top heading in step with the board name.
+  const retitle=(text,title)=>text&&/^# .*\n/.test(text)?text.replace(/^# .*\n/,()=>'# '+title+'\n'):text;
+  const safe=t=>String(t||'Untitled board').replace(/[\\/:*?"<>|\u0000-\u001f]/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'Untitled board';
+  async function exists(n){ try{ await dir.getFileHandle(n); return true; }catch(_){ return false; } }
+  async function uniqueName(title,except){ const base=safe(title); let n=base+'.md', k=2; while(n!==except&&await exists(n)) n=base+' '+(k++)+'.md'; return n; }
+  async function readFile(n){ const fh=await dir.getFileHandle(n); const f=await fh.getFile(); return {text:await f.text(),mod:f.lastModified}; }
+  async function writeFile(n,text){ const fh=await dir.getFileHandle(n,{create:true}); const w=await fh.createWritable(); await w.write(text); await w.close(); return (await fh.getFile()).lastModified; }
+  // All boards in the folder: every .md file with a mermaid flowchart in it.
+  async function scan(){
+    if(!ready()) return 0; const files=[];
+    try{ for await (const [n,h] of dir.entries()){ if(h.kind!=='file'||!/\.md$/i.test(n)) continue;
+      try{ const f=await h.getFile(); if(f.size>4e6) continue; const code=codeOf(await f.text()); if(code&&/(^|\n)\s*(flowchart|graph)\b/.test(code)) files.push({name:n,code,mod:f.lastModified}); }catch(_){} } }
+    catch(_){ perm='prompt'; return 0; }
+    return Boards.syncFolder(files);
+  }
+  /* ---- images: <name>.images/<id>.<ext> ---- */
+  const imgDirName=n=>n.replace(/\.md$/i,'')+'.images';
+  async function writeImages(n,imgs,known){
+    const ids=Object.keys(imgs); if(!ids.length&&!known.size) return;
+    const d=await dir.getDirectoryHandle(imgDirName(n),{create:true});
+    for(const id of ids){ const url=imgs[id]; const sig=url.length+':'+url.slice(-24); if(known.get(id)===sig) continue;
+      const m=/^data:([^;,]+)(;base64)?,(.*)$/s.exec(url); if(!m) continue;
+      const ext=(m[1].split('/')[1]||'png').replace('svg+xml','svg').replace('jpeg','jpg');
+      const bytes=m[2]?Uint8Array.from(atob(m[3]),c=>c.charCodeAt(0)):new TextEncoder().encode(decodeURIComponent(m[3]));
+      for await (const [old] of d.entries()) if(old.startsWith(id+'.')&&old!==id+'.'+ext) try{ await d.removeEntry(old); }catch(_){}
+      const fh=await d.getFileHandle(id+'.'+ext,{create:true}); const w=await fh.createWritable(); await w.write(new Blob([bytes],{type:m[1]})); await w.close(); known.set(id,sig); }
+    for(const id of [...known.keys()]) if(!imgs[id]){ for await (const [old] of d.entries()) if(old.startsWith(id+'.')) try{ await d.removeEntry(old); }catch(_){} known.delete(id); }
+  }
+  async function readImages(n){
+    const out={}; let d; try{ d=await dir.getDirectoryHandle(imgDirName(n)); }catch(_){ return out; }
+    for await (const [f,h] of d.entries()){ if(h.kind!=='file') continue; const id=f.replace(/\.[^.]+$/,'');
+      const file=await h.getFile(); out[id]=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.onerror=()=>r(null); fr.readAsDataURL(file); }); }
+    return out;
+  }
+  async function removeFile(n){ try{ await dir.removeEntry(n); }catch(_){} try{ await dir.removeEntry(imgDirName(n),{recursive:true}); }catch(_){} }
+
+  // One write at a time per board; a newer request replaces a waiting one.
+  const queue=new Map(), knownImgs=new Map();
+  function write(meta,code,imgs){
+    if(!ready()||!meta.file) return;
+    const q=queue.get(meta.id)||{busy:false,next:null}; q.next={code,imgs}; queue.set(meta.id,q);
+    if(!q.busy) pump(meta,q);
+  }
+  async function pump(meta,q){
+    q.busy=true;
+    while(q.next){ const job=q.next; q.next=null;
+      try{
+        let old=null, mod=0; try{ const r=await readFile(meta.file); old=r.text; mod=r.mod; }catch(_){}
+        // Changed outside orim since we last saw it, and not by us: ask instead of overwriting.
+        if(old!=null&&meta.fileMod&&mod>meta.fileMod+1&&codeOf(old)!==meta.fileCode&&codeOf(old)!==job.code){ Boards.fileConflict(meta.id,codeOf(old),mod); break; }
+        // An untitled board gets a proper file name once it has a title.
+        // A renamed board (or an untitled one that now has a title) moves to a matching file name.
+        let n=meta.file; const want=meta.renameTo||(/^Untitled board( \d+)?\.md$/i.test(n)&&meta.title&&meta.title!=='Untitled board'?meta.title:null); delete meta.renameTo;
+        if(want){ const nn=await uniqueName(want,n); if(nn!==n){ const txt=retitle(old,want); await writeFile(nn,fileText(txt,meta.title,job.code)); await removeFile(n); knownImgs.delete(meta.id); n=nn; meta.file=nn; old=txt; Boards.metaChanged(meta); } }
+        meta.fileMod=await writeFile(n,fileText(old,meta.title,job.code)); meta.fileCode=job.code; meta.dirty=false;
+        if(!knownImgs.has(meta.id)) knownImgs.set(meta.id,new Map());
+        await writeImages(n,job.imgs||{},knownImgs.get(meta.id));
+        Boards.metaChanged(meta,'saved');
+      }catch(e){ console.error(e); meta.dirty=true; if(e&&e.name==='NotAllowedError'){ perm='prompt'; Boards.folderChanged(); } else Boards.metaChanged(meta,'error'); }
+    }
+    q.busy=false;
+  }
+  // While a folder board is open: has its file changed outside orim?
+  async function check(meta){
+    if(!ready()||!meta||!meta.file) return null;
+    try{ const fh=await dir.getFileHandle(meta.file); const f=await fh.getFile(); if(f.lastModified<=meta.fileMod+1) return null;
+      const code=codeOf(await f.text()); if(!code||code===meta.fileCode){ meta.fileMod=f.lastModified; return null; }
+      return {code,mod:f.lastModified,images:await readImages(meta.file)}; }
+    catch(e){ if(e&&e.name==='NotFoundError') return {missing:true}; return null; }
+  }
+  return {supported,init,choose,reconnect,disconnect,ready,name,state,scan,write,check,readFile,readImages,uniqueName,removeFile,fileText,codeOf};
+})();
+
+</script>
+<script>
 /* orim · boards.js
  * Several boards per browser, the home page and #b-<id> links.
  * Storage: orim.boards (list), orim.b.<id> (Mermaid code), orim.i.<id> (images).
+ * With a folder chosen (folder.js), boards also live there as .md files: meta.file and meta.dir
+ * link a board to its file; the browser copy stays as a cache and a safety net.
  */
 'use strict';
 const Boards=(()=>{
@@ -12695,7 +13067,78 @@ const Boards=(()=>{
       saveList();
     }
     window.addEventListener('hashchange',route);
-    renderStatic(); route();
+    renderStatic(); route(); renderFolderBtn();
+    Folder.init().catch(()=>{});
+    setInterval(watch,2500);
+  }
+  /* ---- boards in a folder ---- */
+  const linked=m=>!!(m&&m.file&&m.dir&&m.dir===Folder.name());
+  // Files found in the folder: add new boards, refresh changed ones, and let go of files that are gone.
+  function syncFolder(files){
+    const fname=Folder.name(); let added=0; const seen=new Set();
+    for(const f of files){ seen.add(f.name);
+      let m=list.find(b=>b.file===f.name&&b.dir===fname);
+      if(!m){ const id=newId(); LS.set(CODE+id,f.code); LS.set(IMGS+id,{}); m={id,title:titleOf(f.code)||f.name.replace(/\.md$/i,''),created:f.mod,updated:f.mod,opened:0,file:f.name,dir:fname,fileMod:f.mod,fileCode:f.code,needImgs:true}; list.push(m); added++; continue; }
+      if(f.mod>(m.fileMod||0)+1&&f.code!==m.fileCode&&m.id!==current){ LS.set(CODE+m.id,f.code); m.title=titleOf(f.code)||m.title; m.updated=f.mod; m.fileMod=f.mod; m.fileCode=f.code; m.needImgs=true; thumbs.delete(m.id); }
+    }
+    for(const m of list) if(m.dir===fname&&m.file&&!seen.has(m.file)&&!m.dirty){ delete m.file; delete m.dir; delete m.fileMod; delete m.fileCode; }
+    // Unsaved changes made while the folder was unavailable go out now.
+    for(const m of list) if(linked(m)&&m.dirty) Folder.write(m,LS.get(CODE+m.id,''),LS.get(IMGS+m.id,{})||{});
+    saveList(); return added;
+  }
+  function folderChanged(){ renderFileState(); renderFolderBtn(); if(isHome()) renderRecents(); }
+  function renderFolderBtn(){
+    const b=$('#homeFolder'), foot=$('#homeFoot'); if(!b) return; const st=Folder.state();
+    b.hidden=st==='unsupported'; b.classList.toggle('warn',st==='reconnect');
+    b.innerHTML=ico('folder')+'<span>'+(st==='none'?'Save to a folder':st==='reconnect'?'Reconnect '+esc(Folder.name()):esc(Folder.name()))+'</span>';
+    b.title=st==='none'?'Choose a folder on this computer. Each board is saved there as a Markdown file.':st==='reconnect'?'Let orim open '+Folder.name()+' again':'Boards are saved in '+Folder.name()+'. Click to change.';
+    if(foot) foot.textContent=st==='ready'?'New boards are saved as .md files in '+Folder.name()+', and a copy is kept in this browser.':st==='reconnect'?'Reconnect '+Folder.name()+' to keep saving boards there. Until then, changes are kept in this browser.':st==='none'?'Boards are saved in this browser only. Choose a folder to keep them as Markdown files you can put in Git or share.':'Boards are saved in this browser only. To move a board to another device, open it and use Export, Board file.';
+  }
+  function metaChanged(m,status){ saveList(); if(m.id===current){ fileStatus=status||fileStatus; renderFileState(); } if(isHome()) renderRecents(); }
+  let fileStatus='saved', conflictOpen=false;
+  function fileConflict(id,code,mod){
+    const m=meta(id); if(!m||conflictOpen) return; conflictOpen=true;
+    openModal('This board changed in two places','<p><b>'+esc(m.file)+'</b> was changed outside orim while you were editing it here. Which version do you want to keep?</p>',[
+      {label:'Use the file',primary:true,run:()=>{ conflictOpen=false; closeModal(); Folder.readImages(m.file).then(imgs=>applyFile(m,code,mod,imgs)).catch(()=>applyFile(m,code,mod,null)); }},
+      {label:'Keep mine',run:()=>{ conflictOpen=false; m.fileMod=mod; m.fileCode=code; saveList(); Folder.write(m,id===current?state.code:LS.get(CODE+id,''),id===current?usedImages():LS.get(IMGS+id,{})); closeModal(); toast('Saved your version to the file'); }}]);
+  }
+  function applyFile(m,code,mod,images){
+    m.fileMod=mod; m.fileCode=code; m.title=titleOf(code)||m.title; m.updated=mod; LS.set(CODE+m.id,code); if(images) LS.set(IMGS+m.id,images); thumbs.delete(m.id); saveList();
+    if(m.id===current){ if(images){ for(const k of Object.keys(IMG)) delete IMG[k]; Object.assign(IMG,images); } lastSaved.set(m.id,code); loadCode(code,{history:true}); setEditorFromCode(); syncTitle(); toast('Updated from '+m.file); }
+  }
+  // While a folder board is open, look for changes made to its file by Git, an editor or an AI assistant.
+  let watching=false;
+  async function watch(){
+    const m=meta(current); if(watching||!linked(m)||app.hidden||document.visibilityState!=='visible'||!Folder.ready()) return;
+    watching=true;
+    try{ const r=await Folder.check(m);
+      if(r&&r.missing){ delete m.file; delete m.dir; saveList(); renderFileState(); toast('The board file was moved or deleted, so this board is now kept in the browser only'); }
+      else if(r){ if(state.code===m.fileCode||state.code===lastSaved.get(current)&&lastSaved.get(current)===m.fileCode) applyFile(m,r.code,r.mod,r.images); else fileConflict(m.id,r.code,r.mod); } }
+    finally{ watching=false; }
+  }
+  // The file name and save state next to the board title.
+  function renderFileState(){
+    const el=$('#fileState'); if(!el) return; const m=meta(current);
+    if(!m||!m.file||!m.dir){ el.hidden=true; return; }
+    el.hidden=false; const st=Folder.state(), here=m.dir===Folder.name();
+    if(st==='reconnect'&&here){ el.className='file-state warn'; el.innerHTML=ico('folder')+'<span>Reconnect folder</span>'; el.title='Click to let orim save '+m.file+' in '+m.dir+' again'; return; }
+    if(!here||st!=='ready'){ el.className='file-state off'; el.innerHTML=ico('folder')+'<span>'+esc(m.file)+'</span>'; el.title='Saved in this browser. The folder '+m.dir+' is not connected.'; return; }
+    el.className='file-state'+(fileStatus==='error'?' warn':''); el.innerHTML=ico('folder')+'<span>'+esc(m.file)+'</span>';
+    el.title=fileStatus==='error'?'Could not save to the folder. Your changes are kept in the browser.':'Saved in '+m.dir+'/'+m.file;
+  }
+  function folderMenu(){
+    const st=Folder.state();
+    if(st==='none'){ Folder.choose(); return; }
+    if(st==='reconnect'){ Folder.reconnect(); return; }
+    const browserOnly=list.filter(b=>!linked(b)).length;
+    openModal('Board folder','<p>New boards are saved as Markdown files in <b>'+esc(Folder.name())+'</b>, a moment after each change. They show as diagrams on GitHub, in Azure DevOps and in VS Code, and changes made to a file elsewhere (Git, an editor, an AI assistant) appear here while the board is open.</p>'+
+      (browserOnly?'<p>'+browserOnly+(browserOnly===1?' board is':' boards are')+' still only in this browser. Use Move to folder in a board\'s menu to add it.</p>':''),
+      [{label:'Change folder',run:()=>{ closeModal(); Folder.choose(); }},{label:'Stop using this folder',run:()=>{ closeModal(); Folder.disconnect(); }}]);
+  }
+  function moveToFolder(id){
+    const m=meta(id); if(!m||!Folder.ready()) return;
+    Folder.uniqueName(m.title).then(n=>{ m.file=n; m.dir=Folder.name(); m.fileMod=0; m.fileCode=null; saveList();
+      Folder.write(m,id===current?state.code:LS.get(CODE+id,''),id===current?usedImages():LS.get(IMGS+id,{})||{}); renderRecents(); toast('Saved as '+n); });
   }
   function route(){
     const sh=/^#([mt]=[A-Za-z0-9_-]+)$/.exec(location.hash||'');
@@ -12722,6 +13165,7 @@ const Boards=(()=>{
     if(lastSaved.get(current)!==state.code){
       LS.set(CODE+current,state.code); lastSaved.set(current,state.code);
       m.updated=now(); m.title=(state.model&&state.model.title)||'Untitled board'; saveList(); thumbs.delete(current);
+      if(linked(m)){ if(Folder.ready()){ fileStatus='saving'; Folder.write(m,state.code,imgs); } else { m.dirty=true; saveList(); } }
     }
     if(!LS.set(IMGS+current,imgs)&&!imgWarned&&Object.keys(imgs).length){ imgWarned=true; toast('Images are too large to autosave in this browser. Export a board file (.json) to keep them.'); }
   }
@@ -12729,7 +13173,8 @@ const Boards=(()=>{
     const id=newId(); const t=now();
     let c=code||'flowchart LR\n'; if(title) c=setTitleInCode(c,title);
     LS.set(CODE+id,c); LS.set(IMGS+id,{});
-    list.unshift({id,title:titleOf(c)||'Untitled board',created:t,updated:t,opened:t}); saveList();
+    const m={id,title:titleOf(c)||'Untitled board',created:t,updated:t,opened:t}; list.unshift(m); saveList();
+    if(Folder.ready()){ const d=Folder.name(); Folder.uniqueName(m.title).then(n=>{ if(!meta(id)) return; m.file=n; m.dir=d; m.fileMod=0; saveList(); Folder.write(m,LS.get(CODE+id,c),LS.get(IMGS+id,{})||{}); if(id===current) renderFileState(); }); }
     return id;
   }
   function open(id){
@@ -12745,6 +13190,11 @@ const Boards=(()=>{
     loadCode(typeof code==='string'?code:'flowchart LR\n',{clearCache:true}); updUndo();
     state.viewQuietUntil=performance.now()+1500; requestAnimationFrame(()=>{ applyView(); render(); fit(); });
     setHash('b-'+id); document.title=(m.title||'Untitled board')+' · orim';
+    fileStatus='saved'; renderFileState();
+    if(linked(m)&&Folder.ready()){
+      if(m.needImgs) Folder.readImages(m.file).then(imgs=>{ m.needImgs=false; saveList(); if(Object.keys(imgs).length){ LS.set(IMGS+id,imgs); if(current===id){ Object.assign(IMG,imgs); render(); } } });
+      watch();
+    }
   }
   function openNew(code,title){ const id=create(code,title); open(id); return id; }
   function showHome(){
@@ -12799,6 +13249,7 @@ const Boards=(()=>{
   const TPL_CARDS=()=>[{id:'ai',name:'Start with AI',desc:'Describe it, Claude draws it',ai:true},{id:'blank',name:'Blank board',desc:'Start from nothing',plus:true},{id:'text',name:'From text',desc:'Type A -> B, get a diagram',text:true},...TEMPLATES.filter(t=>t.id!=='blank').map(t=>({id:t.id,name:t.name,desc:t.desc,code:t.code,tint:t.tint}))];
   const tplThumb=t=>t.ai?'<span class="th-ai">'+(typeof aiSpark==='function'?aiSpark():'')+'</span>':t.plus?'<svg class="i" viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 5v14M5 12h14"/></svg>':t.text?'<span class="th-text"><span>A</span><i>→</i><span>B</span></span>':thumbSVG(t.code);
   function renderStatic(){
+    renderTeams();
     $('#homeTpl').innerHTML=TPL_CARDS().map(t=>'<button type="button" class="tpl" data-tpl-id="'+t.id+'"'+(t.tint?' style="--tint:'+t.tint+'"':'')+'><span class="th">'+tplThumb(t)+'</span><b>'+esc(t.name)+'</b><small>'+esc(t.desc||'')+'</small></button>').join('');
     const cards=$('#homeTpl').children.length; $('#homeTpl').style.setProperty('--n',Math.ceil(cards/2)); requestAnimationFrame(updTplNav);
     for(const b of document.querySelectorAll('#homeView [data-view]')) b.setAttribute('aria-pressed',String(b.dataset.view===view));
@@ -12849,18 +13300,19 @@ const Boards=(()=>{
     $('#home').classList.toggle('landing',!items.length); $('#recentsSec').hidden=!items.length; renderWelcome();
     if(!items.length){ el.innerHTML=''; return; }
     el.className='recents '+view; const ra=$('#removeAllBtn'); if(ra) ra.hidden=view!=='grid';
-    if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
-    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span class="rl-act"><button type="button" class="ibtn" data-remove-all title="Delete all boards" aria-label="Delete all boards">'+ico('trash')+'</button></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>Created '+esc(when(b.created))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
+    if(view==='grid') el.innerHTML=items.map(b=>'<div class="rc" data-board="'+b.id+'"><button type="button" class="rc-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><b>'+esc(b.title||'Untitled board')+'</b><small>'+(b.file&&b.dir?ico('folder')+esc(b.file)+' · ':'')+'Edited '+esc(when(b.updated))+'</small></button><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
+    else el.innerHTML='<div class="rl-head"><span>Name</span><span>Last opened</span><span>Edited</span><span class="rl-act"><button type="button" class="ibtn" data-remove-all title="Delete all boards" aria-label="Delete all boards">'+ico('trash')+'</button></span></div>'+items.map(b=>'<div class="rl" data-board="'+b.id+'"><button type="button" class="rl-open" data-open="'+b.id+'"><span class="th">'+thumbFor(b.id)+'</span><span class="nm"><b>'+esc(b.title||'Untitled board')+'</b><small>'+(b.file&&b.dir?ico('folder')+esc(b.dir+'/'+b.file):'Created '+esc(when(b.created)))+'</small></span></button><span class="cell">'+esc(when(b.opened))+'</span><span class="cell">'+esc(when(b.updated))+'</span><button type="button" class="ibtn rc-more" data-more="'+b.id+'" title="More" aria-label="More actions"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button></div>').join('');
   }
   function boardMenu(id,anchor){
-    const mn=$('#homeMenu'); mn.dataset.id=id; mn.hidden=false;
+    const mn=$('#homeMenu'); mn.dataset.id=id; const mv=mn.querySelector('[data-hm=move]'); if(mv){ mv.hidden=!Folder.ready()||linked(meta(id)); mv.querySelector('b').textContent='Save to '+Folder.name(); } mn.hidden=false;
     const r=anchor.getBoundingClientRect(); const w=200;
     const h=mn.offsetHeight; let top=r.bottom+6; if(top+h>window.innerHeight-8) top=Math.max(8,r.top-h-6);
     mn.style.left=Math.max(8,Math.min(window.innerWidth-w-8,r.right-w))+'px'; mn.style.top=top+'px';
   }
   function rename(id){
     const m=meta(id); if(!m) return;
-    openModal('Rename board','<input id="renameIn" class="modal-input" value="'+esc(m.title||'')+'" aria-label="Board name" spellcheck="false">',[{label:'Rename',primary:true,run:()=>{ const v=$('#renameIn').value.trim()||'Untitled board'; const code=LS.get(CODE+id,'flowchart LR\n'); const nc=setTitleInCode(code,v); LS.set(CODE+id,nc); m.title=v; m.updated=now(); saveList(); if(current===id){ lastSaved.set(id,nc); } closeModal(); renderRecents(); }}]);
+    openModal('Rename board','<input id="renameIn" class="modal-input" value="'+esc(m.title||'')+'" aria-label="Board name" spellcheck="false">',[{label:'Rename',primary:true,run:()=>{ const v=$('#renameIn').value.trim()||'Untitled board'; const code=LS.get(CODE+id,'flowchart LR\n'); const nc=setTitleInCode(code,v); LS.set(CODE+id,nc); m.title=v; m.updated=now(); saveList(); if(current===id){ lastSaved.set(id,nc); } closeModal(); renderRecents();
+      if(linked(m)&&Folder.ready()){ m.renameTo=v; Folder.write(m,nc,LS.get(IMGS+id,{})||{}); } }}]);
     setTimeout(()=>{ const i=$('#renameIn'); if(i){ i.focus(); i.select(); i.addEventListener('keydown',e=>{ if(e.key==='Enter') $('#modalFoot [data-mb="0"]').click(); }); } },30);
   }
   function duplicate(id){
@@ -12869,15 +13321,35 @@ const Boards=(()=>{
   }
   function remove(id){
     const m=meta(id); if(!m) return;
-    openModal('Delete board','<p>Delete "'+esc(m.title||'Untitled board')+'"? This removes it from this browser and can\'t be undone. Export a board file first if you want to keep a copy.</p>',[{label:'Delete board',primary:true,run:()=>{ try{ localStorage.removeItem(CODE+id); localStorage.removeItem(IMGS+id); }catch(_){} list=list.filter(b=>b.id!==id); saveList(); if(current===id) current=null; closeModal(); renderRecents(); toast('Board deleted'); }}]);
+    const inFolder=linked(m)&&Folder.ready();
+    openModal('Delete board','<p>Delete "'+esc(m.title||'Untitled board')+'"? '+(inFolder?'This also deletes <b>'+esc(m.file)+'</b> from '+esc(m.dir)+'.':'This removes it from this browser.')+' It can\'t be undone.</p>',[{label:'Delete board',primary:true,run:()=>{ if(inFolder) Folder.removeFile(m.file); try{ localStorage.removeItem(CODE+id); localStorage.removeItem(IMGS+id); }catch(_){} list=list.filter(b=>b.id!==id); saveList(); if(current===id) current=null; closeModal(); renderRecents(); toast('Board deleted'); }}]);
   }
   // A new board with the AI tab open, ready to type.
+  /* ---- landing: a starting point for each kind of team, with an AI step to try next ---- */
+  const TEAMS=[
+    {id:'arch',name:'Cloud architects',tpl:'webapp',say:'Draw the system with real Azure icons, then let Claude fill the gaps and write it up.',ask:'Expand this with monitoring, secrets and a staging slot, and explain the design in a doc'},
+    {id:'pp',name:'Power Platform makers',tpl:'pp',say:'Map apps, flows, Dataverse and agents, then turn the plan into tables and tickets.',ask:'Plan this out with a spec doc, the Dataverse tables and tickets for the work'},
+    {id:'agile',name:'Agile teams',tpl:'retro',say:'Run a retro on sticky notes. Claude groups them by theme and turns actions into tickets.',ask:'Group these notes by theme and turn the action items into tickets'},
+    {id:'product',name:'Product and design',tpl:'brainstorm',say:'Collect ideas, then sketch simple phone, iPad and desktop screens next to them.',ask:'Turn the best ideas into a login, a home page and a profile screen for mobile'}];
+  let team=TEAMS[0].id;
+  function renderTeams(){
+    const tabs=$('#teamTabs'), card=$('#teamCard'); if(!tabs) return;
+    tabs.innerHTML=TEAMS.map(t=>'<button type="button" role="tab" data-team="'+t.id+'" aria-selected="'+(t.id===team)+'">'+esc(t.name)+'</button>').join('');
+    const t=TEAMS.find(x=>x.id===team), tp=TEMPLATES.find(x=>x.id===t.tpl); if(!tp){ card.innerHTML=''; return; }
+    card.innerHTML='<div class="team-text"><p>'+esc(t.say)+'</p><div class="team-ask"><span class="ai-mk">'+(typeof aiSpark==='function'?aiSpark():'')+'</span><span>Then ask: <b>'+esc(t.ask)+'</b></span></div>'+
+      '<div class="team-cta"><button type="button" class="btn primary" data-team-go="ai">Open it and ask Claude</button><button type="button" class="btn" data-team-go="open">Just open the board</button></div></div>'+
+      '<button type="button" class="team-th" data-team-go="open" aria-label="Open '+esc(tp.name)+'"><span class="th">'+tplThumb(tp)+'</span><small>'+esc(tp.name)+'</small></button>';
+  }
+  $('#teamTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-team]'); if(!b) return; team=b.dataset.team; renderTeams(); });
+  $('#teamCard').addEventListener('click',e=>{ const b=e.target.closest('[data-team-go]'); if(!b) return; const t=TEAMS.find(x=>x.id===team), tp=TEMPLATES.find(x=>x.id===t.tpl); if(!tp) return;
+    openNew(tp.code); if(b.dataset.teamGo==='ai') setTimeout(()=>{ openAITab(); const i=$('#aiIn'); if(i){ i.value=t.ask; if(!i.disabled) i.focus(); } },120); });
   function startWithAI(){ openNew('flowchart LR\n','Untitled board'); setTimeout(()=>{ if(typeof openAITab==='function') openAITab(); },80); }
   function removeAll(){
-    const n=list.length; if(!n) return;
-    openModal('Delete all boards','<p>Delete all '+n+(n===1?' board':' boards')+' in this browser? This can\'t be undone. Export board files first for anything you want to keep.</p>',[{label:'Delete '+n+(n===1?' board':' boards'),primary:true,run:()=>{
-      for(const b of list){ try{ localStorage.removeItem(CODE+b.id); localStorage.removeItem(IMGS+b.id); }catch(_){} }
-      list=[]; saveList(); current=null; thumbs.clear(); closeModal(); renderRecents(); toast('All boards deleted'); }}]);
+    const own=list.filter(b=>!linked(b)); const n=own.length;
+    if(!n){ toast('Every board here is a file in '+Folder.name()+'. Delete files there, or one by one here.'); return; }
+    openModal('Delete all boards','<p>Delete all '+n+(n===1?' board':' boards')+' kept in this browser? This can\'t be undone. Export board files first for anything you want to keep.'+(n<list.length?' Boards saved in your folder are not touched.':'')+'</p>',[{label:'Delete '+n+(n===1?' board':' boards'),primary:true,run:()=>{
+      for(const b of own){ try{ localStorage.removeItem(CODE+b.id); localStorage.removeItem(IMGS+b.id); }catch(_){} }
+      list=list.filter(b=>linked(b)); saveList(); if(!meta(current)) current=null; thumbs.clear(); closeModal(); renderRecents(); toast('Deleted '+n+(n===1?' board':' boards')); }}]);
   }
   function exportFile(id){ open(id); setTimeout(()=>{ const b=document.querySelector('#exportMenu [data-export=json]'); if(b) b.click(); },120); }
 
@@ -12905,7 +13377,12 @@ const Boards=(()=>{
     const op=e.target.closest('[data-open]'); if(op) open(op.dataset.open);
   });
   $('#homeMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-hm]'); if(!b) return; const id=$('#homeMenu').dataset.id; $('#homeMenu').hidden=true;
-    ({open,rename,duplicate,remove,export:exportFile})[b.dataset.hm](id); });
+    ({open,rename,duplicate,remove,export:exportFile,move:moveToFolder})[b.dataset.hm](id); });
+  $('#homeFolder').addEventListener('click',folderMenu);
+  $('#fileState').addEventListener('click',()=>{ const m=meta(current); if(!m) return; if(Folder.state()==='reconnect'&&m.dir===Folder.name()) Folder.reconnect(); else if(linked(m)) folderMenu(); });
+  // New or changed files in the folder show up when you come back to the home page.
+  const rescan=()=>{ if(isHome()&&Folder.ready()&&document.visibilityState==='visible') Folder.scan().then(()=>renderRecents()); };
+  document.addEventListener('visibilitychange',rescan); window.addEventListener('focus',rescan);
   document.addEventListener('click',e=>{ if(!e.target.closest('#homeMenu')&&!e.target.closest('[data-more]')) $('#homeMenu').hidden=true; });
   $('#removeAllBtn').addEventListener('click',removeAll);
   $('#homeView').addEventListener('click',e=>{ const b=e.target.closest('[data-view]'); if(!b) return; view=b.dataset.view; LS.set('orim.homeView',view); renderStatic(); renderRecents(); });
@@ -12919,7 +13396,7 @@ const Boards=(()=>{
   $('#homeTheme').addEventListener('click',()=>$('#themeBtn').click());
   $('#homeBtn').addEventListener('click',showHome);
 
-  return {init,open,openNew,create,showHome,persist,isHome,iconsReady,current:()=>current,thumbSVG};
+  return {init,open,openNew,create,showHome,persist,isHome,iconsReady,current:()=>current,thumbSVG,syncFolder,folderChanged,metaChanged,fileConflict};
 })();
 
 </script>

@@ -26,8 +26,10 @@ function updCtx(){
   const thick=(v)=>'<label class="thick" title="Thickness"><input type="range" min="1" max="12" step="0.5" value="'+v+'" data-thick aria-label="Thickness"><output>'+v+'</output></label>';
   const colorDots=(cur,withDefault)=>(withDefault?'<button type="button" class="ink-dot" data-acolor="" aria-pressed="'+!cur+'" title="Default" style="background:var(--edge);width:18px;height:18px"></button>':'')+ARROW_COLORS.map(c=>'<button type="button" class="ink-dot" data-acolor="'+c+'" aria-pressed="'+((cur||'').toLowerCase()===c)+'" title="'+c+'" style="background:'+(c==='#1a1a1a'?'var(--ink-black)':c)+';width:18px;height:18px"></button>').join('');
   const lineColorBtn=(c)=>'<button type="button" class="ibtn" data-act="lineColor" title="Line color" aria-label="Line color"><span class="dot" style="background:'+(c?(c==='#1a1a1a'?'var(--ink-black)':c):'var(--edge)')+';border-color:transparent"></span></button>';
+  const aiBtn='<button type="button" class="btn ai-make" data-act="aiPop" title="Ask Claude to sort, summarise or build on the selection">'+aiSpark(true)+'<span>AI</span></button>'+sep;
   if(k.p&&!k.a&&!k.n&&!k.e&&!k.g&&!k.k){
-    html+='<span class="ctx-count">'+(k.p===1?'Image':k.p+' images')+'</span>'+sep+b('picFront','layerUp','Bring to front, above shapes, notes and lines')+b('picBack','layerDown','Send to back, behind shapes and notes')+b('picDup','dup','Duplicate (Ctrl+D)')+sep+b('del','trash','Delete (Del)');
+    html+='<span class="ctx-count">'+(k.p===1?'Image':k.p+' images')+'</span>'+sep+b('picFront','layerUp','Bring to front, above shapes, notes and lines')+b('picBack','layerDown','Send to back, behind shapes and notes')+b('picDup','dup','Duplicate (Ctrl+D)')+b('picFade','picture',(m.images.find(x=>'p:'+x.id===[...state.sel][0])||{}).faded?'Show at full strength':'Fade, to trace over it')+sep+b('del','trash','Delete (Del)');
+    if(k.p===1) html='<button type="button" class="btn ai-make" data-act="picAI" title="Claude recreates this picture as stickies, shapes and lines you can edit">'+aiSpark(true)+'<span>Make editable</span></button>'+sep+html;
   } else if(k.a&&!k.n&&!k.e&&!k.g&&!k.k){
     const as=[...state.sel].map(x=>m.arrows.find(a=>a.id===x.slice(2))).filter(Boolean); const a0=as[0];
     if(as.length>1) html+='<span class="ctx-count">'+as.length+' arrows</span>';
@@ -49,6 +51,7 @@ function updCtx(){
     html+=b('group','group','Group into frame (Ctrl+G)')+b('dup','dup','Duplicate (Ctrl+D)')+b('del','trash','Delete (Del)');
   } else if(k.n&&!k.e&&!k.g&&!k.k&&!k.a&&!k.p){
     const ns=selNodes(); const first=ns[0]; const st=m.styles.get(first.id);
+    html+=aiBtn;
     const allIcon=ns.every(n=>n.shape==='icon'); const allSticky=ns.every(n=>n.shape==='sticky');
     const shapeIco=allIcon?'image':(SHAPES.find(s=>s.id===first.shape)?first.shape:'rect');
     if(!allSticky) html+='<button type="button" class="ibtn" data-act="shapes" title="Change shape" aria-label="Change shape">'+ico(shapeIco)+'</button>';
@@ -80,6 +83,7 @@ function updCtx(){
     html+=sep+b('del','trash','Delete (Del)');
   } else if(k.g&&!k.n&&!k.e&&!k.k&&!k.a&&!k.p){
     const g=m.groups.get([...state.sel][0].slice(2)); const st=g&&m.styles.get(g.id);
+    if(k.g===1&&g&&!g.dev) html+=aiBtn;
     if(k.g===1) html+='<button type="button" class="btn" data-act="editLabel" title="Rename frame (Enter)">'+esc(g?g.label:'Frame')+'</button>'+sep;
     else html+='<span class="ctx-count">'+k.g+' frames</span>'+sep;
     if(k.g===1&&g&&g.dev) html+='<span class="ctx-count">'+esc(DEVICES[g.dev].name)+'</span>';
@@ -88,7 +92,7 @@ function updCtx(){
     if(k.g===1&&g&&!g.dev){ const p=m.pos.get(g.id); if(p&&p.w&&groupHasMembers(m,g.id)) html+=b('fitGroup','fitIn','Resize to fit content'); }
     html+=sep+b('ungroup','ungroup','Remove frame, keep contents (Ctrl+Shift+G)')+b('del','trash','Delete frame and contents (Del)');
   } else {
-    html+='<span class="ctx-count">'+state.sel.size+' selected</span>'+b('group','group','Group into frame (Ctrl+G)')+b('del','trash','Delete (Del)');
+    html+=aiBtn+'<span class="ctx-count">'+state.sel.size+' selected</span>'+b('group','group','Group into frame (Ctrl+G)')+b('del','trash','Delete (Del)');
   }
   if(html!==ctxSig&&!state.sliding){ ctxEl.innerHTML=html; ctxSig=html; }
   ctxEl.hidden=false; placeCtx();
@@ -133,6 +137,9 @@ ctxEl.addEventListener('click',e=>{
     case 'colors': openPop('colors',btn); break;
     case 'format': openPop('format',btn); break;
     case 'picFront': case 'picBack': { const ids=new Set([...state.sel].filter(x=>x[0]==='p').map(x=>x.slice(2))); mutate(mm=>{ const sel=mm.images.filter(im=>ids.has(im.id)),rest=mm.images.filter(im=>!ids.has(im.id)); for(const im of sel) im.front=act==='picFront'; mm.images=act==='picFront'?[...rest,...sel]:[...sel,...rest]; },{structural:false}); for(const el of imgEls.values()) el.remove(); imgEls.clear(); render(); toast(act==='picFront'?'Image in front of everything':'Image behind shapes and notes'); break; }
+    case 'aiPop': openPop('ai',btn); return;
+    case 'picAI': { const id=[...state.sel].find(x=>x[0]==='p'); if(id) AI.fromImage(id.slice(2)); return; }
+    case 'picFade': { const ids=new Set([...state.sel].filter(x=>x[0]==='p').map(x=>x.slice(2))); mutate(mm=>{ const sel=mm.images.filter(im=>ids.has(im.id)); const on=!sel.every(im=>im.faded); for(const im of sel){ if(on) im.faded=true; else delete im.faded; } },{structural:false}); return; }
     case 'picDup': { const ids=[...state.sel].filter(x=>x[0]==='p').map(x=>x.slice(2)); const nsel=[]; mutate(mm=>{ for(const id of ids){ const im=mm.images.find(x=>x.id===id); if(!im) continue; const nid=nextImageId(mm); IMG[nid]=IMG[id]; mm.images.push({id:nid,x:im.x+24,y:im.y+24,w:im.w,h:im.h,front:!!im.front}); nsel.push('p:'+nid); } },{structural:false}); state.sel=new Set(nsel); selChanged(); break; }
     case 'fontSize': openPop('fontSize',btn); break;
     case 'textColor': openPop('textColor',btn); break;
@@ -152,6 +159,21 @@ ctxEl.addEventListener('click',e=>{
       else if(act.startsWith('al-')) align(act.slice(3));
   }
 });
+// What Claude can do with the selection. The request text is what the AI tab sends; "selected" means the selection.
+const AI_ACTIONS={
+  themes:{name:'Group by theme',ask:'Group the selected items by theme. Put each group in a new frame named after its theme, side by side next to where they are now. Keep their text as it is.'},
+  summary:{name:'Summarise into a doc',ask:'Summarise the selected items in a doc next to them: a short title, the key points as a list, and any open questions.'},
+  sentiment:{name:'Sort by sentiment',ask:'Sort the selected notes by sentiment: colour positive ones green (#c9df56), neutral ones yellow (#fff9b1) and negative ones pink (#ffcee0), and move them into three frames named Positive, Neutral and Negative.'},
+  expand:{name:'Expand with ideas',ask:'Build on the selected item: add four to six related ideas as sticky notes around it, each connected to it.'},
+  diagram:{name:'Make a diagram',ask:'Turn the selected notes into a diagram next to them: shapes (with icons where a service fits) and connections that show how the ideas relate.'},
+  tickets:{name:'Turn into tickets',ask:'Turn the selected items into tickets next to them: a user story for each piece of work (a task if it is small), with acceptance criteria, connected to the item it came from, in a frame named Tickets.'},
+  explain:{name:'Explain in a doc',ask:'Explain the selected items in a doc next to them: what each part is for and how they connect.'}
+};
+function aiActions(){
+  const ns=selNodes(), many=state.sel.size>1||[...state.sel].some(k=>k[0]==='g'); const sticky=ns.some(n=>n.shape==='sticky');
+  const L=many?[['themes','frame'],['summary','doc'],...(sticky?[['sentiment','sticky']]:[]),['diagram','shapes'],['tickets','ticket']]:[['expand','sticky'],['explain','doc'],['tickets','ticket']];
+  return L.map(([k,ic])=>[k,ic,AI_ACTIONS[k].name]);
+}
 function openPop(kind,anchor){
   if(!popEl.hidden&&popEl.dataset.kind===kind){ closePop(); return; }
   const m=state.model; let html='';
@@ -165,6 +187,9 @@ function openPop(kind,anchor){
   } else if(kind==='textColor'||kind==='textBg'){
     const st=m.styles.get([...state.sel][0].slice(2)); const list=kind==='textColor'?TEXT_COLORS:TEXT_BGS; const curv=st?(kind==='textColor'?st.color:st.bg):null;
     html='<div class="pop-label">'+(kind==='textColor'?'Text color':'Highlight')+'</div><div class="swatches">'+list.map(c=>'<button type="button" class="swt'+(c?'':' none')+'" data-tc="'+(c||'')+'" data-tk="'+kind+'" aria-pressed="'+((curv||'')===(c||''))+'" title="'+(c||'None')+'" style="'+(c?'background:'+c+';border-color:'+(c==='#ffffff'?'var(--line-strong)':c):'')+'"></button>').join('')+'</div>';
+  } else if(kind==='ai'){
+    // Quick AI actions on the selection, like Mural's: Claude sees what is selected.
+    html='<div class="pop-label">Claude</div>'+aiActions().map(([key,icon,name])=>'<button type="button" class="fly-row" data-aiask="'+key+'">'+ico(icon)+'<span>'+name+'</span></button>').join('');
   } else if(kind==='format'){
     html='<div class="pop-label">Frame format</div><div class="fmt-list">'+FRAME_FORMATS.map((f,i)=>'<button type="button" class="fmt" data-fmt="'+i+'"><b>'+f.name+'</b><small>'+(f.w?f.w+' × '+f.h:'Grows with content')+'</small></button>').join('')+'</div>';
   } else if(kind==='shapes'){
@@ -204,6 +229,7 @@ function closePop(){ popEl.hidden=true; popEl.dataset.kind=''; popEl._anchor=nul
 popEl.addEventListener('pointerdown',e=>e.stopPropagation());
 popEl.addEventListener('keydown',e=>{ if(e.target.id==='fsIn'&&e.key==='Enter'){ e.preventDefault(); const v=e.target.value.trim(); setFontSize(v?+v:null); closePop(); } e.stopPropagation(); });
 popEl.addEventListener('click',e=>{
+  const aa=e.target.closest('[data-aiask]'); if(aa){ const a=AI_ACTIONS[aa.dataset.aiask]; closePop(); if(a) AI.ask(a.ask,a.name); return; }
   const sb=e.target.closest('[data-shape]'),sw=e.target.closest('[data-sw]'),stc=e.target.closest('[data-stc]'),fmt=e.target.closest('[data-fmt]');
   const fsb=e.target.closest('[data-fs]'),tcb=e.target.closest('[data-tc]'),lcb=e.target.closest('[data-lc]');
   if(lcb){ const c=lcb.dataset.lc||null; const t=thickTargets(); mutate(()=>{ t.edges.forEach(x=>x.color=c); t.arrows.forEach(x=>x.color=c||'#1a1a1a'); },{structural:t.edges.length>0}); closePop(); return; }

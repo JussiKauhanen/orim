@@ -251,12 +251,13 @@ function renderImages(m){
     const layer=im.front?lImgTop:lImg; if(el.parentNode!==layer||layer.lastChild!==el) layer.appendChild(el);
     const src=IMG[im.id]||null;
     if(el._src!==src){ el._src=src; el.innerHTML=src?'<image preserveAspectRatio="none"/>':'<rect style="fill:var(--panel-2);stroke:var(--line-strong);stroke-dasharray:6 4"/><text text-anchor="middle" style="fill:var(--muted);font:500 13px '+FONT_ATTR+'">Image missing</text>'; if(src) el.firstChild.setAttribute('href',src); }
+    el.style.opacity=im.faded?'.4':'';
     const a=el.firstChild; a.setAttribute('x',im.x); a.setAttribute('y',im.y); a.setAttribute('width',im.w); a.setAttribute('height',im.h);
     if(!src){ const t=el.lastChild; t.setAttribute('x',im.x+im.w/2); t.setAttribute('y',im.y+im.h/2); }
   }
   for(const [id,el] of imgEls) if(!seen.has(id)){ el.remove(); imgEls.delete(id); }
 }
-function imagesMarkup(m,front){ let o=''; for(const im of m.images||[]){ if(!!im.front!==!!front) continue; const src=IMG[im.id]; if(src) o+='<image href="'+src+'" x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" preserveAspectRatio="none"/>'; } return o; }
+function imagesMarkup(m,front){ let o=''; for(const im of m.images||[]){ if(!!im.front!==!!front) continue; const src=IMG[im.id]; if(src) o+='<image href="'+src+'" x="'+im.x+'" y="'+im.y+'" width="'+im.w+'" height="'+im.h+'" preserveAspectRatio="none"'+(im.faded?' opacity=".4"':'')+'/>'; } return o; }
 function inkPath(pts){
   if(pts.length===1) return 'M'+pts[0][0]+' '+pts[0][1]+'l0.01 0';
   let d='M'+pts[0][0]+' '+pts[0][1];
