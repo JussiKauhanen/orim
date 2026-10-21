@@ -45,6 +45,8 @@ const Boards=(()=>{
   function folderChanged(){ renderFileState(); renderFolderBtn(); if(isHome()) renderRecents(); }
   function renderFolderBtn(){
     const b=$('#homeFolder'), foot=$('#homeFoot'); if(!b) return; const st=Folder.state();
+    // A one-time suggestion on the home page; No thanks hides it for good (the folder button stays in the corner).
+    const tip=$('#folderTip'); if(tip) tip.hidden=!(st==='none'&&LS.get('orim.folderTip','ask')!=='no'&&list.length>0);
     b.hidden=st==='unsupported'; b.classList.toggle('warn',st==='reconnect');
     b.innerHTML=ico('folder')+'<span>'+(st==='none'?'Save to a folder':st==='reconnect'?'Reconnect '+esc(Folder.name()):esc(Folder.name()))+'</span>';
     b.title=st==='none'?'Choose a folder on this computer. Each board is saved there as a Markdown file.':st==='reconnect'?'Let orim open '+Folder.name()+' again':'Boards are saved in '+Folder.name()+'. Click to change.';
@@ -73,15 +75,32 @@ const Boards=(()=>{
     finally{ watching=false; }
   }
   // The file name and save state next to the board title.
+  // Where this board is saved, next to its title, like Excel's "Saved to this PC": on disk or only in this browser.
   function renderFileState(){
-    const el=$('#fileState'); if(!el) return; const m=meta(current);
-    if(!m||!m.file||!m.dir){ el.hidden=true; return; }
-    el.hidden=false; const st=Folder.state(), here=m.dir===Folder.name();
-    if(st==='reconnect'&&here){ el.className='file-state warn'; el.innerHTML=ico('folder')+'<span>Reconnect folder</span>'; el.title='Click to let orim save '+m.file+' in '+m.dir+' again'; return; }
-    if(!here||st!=='ready'){ el.className='file-state off'; el.innerHTML=ico('folder')+'<span>'+esc(m.file)+'</span>'; el.title='Saved in this browser. The folder '+m.dir+' is not connected.'; return; }
-    el.className='file-state'+(fileStatus==='error'?' warn':''); el.innerHTML=ico('folder')+'<span>'+esc(m.file)+'</span>';
-    el.title=fileStatus==='error'?'Could not save to the folder. Your changes are kept in the browser.':'Saved in '+m.dir+'/'+m.file;
+    const el=$('#fileState'); if(!el) return; const m=meta(current); if(!m){ el.hidden=true; return; }
+    el.hidden=false; const st=Folder.state(), here=linked(m);
+    let cls='file-state', icon='browser', text='Saved in browser', tip='This board is kept in this browser only. Click for options.';
+    if(here&&st==='ready'){ icon='folder'; text=fileStatus==='saving'?'Saving…':fileStatus==='error'?'Not saved to disk':'Saved to disk'; tip=fileStatus==='error'?'Could not write '+m.file+'. Your changes are kept in the browser.':'Saved as '+m.dir+'/'+m.file; if(fileStatus==='error') cls+=' warn'; else cls+=' disk'; }
+    else if(m.file&&m.dir&&st==='reconnect'&&m.dir===Folder.name()){ icon='folder'; text='Reconnect folder'; tip='The browser needs your permission again to save '+m.file+' in '+m.dir; cls+=' warn'; }
+    el.className=cls; el.innerHTML=ico(icon)+'<span>'+text+'</span>'+ico('chevD'); el.title=tip;
   }
+  // The small menu under that note: choose a folder, save this board there, change folder or stop using it.
+  function saveMenu(){
+    const mn=$('#saveMenu'), m=meta(current); if(!m) return; const st=Folder.state(), here=linked(m), inClaude=(()=>{ try{ return window.self!==window.top; }catch(_){ return true; } })();
+    let h;
+    if(st==='unsupported') h='<p><b>Saved in this browser.</b> '+(inClaude?'To save boards as files on your computer, open orim on its own page in Chrome or Edge.':'This browser cannot save to a folder. Chrome or Edge on a computer can.')+'</p>';
+    else if(st==='none') h='<p><b>Saved in this browser only.</b> Choose a folder and each board is saved there as a Markdown file, with its pictures next to it.</p><button type="button" class="btn primary" data-sm="choose">'+ico('folder')+'Choose a folder</button>';
+    else if(st==='reconnect') h='<p>Your browser needs permission again to save into <b>'+esc(Folder.name())+'</b>.</p><button type="button" class="btn primary" data-sm="reconnect">Reconnect '+esc(Folder.name())+'</button><button type="button" class="btn ghost" data-sm="stop">Stop saving to a folder</button>';
+    else if(here) h='<p><b>Saved to disk</b> as <code>'+esc(m.dir+'/'+m.file)+'</code>, a moment after each change. A copy is kept in this browser too.</p><button type="button" class="btn" data-sm="choose">Change folder</button><button type="button" class="btn ghost" data-sm="stop">Stop saving to a folder</button>';
+    else h='<p><b>Saved in this browser only.</b> New boards go to <b>'+esc(Folder.name())+'</b>; this one is older.</p><button type="button" class="btn primary" data-sm="move">'+ico('folder')+'Save this board to '+esc(Folder.name())+'</button><button type="button" class="btn ghost" data-sm="stop">Stop saving to a folder</button>';
+    mn.innerHTML=h; const r=$('#fileState').getBoundingClientRect(); mn.style.left=Math.max(8,Math.min(innerWidth-308,r.left))+'px'; mn.style.top=(r.bottom+6)+'px'; mn.hidden=false;
+  }
+  $('#saveMenu').addEventListener('click',async e=>{ const b=e.target.closest('[data-sm]'); if(!b) return; $('#saveMenu').hidden=true; const k=b.dataset.sm;
+    if(k==='choose'){ const was=Folder.ready(); await Folder.choose(); if(Folder.ready()&&current&&!linked(meta(current))&&!was) moveToFolder(current); }
+    else if(k==='reconnect') Folder.reconnect();
+    else if(k==='stop') openModal('Stop saving to a folder','<p>Boards will be kept in this browser only. The files already in <b>'+esc(Folder.name())+'</b> stay where they are.</p>',[{label:'Stop saving to a folder',primary:true,run:()=>{ closeModal(); Folder.disconnect(); }}]);
+    else if(k==='move') moveToFolder(current); });
+  document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#saveMenu')&&!e.target.closest('#fileState')) $('#saveMenu').hidden=true; });
   function folderMenu(){
     const st=Folder.state();
     if(st==='none'){ Folder.choose(); return; }
@@ -121,7 +140,7 @@ const Boards=(()=>{
     if(lastSaved.get(current)!==state.code){
       LS.set(CODE+current,state.code); lastSaved.set(current,state.code);
       m.updated=now(); m.title=(state.model&&state.model.title)||'Untitled board'; saveList(); thumbs.delete(current);
-      if(linked(m)){ if(Folder.ready()){ fileStatus='saving'; Folder.write(m,state.code,imgs); } else { m.dirty=true; saveList(); } }
+      if(linked(m)){ if(Folder.ready()){ fileStatus='saving'; renderFileState(); Folder.write(m,state.code,imgs); } else { m.dirty=true; saveList(); } }
     }
     if(!LS.set(IMGS+current,imgs)&&!imgWarned&&Object.keys(imgs).length){ imgWarned=true; toast('Images are too large to autosave in this browser. Export a board file (.json) to keep them.'); }
   }
@@ -340,6 +359,7 @@ const Boards=(()=>{
   $('#tplNav').addEventListener('click',e=>{ const b=e.target.closest('[data-tpl-dir]'); if(!b) return; const r=$('#homeTpl'); r.scrollBy({left:+b.dataset.tplDir*r.clientWidth*0.8,behavior:'smooth'}); });
   $('#homeTpl').addEventListener('scroll',updTplNav,{passive:true});
   $('#heroDots').addEventListener('click',e=>{ const b=e.target.closest('[data-hero]'); if(b) heroScene(+b.dataset.hero); });
+  $('#folderTip').addEventListener('click',e=>{ const b=e.target.closest('[data-ft]'); if(!b) return; if(b.dataset.ft==='choose') Folder.choose(); else { LS.set('orim.folderTip','no'); $('#folderTip').hidden=true; toast('Boards stay in this browser. You can choose a folder any time from the top of this page.'); } });
   $('#homeAllTpl').addEventListener('click',()=>openTemplates());
   window.addEventListener('resize',updTplNav);
   $('#homeTpl').addEventListener('click',e=>{
@@ -357,7 +377,7 @@ const Boards=(()=>{
   $('#homeMenu').addEventListener('click',e=>{ const b=e.target.closest('[data-hm]'); if(!b) return; const id=$('#homeMenu').dataset.id; $('#homeMenu').hidden=true;
     ({open,rename,duplicate,remove,export:exportFile,move:moveToFolder})[b.dataset.hm](id); });
   $('#homeFolder').addEventListener('click',folderMenu);
-  $('#fileState').addEventListener('click',()=>{ const m=meta(current); if(!m) return; if(Folder.state()==='reconnect'&&m.dir===Folder.name()) Folder.reconnect(); else if(linked(m)) folderMenu(); });
+  $('#fileState').addEventListener('click',()=>{ const mn=$('#saveMenu'); if(!mn.hidden){ mn.hidden=true; return; } saveMenu(); });
   // New or changed files in the folder show up when you come back to the home page.
   const rescan=()=>{ if(isHome()&&Folder.ready()&&document.visibilityState==='visible') Folder.scan().then(()=>renderRecents()); };
   document.addEventListener('visibilitychange',rescan); window.addEventListener('focus',rescan);

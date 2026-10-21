@@ -94,6 +94,7 @@ const I={
   quote:'<path d="M5 7v10M9 9h10M9 13h10M9 17h6"/>',
   hr:'<path d="M3.5 12h17M7 7h10M7 17h10" stroke-dasharray="0"/>',
   textDir:'<path d="M3.5 17l4-10 4 10M5 13.5h5"/><path d="M17 4.5v15M14.5 17l2.5 2.5 2.5-2.5"/>',
+  browser:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9h17M6.5 6.8h.01M9 6.8h.01"/>',
   close:'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   picture:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5L5 19.5"/>',
   chevD:'<path d="M8 10l4 4 4-4"/>',

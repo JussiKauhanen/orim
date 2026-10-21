@@ -915,3 +915,19 @@ kbd{font:500 11px var(--font-code);border:1px solid var(--line);border-bottom-wi
 .tp-ai,.tp-ai .aim{width:28px;height:28px}
 .tp-ai{border-radius:8px}
 @media (max-width:760px){ .tp-side{padding-right:52px} .tp-x{top:8px;right:8px} }
+/* Where the board is saved: a quiet note next to the title */
+.file-state{gap:4px;max-width:none;padding:3px 6px 3px 7px;font:500 12px var(--font-ui);color:var(--muted)}
+.file-state .i{width:14px;height:14px}
+.file-state .i:last-child{width:12px;height:12px;opacity:.7}
+.file-state.disk .i:first-child{color:#0ca789}
+.file-state span{white-space:nowrap}
+.save-menu{position:fixed;z-index:60;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.5;color:var(--muted)}
+.save-menu p{margin:0 0 4px}
+.save-menu b{color:var(--fg);font-weight:600}
+.save-menu code{font:12px var(--font-code);color:var(--fg);background:var(--panel-2);padding:1px 5px;border-radius:4px;word-break:break-all}
+.save-menu .btn{justify-content:center;gap:6px}
+.folder-tip{display:flex;align-items:center;gap:14px;margin:0 0 28px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);flex-wrap:wrap}
+.folder-tip .ft-ico{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,#0ca789 14%,var(--panel));color:#0ca789;flex:none}
+.folder-tip>div{flex:1 1 280px;display:flex;flex-direction:column;font-size:13px;color:var(--muted);line-height:1.45}
+.folder-tip b{color:var(--fg);font-size:14px}
+@media (max-width:760px){ .file-state span{display:none} }
