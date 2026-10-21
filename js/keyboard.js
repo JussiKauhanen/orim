@@ -45,7 +45,8 @@ document.addEventListener('keyup',e=>{ if(e.key===' '){ spaceDown=false; updTool
 const CLIP_MARK='%% mermaid-board-clip';
 function looksMermaid(t){ return /^\s*(---\s*\n|%%|flowchart\b|graph\b)/.test(t)||/```mermaid\s*\n\s*(---[\s\S]*?---\s*\n\s*)?(%%[^\n]*\n\s*)*(flowchart|graph)\b/.test(t); }
 document.addEventListener('paste',e=>{
-  const t=e.target; if(t&&t.closest&&t.closest('input,textarea')) return;
+  // Pasting into a text field, a table cell or a document stays there; only the board itself takes pastes.
+  const t=e.target; if(e.defaultPrevented||(t&&t.closest&&t.closest('input,textarea,[contenteditable],.rich-box,.rich-bar'))) return;
   const files=[]; for(const it of (e.clipboardData&&e.clipboardData.items)||[]) if(it.kind==='file'&&/^image\//.test(it.type)){ const f=it.getAsFile(); if(f) files.push(f); }
   if(Boards.isHome()){
     const tx=(e.clipboardData&&e.clipboardData.getData('text/plain'))||'';
