@@ -62,7 +62,9 @@ function updCtx(){
     if(allSticky) html+='<button type="button" class="ibtn" data-act="colors" title="Sticky color" aria-label="Sticky color"><span class="dot" style="background:'+((st&&st.fill)||'#fff9b1')+';border-color:transparent;border-radius:3px"></span></button>';
     else if(!allIcon) html+='<button type="button" class="ibtn" data-act="colors" title="Fill color" aria-label="Fill color"><span class="dot" style="'+(st&&st.fill?'background:'+st.fill+';border-color:'+(st.stroke||st.fill):'')+'"></span></button>';
     // The icon button shows the icon itself, so it never looks like the shape button next to it.
-    if(!allSticky){ const ic=allIcon&&ns.length===1&&iconFor(first.icon); html+=ic?'<button type="button" class="ibtn ctx-icon" data-act="pickIcon" title="Change icon" aria-label="Change icon"><img alt="" src="'+ic.uri+'"></button>':b('pickIcon','library',allIcon?'Change icon':'Use an icon'); }
+    if(!allSticky){ const ic=allIcon&&ns.length===1&&iconFor(first.icon); html+=ic?'<button type="button" class="ibtn ctx-icon" data-act="pickIcon" title="Change icon" aria-label="Change icon"><img alt="" src="'+iconUri(ic,ic.svg&&st&&st.stroke)+'"></button>':b('pickIcon','library',allIcon?'Change icon':'Use an icon'); }
+    // Generic outline icons take any colour.
+    if(allIcon&&ns.every(n=>{ const ic=iconFor(n.icon); return ic&&ic.svg; })) html+='<button type="button" class="ibtn" data-act="iconColor" title="Icon color" aria-label="Icon color"><span class="dot" style="background:'+((st&&st.stroke)||'var(--fg)')+';border-color:transparent"></span></button>';
     if(ns.some(n=>n.shape==='icon')) html+=b('noIcon','noimage','Remove icon');
     { const fsz=st&&st.fontSize?Math.round(st.fontSize):(allIcon?Math.round(labelSize(first)):'Auto');
       const fk=st&&st.font&&FONTS[st.font]?st.font:null;
@@ -159,6 +161,7 @@ ctxEl.addEventListener('click',e=>{
     case 'fontSize': openPop('fontSize',btn); break;
     case 'fontFam': openPop('fontFam',btn); break;
     case 'textColor': openPop('textColor',btn); break;
+    case 'iconColor': openPop('iconColor',btn); break;
     case 'textBg': openPop('textBg',btn); break;
     case 'lineColor': openPop('lineColor',btn); break;
     case 'bold': toggleTextStyle('bold'); break;
@@ -225,6 +228,9 @@ function openPop(kind,anchor){
   if(kind==='lineColor'){
     const t=thickTargets(); const cur=(t.edges[0]&&t.edges[0].color)||(t.arrows[0]&&t.arrows[0].color)||'';
     html='<div class="pop-label">Line color</div><div class="swatches">'+(t.edges.length?'<button type="button" class="swt none" data-lc="" aria-pressed="'+!cur+'" title="Default"></button>':'')+MIRO_COLORS.map(c=>'<button type="button" class="swt" data-lc="'+c+'" aria-pressed="'+(cur.toLowerCase()===c)+'" title="'+c+'" style="background:'+c+';border-color:'+(c==='#ffffff'?'var(--line-strong)':c)+'"></button>').join('')+'</div>';
+  } else if(kind==='iconColor'){
+    const st=m.styles.get([...state.sel][0].slice(2)); const cur=((st&&st.stroke)||'').toLowerCase();
+    html='<div class="pop-label">Icon color</div><div class="swatches"><button type="button" class="swt none" data-icc="" aria-pressed="'+!cur+'" title="Default"></button>'+MIRO_COLORS.filter(c=>c!=='#ffffff'||boardTheme(m)&&boardTheme(m).dark).map(c=>'<button type="button" class="swt" data-icc="'+c+'" aria-pressed="'+(cur===c)+'" title="'+c+'" style="background:'+c+';border-color:'+(c==='#ffffff'?'var(--line-strong)':c)+'"></button>').join('')+'</div>';
   } else if(kind==='fontSize'){
     const st=m.styles.get([...state.sel][0].slice(2)); const sticky=selNodes().every(n=>n.shape==='sticky');
     const cur=st&&st.fontSize?Math.round(st.fontSize):'';
@@ -292,6 +298,8 @@ popEl.addEventListener('click',e=>{
   if(fsb){ setFontSize(fsb.dataset.fs==='auto'?null:+fsb.dataset.fs); closePop(); return; }
   const rb=e.target.closest('[data-rot]'); if(rb){ const r=+rb.dataset.rot; mutate(mm=>{ for(const k of state.sel){ const x=k[0]==='n'?mm.nodes.get(k.slice(2)):k[0]==='g'?mm.groups.get(k.slice(2)):null; if(!x) continue; if(r) x.rot=r; else delete x.rot; if(k[0]==='n') sizeNode(x); } },{structural:false}); closePop(); return; }
   const fnb=e.target.closest('[data-font]'); if(fnb){ applyTextStyle({font:fnb.dataset.font||null}); closePop(); return; }
+  const icc=e.target.closest('[data-icc]');
+  if(icc){ applyTextStyle({stroke:icc.dataset.icc||null}); closePop(); return; }
   if(tcb){ const v=tcb.dataset.tc||null; applyTextStyle(tcb.dataset.tk==='textColor'?{color:v}:{bg:v}); closePop(); return; }
   if(stc){ const c=stc.dataset.stc; mutate(m=>{ for(const n of selNodes()){ const cur=m.styles.get(n.id)||{fill:null,stroke:null,color:null,extra:[]}; cur.fill=c; cur.stroke=null; m.styles.set(n.id,cur); } }); closePop(); return; }
   if(fmt){ const f=FRAME_FORMATS[+fmt.dataset.fmt]; const gid=[...state.sel][0].slice(2); const b=state.boxes.get(gid);

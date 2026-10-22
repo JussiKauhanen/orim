@@ -26,7 +26,8 @@ function aiIconList(full){
         s+='azure: '+AI_COMMON_AZURE.split(' ').filter(id=>have.has(id)).join(' ')+'\n';
         s+='Other Azure icons use the kebab-case name of the Azure Architecture Icon (e.g. azure:event-hub-clusters). Unknown ids show as an empty box.\n';
       }
-    } else s+=p.id+': '+p.icons.map(ic=>ic.id).join(' ')+'\n';
+    } else if(p.id==='gen') s+='gen (generic outline icons for people, roles, places, things and status; not tied to any product; colour one with `style id stroke:#hex`): '+p.icons.map(ic=>ic.id).join(' ')+'\n';
+    else s+=p.id+': '+p.icons.map(ic=>ic.id).join(' ')+'\n';
   }
   return s;
 }

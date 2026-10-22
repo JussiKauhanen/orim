@@ -79,10 +79,13 @@ const Boards=(()=>{
   function renderFileState(){
     const el=$('#fileState'); if(!el) return; const m=meta(current); if(!m){ el.hidden=true; return; }
     el.hidden=false; const st=Folder.state(), here=linked(m);
-    let cls='file-state', icon='browser', text='Saved in browser', tip='This board is kept in this browser only. Click for options.';
-    if(here&&st==='ready'){ icon='folder'; text=fileStatus==='saving'?'Saving…':fileStatus==='error'?'Not saved to disk':'Saved to disk'; tip=fileStatus==='error'?'Could not write '+m.file+'. Your changes are kept in the browser.':'Saved as '+m.dir+'/'+m.file; if(fileStatus==='error') cls+=' warn'; else cls+=' disk'; }
-    else if(m.file&&m.dir&&st==='reconnect'&&m.dir===Folder.name()){ icon='folder'; text='Reconnect folder'; tip='The browser needs your permission again to save '+m.file+' in '+m.dir; cls+=' warn'; }
-    el.className=cls; el.innerHTML=ico(icon)+'<span>'+text+'</span>'+ico('chevD'); el.title=tip;
+    // Green: saved to a file. Yellow: only in this browser, or the folder needs permission again. Red: saving failed.
+    let tone='warn', text='In browser only', tip='Saved in this browser only, not as a file. Click to choose a folder.';
+    if(here&&st==='ready'){ if(fileStatus==='error'){ tone='bad'; text='Not saved to disk'; tip='Could not write '+m.file+'. Your changes are kept in the browser. Click for options.'; }
+      else { tone='ok'; text=fileStatus==='saving'?'Saving…':'Saved to disk'; tip='Saved as '+m.dir+'/'+m.file+'. Click for options.'; } }
+    else if(m.file&&m.dir&&st==='reconnect'&&m.dir===Folder.name()){ tone='warn'; text='Reconnect folder'; tip='The browser needs your permission again to save '+m.file+' in '+m.dir+'. Click to reconnect.'; }
+    else if(st==='unsupported') tip='Saved in this browser only. Click to see how to save boards as files.';
+    el.className='file-state '+tone; el.innerHTML='<i class="fs-dot"></i><span>'+text+'</span>'+ico('chevD'); el.title=tip;
   }
   // The small menu under that note: choose a folder, save this board there, change folder or stop using it.
   function saveMenu(){
@@ -181,7 +184,7 @@ const Boards=(()=>{
   const isHome=()=>!$('#home').hidden;
 
   /* ---- thumbnails ---- */
-  const PACK_TINT={azure:'#0078d4',pp:'#742774',d365:'#0b53ce'};
+  const PACK_TINT={azure:'#0078d4',pp:'#742774',d365:'#0b53ce',gen:'#5b6475'};
   function thumbSVG(code,opt){
     opt=opt||{}; const aspect=opt.aspect||1.6;
     let m; try{ const r=parseMermaid(code); if(r.fatal) return emptyThumb(); m=r.model; resolveGeometry(m,new Map()); }catch(_){ return emptyThumb(); }
@@ -206,7 +209,7 @@ const Boards=(()=>{
     for(const id of m.nodeOrder){ const n=m.nodes.get(id); if(!n||n.x==null) continue; const st=styleOf(m,id)||{};
       if(n.shape==='sticky'){ o+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="2" style="fill:'+(st.fill||'#fff9b1')+'"/>'+lines(n,n.x+n.w/2,n.y+n.h/2,n.w*0.66,n.h*0.06,'#1a1a1a',.28); }
       else if(n.shape==='icon'){ const s=iconSize(n); const ic=iconFor(n.icon); const x=n.x+(n.w-s)/2;
-        o+=ic?'<image href="'+ic.uri+'" x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'"/>':'<rect x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'" rx="'+(s*0.22)+'" style="fill:'+(PACK_TINT[String(n.icon||'').split(':')[0]]||'#808080')+'"/>';
+        o+=ic?'<image href="'+iconUri(ic,ic.svg&&(st.stroke||(T&&T.text)||null))+'" x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'"/>':'<rect x="'+x+'" y="'+n.y+'" width="'+s+'" height="'+s+'" rx="'+(s*0.22)+'" style="fill:'+(PACK_TINT[String(n.icon||'').split(':')[0]]||'#808080')+'"/>';
         o+=bar(n.x+n.w/2-Math.min(n.w*0.8,Core.measure(n.label,12))/2,n.y+s+9,Math.min(n.w*0.8,Core.measure(n.label,12)),7,'var(--th-edge)',.6); }
       else if(n.shape==='text') o+=lines(n,n.x+n.w/2,n.y+n.h/2,n.w*0.8,Math.max(6,labelSize(n)*0.55),'var(--th-stroke)',.55);
       else { const fill=st.fill||(T?T.node:'var(--th-node)'); const sty='fill:'+fill+';stroke:'+(st.stroke||(n.group&&themeAccent(m,n.group))||(T?T.stroke:'var(--th-stroke)'))+';stroke-width:1.4';

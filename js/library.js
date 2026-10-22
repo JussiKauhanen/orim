@@ -6,7 +6,7 @@ const COMMON=['azure:function-apps','azure:app-services','azure:static-apps','az
 function tileHTML(ic){ return '<button type="button" class="tile" draggable="true" data-key="'+ic.key+'" title="'+esc(ic.title)+'\n'+ic.key+'"><img src="'+ic.uri+'" alt="" decoding="async" loading="lazy"><span>'+esc(ic.title)+'</span></button>'; }
 function secHTML(title,icons,open){ return '<details class="lib-sec"'+(open?' open':'')+'><summary>'+ico('chev')+esc(title)+'<em>'+icons.length+'</em></summary><div class="grid">'+icons.map(tileHTML).join('')+'</div></details>'; }
 function renderLibrary(){
-  const chips=$('#libChips'); const F=[['all','All'],['pp','Power Platform'],['d365','Dynamics 365'],['azure','Azure']];
+  const chips=$('#libChips'); const F=[['all','All'],['pp','Power Platform'],['d365','Dynamics 365'],['azure','Azure'],['gen','Generic']];
   chips.innerHTML=F.map(([id,t])=>'<button type="button" data-f="'+id+'" aria-pressed="'+(state.libFilter===id)+'">'+t+'</button>').join('');
   const body=$('#libBody');
   if(Icons.failed){ body.innerHTML='<div class="lib-empty">The icon pack could not be loaded. Shapes and Mermaid code still work.</div>'; return; }
@@ -26,6 +26,9 @@ function renderLibrary(){
         if(f==='all'){ const common=COMMON.map(k=>Icons.byKey.get(k)).filter(Boolean); html+=secHTML('Common Azure',common,true); }
         const cats=new Map(); for(const ic of p.icons){ if(!cats.has(ic.cat)) cats.set(ic.cat,[]); cats.get(ic.cat).push(ic); }
         for(const [c,list] of [...cats].sort((a,b)=>a[0].localeCompare(b[0]))) html+=secHTML('Azure · '+c,list,f==='azure'&&c==='Compute');
+      } else if(p.id==='gen'){
+        const cats=new Map(); for(const ic of p.icons){ if(!cats.has(ic.cat)) cats.set(ic.cat,[]); cats.get(ic.cat).push(ic); }
+        let i=0; for(const [c,list] of cats) html+=secHTML('Generic · '+c,list,f==='gen'&&i++<2);
       } else html+=secHTML(p.title,p.icons,p.id==='pp'||f===p.id);
     }
   }

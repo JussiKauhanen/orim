@@ -139,7 +139,7 @@ Commands:
 Rules:
 - Reuse existing ids exactly. New ids: camelCase letters and digits, not used yet.
 - Do only what was asked. Keep labels short; use \\n for a line break.
-- Use an icon for a cloud or Microsoft service when one fits (ids listed below); otherwise a plain shape.
+- Use an icon for a cloud or Microsoft service when one fits (ids listed below). For people, roles, teams, customers, places, channels, things and status (stakeholder maps, journeys, service blueprints, personas) use a gen: icon, coloured with stroke ("stroke":"#2d9bf0"); give icons of one group the same colour. Otherwise a plain shape.
 - Mockups: keep them simple and grey, a few pieces per screen. New screens: phone ${DEVICES.mobile.w*MOCK}x${DEVICES.mobile.h*MOCK} (content from y ${DEVICES.mobile.top*MOCK}), iPad ${DEVICES.tablet.w*MOCK}x${DEVICES.tablet.h*MOCK} (from y ${DEVICES.tablet.top*MOCK}), desktop ${DEVICES.desktop.w*MOCK}x${DEVICES.desktop.h*MOCK} (from y ${DEVICES.desktop.top*MOCK}); the board lists each screen's real size. Start from a preset, then add, update or delete pieces. Connect screens to each other for a flow, or pieces to the screen they open.
 - Showing changes on a mockup (a proposal, a ticket, "add two fields"): start an item or a piece's label with + for new, ~ for changed or - for removed. A uiTable label "Account name\nCity\n+Industry\n+Annual revenue" draws the two new columns in green; "+Industry" on a uiInput marks that field as new. Then add a short sticky or doc next to the screen saying what changes and why, connected to the piece.
 - Database tables: a table titled with the table name, header row Column | Type | Key | Notes and one row per column; link foreign keys row to row with fromRow and toRow.
@@ -156,7 +156,7 @@ Measure everything on a grid laid over the picture: x runs from 0 at the left ed
 - Areas that hold other things (layers, bands, columns, swimlanes, groups, boxes around boxes) are frames: {"op":"frame","id":"svc","label":"Service layer","xy":[20,120],"wh":[700,400],"fill":"#cfe8ff"} with the area's colour. Send outer frames first; a frame inside another has "in". Then add the items inside with "in".
 - Boxes: a shape with the box's own colour as "fill" (and "color":"#ffffff" for light text on a dark box). Rounded corners: round; pills: stadium; cylinders: cyl; diamonds: diamond; circles: circle.
 - Sticky notes: sticky in the nearest sticky colour.
-- Pictures, illustrations or logos inside circles or boxes: a circle (or the matching icon for a cloud or Microsoft service) with a one- or two-word label of what it shows.
+- Pictures, illustrations or logos inside circles or boxes: a circle (or the matching icon for a cloud or Microsoft service) with a one- or two-word label of what it shows. Simple line icons (a person, a sofa, a key, a headset, a hammer…) with a label below: the closest gen: icon, in the colour shown.
 - Text written sideways (for example a layer name running up the side): "rot":270 when it reads bottom to top, 90 when it reads top to bottom; on a frame it turns the frame's title.
 - Headings, step numbers, captions and paragraphs: text shapes whose wh covers the text block; "size":"xl" for the main title, "l" for headings, "s" for small print.
 - Arrows and lines: connect, with "line":"dotted" for dotted ones and any words written on them.

@@ -12,7 +12,7 @@ function iconMatch(label){
   const k=normName(label); if(!k) return null;
   if(QUICK_ALIAS_N.has(k)) return QUICK_ALIAS_N.get(k);
   if(!Icons.ready) return null;
-  if(!iconIndex){ iconIndex=new Map(); for(const p of Icons.packs) for(const ic of p.icons){ const n=normName(ic.title); if(n.length>3&&!iconIndex.has(n)) iconIndex.set(n,ic.key); } }
+  if(!iconIndex){ iconIndex=new Map(); for(const p of Icons.packs) if(p.id!=='gen') for(const ic of p.icons){ const n=normName(ic.title); if(n.length>3&&!iconIndex.has(n)) iconIndex.set(n,ic.key); } }
   return iconIndex.get(k)||null;
 }
 function guessShape(label){

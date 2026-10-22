@@ -289,6 +289,14 @@ test('text direction and marked mockup items', () => {
   assert.equal(run('uiMark("+Industry").t'), 'Industry');
 });
 
+test('generic icons keep their colour', () => {
+  const r = roundTrip('flowchart LR\n  care@{ icon: "gen:heart-handshake", label: "Customer care" }\n  style care stroke:#2d9bf0\n');
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.equal(r.s1, r.s2);
+  assert.equal(r.model.nodes.get('care').icon, 'gen:heart-handshake');
+  assert.ok(/style care stroke:#2d9bf0/.test(r.s1), r.s1);
+});
+
 test('reports errors with line numbers', () => {
   const r = roundTrip('flowchart LR\n  A -->\n  subgraph x [X]\n    B\n');
   assert.ok(r.errors.some((e) => e.line === 1));

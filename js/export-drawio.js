@@ -49,7 +49,7 @@ function buildDrawio(sel){
     let style='whiteSpace=wrap;html=1;'; const fs=st.fontSize||labelSize(n); const fst=(st.bold?1:0)+(st.italic?2:0);
     const txt=';fontSize='+Math.round(fs)+(fst?';fontStyle='+fst:'')+(st.bg?';labelBackgroundColor='+st.bg:'')+';fontColor='+(st.color||'#1a1a1a')+';';
     let x=n.x,y=n.y,w=n.w,h=n.h;
-    if(n.shape==='icon'){ const ic=iconFor(n.icon); const is=iconSize(n); x=n.x+(n.w-is)/2; w=is; h=is; style='image;html=1;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;image='+(ic?dioImg(ic.uri):'')+txt; }
+    if(n.shape==='icon'){ const ic=iconFor(n.icon); const is=iconSize(n); x=n.x+(n.w-is)/2; w=is; h=is; style='image;html=1;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;labelPosition=center;align=center;image='+(ic?dioImg(iconUri(ic,ic.svg&&(st.stroke||'#1a1a1a'))):'')+txt; }
     else if(n.shape==='text') style='text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;strokeColor=none;fillColor='+(st.fill||'none')+txt;
     else if(n.shape==='sticky') style='rounded=0;whiteSpace=wrap;html=1;strokeColor=none;shadow=1;fillColor='+(st.fill||'#fff9b1')+txt;
     else if(isUi(n)){ const U={uiButton:'rounded=1;fillColor=#5f6470;strokeColor=none;fontColor=#ffffff;fontStyle=1;',uiInput:'rounded=1;fillColor=#ffffff;strokeColor=#c4c8d0;align=left;spacingLeft=10;fontColor=#4b5160;',uiImage:'rounded=0;fillColor=#eceef2;strokeColor=#c4c8d0;fontColor=#4b5160;',

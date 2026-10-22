@@ -193,7 +193,7 @@ function updateGhost(){
   setGhost({line:v.slice(0,pos).split('\n').length-1,text:it.insert.slice(typed.length),full:it.insert,from:r.from});
 }
 function acceptGhost(){ const g=state.ghost; if(!g) return false; const pos=ta.selectionStart; ta.setRangeText(g.full,g.from,pos,'end'); setGhost(null); ta.dispatchEvent(new Event('input')); return true; }
-function iconHint(ic){ return ic.pack==='pp'?'Power Platform':ic.pack==='d365'?'Dynamics 365':'Azure · '+ic.cat; }
+function iconHint(ic){ return ic.pack==='gen'?'Generic · '+ic.cat:ic.pack==='pp'?'Power Platform':ic.pack==='d365'?'Dynamics 365':'Azure · '+ic.cat; }
 function acMatch(name,lw){ const t=String(name).toLowerCase(); if(t.startsWith(lw)||t.replace(/[\s-]+/g,'').startsWith(lw.replace(/[\s-]+/g,''))) return 0; if(t.split(/[\s-]+/).some(x=>x.startsWith(lw))) return 1; return -1; }
 function acCandidates(force){
   const v=ta.value,pos=ta.selectionStart; if(pos!==ta.selectionEnd) return null;

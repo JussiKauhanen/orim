@@ -25,7 +25,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 - Shapes, sticky notes, text, frames (nested), pen, highlighter and eraser, with Miro-style menus that name each tool and its shortcut. Besides the flowchart shapes there are a cloud, speech bubble, triangle, star, block arrow, chevron and document.
 - Text in a shape or sticky note grows and shrinks with it (Auto size); pick a size in the toolbar to fix it. Six fonts (handwritten, marker, rounded, serif and code), kept in PNG and SVG exports.
 - **Style** recolours the whole board: Classic, Midnight (dark navy with coloured frames), Pastel, Blueprint or Sketch (handwritten).
-- **Templates** opens a picker like Miro's: use cases on the left, a search box, and a grid of coloured previews. Click a card to use it, or its yellow mark to use it and ask Claude the suggested next step: architecture, journey map, mind map, SWOT, retro, kanban, sprint plan and more.
+- **Templates** opens a picker like Miro's: use cases on the left, a search box, and a grid of coloured previews. On a board that already has things on it, choose **Add to this board** (the template lands next to what is there, like a module; Undo takes it away) or **New board**; the choice is remembered. Click a card to use it, or its yellow mark to use it and ask Claude the suggested next step: architecture, journey map, stakeholder map, service blueprint, personas, mind map, SWOT, retro, kanban, sprint plan and more. The stakeholder map, service blueprint and personas use the coloured Generic icons.
 - Paste cells from Excel, Google Sheets or a CSV file to make a table, or into a selected table to fill it.
 - **Text direction** on shapes, notes, text and frame titles: four examples to pick from, horizontal or turned 90°, 180° or 270°. A turned frame title runs up the frame's left side.
 - **Duplicate** on a frame's toolbar (or Ctrl+D) copies the frame with everything in it and the lines between, next to it.
@@ -55,6 +55,7 @@ Everything runs in the browser. There is no backend, no account and no build ste
 
 **Icons**
 - 637 Azure architecture icons (V24), 9 Power Platform icons (Power Apps, Power Automate, Dataverse, Power BI, Copilot Studio, Power Pages, AI Builder, Power Fx, Power Platform) and 33 Dynamics 365 icons.
+- 129 Generic outline icons (people, roles, places, communication, things, tech, status) for journeys, stakeholder maps and service blueprints. They take any colour: select one and use **Icon color**. They come from Lucide (ISC license), so they are free to use anywhere.
 - Search the library, click or drag to add, or let Text mode pick icons from service names.
 
 **Export**
@@ -150,7 +151,8 @@ orim/
 ├── tests/core.test.mjs     Parser and serializer round-trip tests
 └── tools/
     ├── build.mjs           Bundles dist/orim.html
-    └── build-icons.py      Regenerates assets/icons.json
+    ├── build-icons.py      Regenerates the Microsoft packs in assets/icons.json
+    └── build-generic-icons.mjs  Adds the Generic (Lucide) pack to assets/icons.json
 ```
 
 The scripts are plain browser scripts loaded in order, not modules, so the app runs from any static host without bundling. Top-level declarations are shared between them; the order in `index.html` matters.
@@ -166,7 +168,7 @@ In Chrome or Edge on a computer, **Save to a folder** on the home page asks for 
 - Renaming a board renames its file. Deleting a board deletes its file. Delete all only touches boards kept in the browser.
 - Boards already in the folder (any `.md` with a Mermaid flowchart) show up in Jump back in. Older boards in the browser can be added with **Save to folder** in their ⋯ menu.
 - If the file changes outside orim (Git pull, an editor, an AI assistant) while the board is open, orim loads the new version. If you changed the board too, it asks which version to keep.
-- Next to the board title, a small note says where the board is saved, like Excel's: **Saved to disk** or **Saved in browser** (and Saving… while it writes). Click it to choose a folder, save an older board to the folder, change folder or stop saving to a folder. The home page suggests a folder once; **No thanks** hides that for good. When the browser needs permission again (after a restart), the note says **Reconnect folder**; changes made meanwhile are kept in the browser and written out once you reconnect.
+- Right after the board title, a small note says where the board is saved, like Excel's, with a coloured dot: green **Saved to disk** (and Saving… while it writes), yellow **In browser only** or **Reconnect folder**, red **Not saved to disk** when writing failed. Click it to choose a folder, save an older board to the folder, change folder or stop saving to a folder. The home page suggests a folder once; **No thanks** hides that for good. When the browser needs permission again (after a restart), the note says **Reconnect folder**; changes made meanwhile are kept in the browser and written out once you reconnect.
 - The browser keeps its own copy of every board too. Folder saving is not available inside Claude or in browsers without the File System Access API (Firefox, Safari); boards are then kept in the browser as before.
 
 Boards live in the browser's `localStorage` on the device you use: `orim.boards` holds the list, `orim.b.<id>` the Mermaid code and `orim.i.<id>` the images of each board. `orim.me` is your comment name. `orim.anthropicKey`, `orim.anthropicWorkspace` and `orim.anthropicModel` hold your Claude API key, workspace ID and model if you saved them in the AI tab. Clearing site data removes them, so export a board file (`.json`) for anything you want to keep or move.
@@ -189,7 +191,7 @@ A board is stored as standard Mermaid, so it renders on GitHub, Azure DevOps and
 %% @comment <id> <x> <y> [on=<id>] [done] <json>      comment thread [{a: author, t: text, d: time}]; on= makes x y an offset from that shape, done = resolved
 ```
 
-Icon nodes use Mermaid 11 shape syntax: `fn@{ icon: "azure:function-apps", label: "API" }`. Packs are `azure:`, `pp:` (Power Platform) and `d365:`. Other Mermaid renderers show these as plain nodes unless the same icon pack is registered there.
+Icon nodes use Mermaid 11 shape syntax: `fn@{ icon: "azure:function-apps", label: "API" }`. Packs are `azure:`, `pp:` (Power Platform), `d365:` and `gen:` (Generic). A Generic icon's colour is its stroke: `style person stroke:#2d9bf0`. Other Mermaid renderers show these as plain nodes unless the same icon pack is registered there.
 
 `classDef`, `class` and `:::name` colours are drawn as Mermaid draws them; a `style` line for a node wins over its class. Auto layout lays out each frame on its own first and then places the frames, so frames stay compact.
 
@@ -243,7 +245,7 @@ Suggestions work like VS Code:
 **Export → Ask an AI** copies a prompt for ChatGPT, Claude, Copilot or any other chat assistant. The prompt contains:
 
 - a short guide to the orim board format: node shapes, frames, edges, styling and the `%%` canvas lines;
-- the Power Platform and Dynamics 365 icon ids, and the 88 Azure icons most boards use;
+- the Power Platform, Dynamics 365 and Generic icon ids, and the 88 Azure icons most boards use;
 - the current board;
 - your request, if you type one in the dialog.
 
@@ -301,7 +303,7 @@ npm test          # parser and serializer tests (Node 18+)
 npm run build     # single-file build in dist/
 ```
 
-To update the icons, see the header of `tools/build-icons.py`.
+To update the icons, see the headers of `tools/build-icons.py` and `tools/build-generic-icons.mjs`.
 
 ## Licenses
 

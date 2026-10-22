@@ -65,6 +65,46 @@ function journeyCode(){
     if(i) edges.push([S[i-1][0],id,'','',null]); });
   return buildBoard({title:'Customer journey map',theme:'pastel',nodes,frames,edges});
 }
+// Generic icons (gen:) in a colour: an icon node for the templates below.
+const genIcon=(id,icon,label,x,y,color,inFrame,h)=>({id,icon:'gen:'+icon,label,x,y,w:170,h:h||76,in:inFrame,style:color?{stroke:color}:undefined});
+// Stakeholder map: who the customer is, who serves them and which partners help, with what flows between them.
+function stakeholderCode(){
+  const B='#2d9bf0', G='#0ca789', O='#ff9d48';
+  const frames=[{id:'cust',label:'Customer'},{id:'us',label:'Our company'},{id:'partners',label:'Partners'}];
+  const nodes=[
+    genIcon('resident','sofa','Resident or tenant',24,48,B,'cust'), genIcon('manager','key-round','Property manager',24,208,B,'cust'), genIcon('owner','building','Building owner',24,368,B,'cust'),
+    genIcon('care','heart-handshake','Customer care',344,48,G,'us'), genIcon('service','headset','Service desk',344,208,G,'us'), genIcon('warranty','hammer','Warranty team',584,48,G,'us'), genIcon('sales','briefcase','Sales',584,368,G,'us'),
+    genIcon('supplier','hard-hat','Supplier',904,48,O,'partners'), genIcon('contractor','wrench','Contractor',904,208,O,'partners'), genIcon('bank','landmark','Bank',904,368,O,'partners')];
+  const edges=[['resident','care','reports an issue'],['manager','service','orders service'],['owner','sales','new contracts'],['care','warranty','warranty claim'],['warranty','supplier','orders parts'],['service','contractor','assigns work'],['sales','bank','financing','dotted'],['owner','manager','','plain']];
+  return buildBoard({title:'Stakeholder map',theme:'pastel',frames,nodes,edges});
+}
+// Service blueprint: what the customer does, what they see, what happens behind the scenes and the systems that support it.
+function blueprintCode(){
+  const CW=210, cols=['Book','Visit','Repair','Follow up'];
+  const lanes=[['custL','Customer actions','#2d9bf0',[['smartphone','Books a visit online'],['house','Lets the technician in'],['eye','Checks the result'],['star','Rates the service']]],
+    ['frontL','Front stage','#0ca789',[['mail','Booking confirmation'],['hard-hat','Technician arrives'],['wrench','Repairs on site'],['message-square','Follow-up message']]],
+    ['backL','Back stage','#9510ac',[['calendar','Schedules the visit'],['truck','Brings the parts'],['clipboard-check','Logs the work'],['receipt','Sends the invoice']]],
+    ['sysL','Support systems','#5b6475',[['app-window','Booking app'],['warehouse','Parts stock'],['database','Work orders'],['credit-card','Payments']]]];
+  const frames=[], nodes=[], edges=[];
+  cols.forEach((c,i)=>nodes.push({id:'step'+i,label:(i+1)+' · '+c,shape:'text',x:34+i*CW,y:-64,w:150,h:36,style:{bold:true,size:16}}));
+  lanes.forEach(([fid,label,color,items],r)=>{ frames.push({id:fid,label,pos:[0,r*200,24*2+3*CW+170,160]});
+    items.forEach(([ic,t],i)=>nodes.push(genIcon(fid.replace('L','')+i,ic,t,24+i*CW,56+r*200,color,fid))); });
+  for(let i=0;i<3;i++) edges.push(['cust'+i,'cust'+(i+1)]);
+  for(let i=0;i<4;i++){ edges.push(['cust'+i,'front'+i,'','dotted'],['front'+i,'back'+i,'','dotted'],['back'+i,'sys'+i,'','dotted']); }
+  return buildBoard({title:'Service blueprint',frames,nodes,edges});
+}
+// Personas: who we design for, each with goals and pains.
+function personasCode(){
+  const P=[['anna','user-round','Anna, 34\nTenant','#2d9bf0','Fix things fast without taking a day off','Has to call three times to get an answer'],
+    ['mikko','key-round','Mikko, 51\nProperty manager','#0ca789','One view of every open repair','Updates arrive by email and get lost'],
+    ['sara','hard-hat','Sara, 28\nSupplier technician','#ff9d48','Know the job and the parts before arriving','Wrong address or missing door code']];
+  const frames=[], nodes=[];
+  P.forEach(([id,ic,name,color,goal,pain],i)=>{ const x=i*300; frames.push({id,label:name.split('\n')[1]});
+    nodes.push(genIcon(id+'Me',ic,name,x+39,48,color,id,92));
+    nodes.push({id:id+'Goal',label:'Goal: '+goal,shape:'sticky',in:id,x:x+24,y:180,w:200,h:112,fill:'#d5f692'});
+    nodes.push({id:id+'Pain',label:'Pain: '+pain,shape:'sticky',in:id,x:x+24,y:316,w:200,h:112,fill:'#ffcee0'}); });
+  return buildBoard({title:'Personas',theme:'pastel',frames,nodes,edges:[]});
+}
 // Layered architecture: application, service and data layers with modules inside, and cross-cutting concerns on the side.
 function layersCode(){
   const nodes=[], frames=[], edges=[]; const W=150, H=48, G=16;
@@ -325,7 +365,10 @@ TEMPLATES.splice(TEMPLATES.findIndex(t=>t.id==='blank'),0,
   {id:'layers',tint:'#e7f4f1',name:'Layered architecture',desc:'Application, service and data layers',code:layersCode()},
   {id:'mind',tint:'#e6e7f3',name:'Mind map',desc:'One question, coloured branches of ideas',code:mindCode()},
   {id:'swot',tint:'#eef6e2',name:'SWOT analysis',desc:'Strengths, weaknesses, opportunities, threats',code:swotCode()},
-  {id:'sprint',tint:'#e3f0fb',name:'Sprint plan',desc:'A feature, stories and a task as tickets',code:sprintCode()});
+  {id:'sprint',tint:'#e3f0fb',name:'Sprint plan',desc:'A feature, stories and a task as tickets',code:sprintCode()},
+  {id:'stake',tint:'#e7f1fb',name:'Stakeholder map',desc:'Customers, teams and partners as icons',code:stakeholderCode()},
+  {id:'blueprint',tint:'#eef3f0',name:'Service blueprint',desc:'Customer, front stage, back stage and systems',code:blueprintCode()},
+  {id:'personas',tint:'#fdf1e4',name:'Personas',desc:'Who we design for, with goals and pains',code:personasCode()});
 const TPL_META={
   inspect:{cat:'Architecture',next:'Add monitoring, secrets and a test environment, and explain the design in a doc'},
   webapp:{cat:'Architecture',next:'Add a staging slot, a CDN for images and alerts, and list the costs in a table'},
@@ -335,6 +378,9 @@ const TPL_META={
   layers:{cat:'Architecture',next:'Turn these boxes into Azure services with icons, and connect how the data flows'},
   flow:{cat:'Diagrams',theme:'sketch',next:'Add a step for receipts over 2,000 EUR that need a second approver'},
   mind:{cat:'Diagrams',next:'Add two more ideas to each branch and a fourth branch for sales'},
+  stake:{cat:'Workshops',next:'Map the stakeholders of a housing repair service, with what each one needs from us'},
+  blueprint:{cat:'Diagrams',next:'Make a service blueprint for ordering a home charger, and mark the pain points in red'},
+  personas:{cat:'Workshops',next:'Add a fourth persona for the building owner, and write user stories for each persona'},
   journey:{cat:'Workshops',next:'Fill this journey for a customer renting a city bike, and turn the best ideas into tickets'},
   retro:{cat:'Workshops',theme:'pastel',next:'Group these notes by theme and turn the action items into tickets'},
   ssc:{cat:'Workshops',theme:'pastel',next:'Summarise what the team agreed in a doc'},

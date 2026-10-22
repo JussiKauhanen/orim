@@ -157,7 +157,8 @@ function nodeInner(n,m,P,live){
     case 'icon': {
       const is=iconSize(n); const ic=iconFor(n.icon);
       if(live) s+='<rect class="hit" x="-4" y="-4" width="'+(w+8)+'" height="'+(h+8)+'" rx="8" style="fill:transparent;stroke:transparent"/>';
-      if(ic) s+='<image href="'+ic.uri+'" x="'+((w-is)/2)+'" y="0" width="'+is+'" height="'+is+'" preserveAspectRatio="xMidYMid meet"/>';
+      if(ic&&ic.svg) s+=iconSvg(ic,(w-is)/2,0,is,(st&&st.stroke)||P.nodeText);
+      else if(ic) s+='<image href="'+ic.uri+'" x="'+((w-is)/2)+'" y="0" width="'+is+'" height="'+is+'" preserveAspectRatio="xMidYMid meet"/>';
       else s+='<rect x="'+((w-is)/2)+'" y="0" width="'+is+'" height="'+is+'" rx="10" style="fill:'+P.nodeFill+';stroke:'+P.nodeStroke+';stroke-dasharray:4 3"/><text x="'+(w/2)+'" y="'+(is/2+4)+'" text-anchor="middle" style="fill:'+P.muted+';font:500 10px '+P.font+'">'+(Icons.ready||Icons.failed?'?':'…')+'</text>';
       break;
     }
